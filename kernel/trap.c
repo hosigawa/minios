@@ -19,7 +19,7 @@ void trap(struct trap_frame *tf)
 {
 	switch(tf->trapno) {
 		case GET_IRQ(IRQ_TIMER):
-			printf("tick is %d\n", tick++);
+			//printf("tick is %d\n", tick++);
 			break;
 		default:
 			panic("trap occurd, trapno:%d\n", tf->trapno);
