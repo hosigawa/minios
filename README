@@ -1,0 +1,5 @@
+Learning XV6, a simple, Unix-like teaching operating system from MIT
+
+#cmd to gen ssh key:
+	ssh-keygen -t rsa -C "youremail@example.com"
+
