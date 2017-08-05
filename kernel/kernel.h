@@ -12,6 +12,7 @@
 #include "uart.h"
 #include "mmu.h"
 #include "timer.h"
+#include "proc.h"
 
 #define LOG cprintf
 #define sys_info cprintf

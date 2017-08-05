@@ -57,6 +57,9 @@ $(OBJDIR)%.o: kernel/%.S
 $(OBJDIR)%.o: %.c
 	$(CC) $(CFLAGS) -O -nostdinc -I $(SRCDIR) -c -o $@ $<
 
+mkfs: tools/mkfs.c fs.h
+	gcc -Werror -Wall -I $(SRCDIR) -o tools/mkfs $<
+
 mkobjdir:
 	@test -d $(OBJDIR) || (mkdir $(OBJDIR) && mkdir $(addprefix $(OBJDIR), $(subst ./,,$(SRCDIR))))
 
