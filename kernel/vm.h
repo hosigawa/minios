@@ -79,8 +79,9 @@ struct taskstate {
 
 void init_gdt();
 void init_kvm();
-void set_kvm(pde_t *pdir);
+pde_t *set_kvm();
 void swtch_kvm();
+int init_uvm(pde_t *pdir, char *start, int size);
 
 struct proc;
 void swtch_uvm(struct proc *p);

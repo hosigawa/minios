@@ -19,9 +19,14 @@ int main()
 	init_gdt();
 	init_idt();
 	init_timer();
-	mem_init(P2V(4*1024*1024), P2V(PYSICAL_END));
+	mem_init(P2V(4*1024*1024), P2V(PHYSICAL_END));
+	user_init();
 
 	sys_info("\nMINIOS ver.%s start...\n\n", MINIOS_VERSION);
+
+	scheduler();
+
+	sys_info("kernal go on ...\n");
 
 	for(;;);
 }

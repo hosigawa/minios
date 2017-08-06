@@ -1,6 +1,7 @@
 #include "kernel.h"
 
 static struct mem_header *free_list = NULL;
+extern char end[];
 
 void mem_init(char *vstart, char *vend)
 {
@@ -9,18 +10,22 @@ void mem_init(char *vstart, char *vend)
 	for(; s < e; s += PG_SIZE) {
 		mem_free(s);
 	}
+	printf("mem_init: free page is %d\n", size_of_free_page());
 }
 
 char *mem_alloc() 
 {
 	struct mem_header *header = free_list;
-	if(free_list)
+	if(free_list) {
 		free_list = free_list->next;
+	}
 	return (char *)header;
 }
 
 void mem_free(char *p)
 {
+	if((uint)p % PG_SIZE || p < end || V2P(p) >= PHYSICAL_END)
+    	panic("mem_free error\n");
 	struct mem_header *header = (struct mem_header *)p;
 	header->next = free_list;
 	free_list = header;

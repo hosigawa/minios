@@ -9,7 +9,7 @@ extern char data[];
 struct kernel_map kmap[] = {
 	{ (void*)KERN_BASE, 0,             IO_END,    PTE_W}, // I/O space
 	{ (void*)KERN_LINK, V2P(KERN_LINK), V2P(data), 0},     // kern text+rodata
-	{ (void*)data,     V2P(data),     PYSICAL_END,   PTE_W}, // kern data+memory
+	{ (void*)data,     V2P(data),     PHYSICAL_END,   PTE_W}, // kern data+memory
 	{ (void*)DEV_SPACE, DEV_SPACE,      0,         PTE_W}, // more devices
 };
 
@@ -25,11 +25,7 @@ void init_gdt()
 
 void init_kvm() 
 {
-	k_dir = (pde_t *)mem_alloc();
-	if(k_dir == 0)
-		panic("init_kvm error\n");
-	memset(k_dir, 0, PG_SIZE);
-	set_kvm(k_dir);
+	k_dir = set_kvm();
 	swtch_kvm();
 }
 
@@ -38,8 +34,12 @@ void swtch_kvm()
 	lcr3(V2P(k_dir));
 }
 
-void set_kvm(pde_t *pdir)
+pde_t *set_kvm()
 {
+	pde_t *pdir = (pde_t *)mem_alloc();
+	if(pdir == 0)
+		panic("set_kvm error\n");
+	memset(pdir, 0, PG_SIZE);
 	int size = sizeof(kmap) / sizeof(kmap[0]);
 	int i = 0;
 	struct kernel_map *km;
@@ -47,6 +47,7 @@ void set_kvm(pde_t *pdir)
 		km = kmap + i;
 		map_page(pdir, km->va, km->pa_start, km->pa_end-km->pa_start, km->perm);
 	}
+	return pdir;
 }
 
 void map_page(pde_t *pdir, void *va, uint la, uint size, int perm)
@@ -98,5 +99,14 @@ void swtch_uvm(struct proc *p)
 	
 	lcr3(V2P(p->pgdir));
 	sti();
+}
+
+int init_uvm(pde_t *pdir, char *start, int size)
+{
+	char *pg = mem_alloc();
+	memset(pg, 0, PG_SIZE);
+	map_page(pdir, 0, V2P(pg), PG_SIZE, PTE_W|PTE_U);
+	memmove(pg, start, size);
+	return 0;
 }
 

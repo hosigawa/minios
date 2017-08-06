@@ -30,10 +30,10 @@ q: qemu
 g: qemu-gdb
 
 qemu: makeproject
-	qemu-system-x86_64 -serial mon:stdio -drive file=minios.img,index=0,media=disk,format=raw -smp 1
+	qemu-system-x86_64 -m 512 -serial mon:stdio -drive file=minios.img,index=0,media=disk,format=raw -smp 1
 
 qemu-gdb: makeproject
-	qemu-system-x86_64 -serial mon:stdio -drive file=minios.img,index=0,media=disk,format=raw -S -gdb tcp::1111
+	qemu-system-x86_64 -m 512 -serial mon:stdio -drive file=minios.img,index=0,media=disk,format=raw -S -gdb tcp::1111
 
 minios.img:	$(OBJDIR)bootblock $(OBJDIR)kernelblock
 	dd if=/dev/zero of=$@ count=10000
@@ -47,8 +47,8 @@ $(OBJDIR)bootblock: kernel/boot/bootasm.S kernel/boot/bootmain.c
 	$(OBJCOPY) -S -O binary -j .text $(OBJDIR)bootblock.o $@
 	./kernel/boot/sign.pl $@
 
-$(OBJDIR)kernelblock: $(OBJS) $(ASM_OBJS) kernel/kernel.ld
-	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o $@ $^
+$(OBJDIR)kernelblock: $(OBJS) $(ASM_OBJS) $(OBJDIR)initcode kernel/kernel.ld
+	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o $@ $(OBJS) $(ASM_OBJS) -b binary initcode
 
 kernel/vectors.S: kernel/vectors.pl
 	perl kernel/vectors.pl > kernel/vectors.S
@@ -58,6 +58,11 @@ $(OBJDIR)%.o: %.S
 	
 $(OBJDIR)%.o: %.c
 	$(CC) $(CFLAGS) -O -nostdinc -I $(SRCDIR) -c -o $@ $<
+
+$(OBJDIR)initcode: kernel/boot/initcode.S
+	$(CC) $(CFLAGS) -nostdinc -I$(SRCDIR) -c $< -o $(OBJDIR)initcode.o
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $(OBJDIR)initcode.out $(OBJDIR)initcode.o
+	$(OBJCOPY) -S -O binary $(OBJDIR)initcode.out $@
 
 mkfs: tools/mkfs.c fs.h
 	gcc -Werror -Wall -I $(SRCDIR) -o tools/mkfs $<

@@ -5,6 +5,10 @@ extern uint vectors[];
 
 uint tick = 0;
 
+void swtch(struct context **old, struct context *new);
+extern struct proc *run_proc;
+extern struct context *scheduler_context;
+
 void init_idt() 
 {
 	int i = 0;
@@ -19,7 +23,12 @@ void trap(struct trap_frame *tf)
 {
 	switch(tf->trapno) {
 		case GET_IRQ(IRQ_TIMER):
-			//printf("tick is %d\n", tick++);
+			tick++;
+			if(tick % 500 == 0) {
+				printf("timer 500, ready to sleep pid:%d\n", run_proc->pid);
+				run_proc->status = READY;
+				swtch(&run_proc->context, scheduler_context);
+			}
 			break;
 		default:
 			panic("trap occurd, trapno:%d; errno:%d\n", tf->trapno, tf->errno);

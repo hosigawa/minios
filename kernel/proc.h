@@ -5,9 +5,10 @@
 
 enum PROC_STATUS {
 	UNUSED = 0,
+	EMBRYO,
 	READY,
 	RUNNING,
-	SLEPPING,
+	SLEPING,
 };
 
 struct context {
@@ -18,15 +19,21 @@ struct context {
 	uint eip;
 };
 
+struct trap_frame;
+
 struct proc {
-	int pid;
+	uint pid;
 	uint kstack;
+	struct trap_frame *tf;
 	struct context *context;
 	int status;
 	pde_t *pgdir;
 };
 
+void forkret();
+struct proc *alloc_proc();
 void scheduler();
+void user_init();
 
 #endif
 

@@ -24,3 +24,4 @@ trapret:
 	popl %ds
 	addl $8, %esp
 	iret
+
