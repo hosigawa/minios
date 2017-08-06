@@ -19,11 +19,9 @@ int main()
 	init_gdt();
 	init_idt();
 	init_timer();
-	mem_init(P2V(4*1024*1024), P2V(KERN_END));
+	mem_init(P2V(4*1024*1024), P2V(PYSICAL_END));
 
 	sys_info("\nMINIOS ver.%s start...\n\n", MINIOS_VERSION);
-
-	sti();
 
 	for(;;);
 }

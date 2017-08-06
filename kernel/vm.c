@@ -1,14 +1,15 @@
 #include "kernel.h"
 
-static struct gdt_desc gdt[8];
-static pde_t *k_dir;
+struct gdt_desc gdt[8];
+struct taskstate ts;
+pde_t *k_dir;
 
 extern char data[];
 
-static struct kernel_map kmap[] = {
+struct kernel_map kmap[] = {
 	{ (void*)KERN_BASE, 0,             IO_END,    PTE_W}, // I/O space
 	{ (void*)KERN_LINK, V2P(KERN_LINK), V2P(data), 0},     // kern text+rodata
-	{ (void*)data,     V2P(data),     KERN_END,   PTE_W}, // kern data+memory
+	{ (void*)data,     V2P(data),     PYSICAL_END,   PTE_W}, // kern data+memory
 	{ (void*)DEV_SPACE, DEV_SPACE,      0,         PTE_W}, // more devices
 };
 
@@ -29,6 +30,11 @@ void init_kvm()
 		panic("init_kvm error\n");
 	memset(k_dir, 0, PG_SIZE);
 	set_kvm(k_dir);
+	swtch_kvm();
+}
+
+void swtch_kvm() 
+{
 	lcr3(V2P(k_dir));
 }
 
@@ -78,5 +84,19 @@ pte_t *get_pte(pde_t *pdir, void *va, bool bcreate)
 		*pde = (uint)V2P(pttab) | PTE_P | PTE_W | PTE_U;
 	}
 	return (pte_t *)(pttab + (((uint)va >> 12) & 0x3ff));
+}
+
+void swtch_uvm(struct proc *p)
+{
+	cli();
+	gdt[SEG_TSS] = SEG16(STS_T32A, &ts, sizeof(ts)-1, 0);
+	gdt[SEG_TSS].s = 0;
+	ts.ss0 = SEG_KDATA << 3;
+	ts.esp0 = p->kstack + KSTACKSIZE;
+	ts.iomb = (ushort) 0xFFFF;
+	ltr(SEG_TSS << 3);	
+	
+	lcr3(V2P(p->pgdir));
+	sti();
 }
 

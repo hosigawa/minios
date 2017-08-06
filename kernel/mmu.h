@@ -29,6 +29,7 @@
 #define SEG_KDATA 2
 #define SEG_UCODE 3
 #define SEG_UDATA 4
+#define SEG_TSS 5
 
 #define V2P(a) (((uint) (a)) - KERN_BASE)
 #define P2V(a) (((void *) (a)) + KERN_BASE)
@@ -43,7 +44,7 @@
 
 #define PG_SIZE 4096
 #define IO_END 0x100000
-#define KERN_END 0xE000000
+#define PYSICAL_END 0x7D000000
 #define KERN_BASE 0x80000000
 #define KERN_LINK 0x80100000
 #define DEV_SPACE 0xFE000000

@@ -22,7 +22,7 @@ void trap(struct trap_frame *tf)
 			//printf("tick is %d\n", tick++);
 			break;
 		default:
-			panic("trap occurd, trapno:%d\n", tf->trapno);
+			panic("trap occurd, trapno:%d; errno:%d\n", tf->trapno, tf->errno);
 			break;
 	}
 }

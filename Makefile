@@ -14,12 +14,14 @@ SRCDIR =\
 		./kernel/
 
 SRCS = $(wildcard $(addsuffix *.c, $(SRCDIR)))
+ASM_SRCS = $(wildcard $(addsuffix *.S, $(SRCDIR)))
 
 OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(SRCS:.c=.o)))
+ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o)))
 
 .PHONY: all mkobjdir makeproject q qemu
 
-makeproject: mkobjdir minios.img
+makeproject: mkobjdir kernel/vectors.S minios.img
 
 all: makeproject
 
@@ -45,13 +47,13 @@ $(OBJDIR)bootblock: kernel/boot/bootasm.S kernel/boot/bootmain.c
 	$(OBJCOPY) -S -O binary -j .text $(OBJDIR)bootblock.o $@
 	./kernel/boot/sign.pl $@
 
-$(OBJDIR)kernelblock: $(OBJS) $(OBJDIR)entry.o $(OBJDIR)vectors.o $(OBJDIR)trapasm.o kernel/kernel.ld
+$(OBJDIR)kernelblock: $(OBJS) $(ASM_OBJS) kernel/kernel.ld
 	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o $@ $^
 
 kernel/vectors.S: kernel/vectors.pl
 	perl kernel/vectors.pl > kernel/vectors.S
 
-$(OBJDIR)%.o: kernel/%.S
+$(OBJDIR)%.o: %.S
 	$(CC) $(CFLAGS) -O -nostdinc -I $(SRCDIR) -c -o $@ $<
 	
 $(OBJDIR)%.o: %.c
