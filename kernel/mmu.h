@@ -91,7 +91,8 @@
 
 //sys call
 #define T_SYSCALL 64
-#define SYS_PRINT 1
+#define SYS_PRINT 128
+#define SYS_FORK 1
 
 #endif
 

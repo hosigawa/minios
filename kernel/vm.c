@@ -110,3 +110,75 @@ int init_uvm(pde_t *pdir, char *start, int size)
 	return 0;
 }
 
+pde_t *cp_uvm(pde_t *pgdir, int mem_size) 
+{
+	char *new_mem, *old_mem;
+	uint flag;
+	pde_t *new_pg = set_kvm();
+	if(!new_pg)
+		return NULL;
+	uint i = 0;
+	for(; i < (uint)mem_size; i += PG_SIZE) {
+		pte_t *pte = get_pte(pgdir, (char *)i, false);
+		if(!pte) {
+			panic("pte not exist\n");
+			return NULL;
+		}
+		new_mem = mem_alloc();
+		if(!new_mem) {
+			panic("free uvm\n");
+			free_uvm(new_pg);
+			return NULL;
+		}
+		old_mem = (char *)P2V(*pte & ~0xfff);
+		flag = (uint)(*pte & 0xfff);
+		memmove(new_mem, old_mem, PG_SIZE);
+		map_page(new_pg, (char *)i, V2P(new_mem), PG_SIZE, flag);
+	}
+	return new_pg;
+}
+
+void free_uvm(pde_t *pgdir)
+{
+	resize_uvm(pgdir, KERN_BASE, 0);
+	int i = 0;
+	for(; i < 1024; i++) {
+		if(pgdir[i] & PTE_P)
+			mem_free(P2V(pgdir[i] & ~0xfff));
+	}
+	mem_free(pgdir);
+}
+
+int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz)
+{
+	if(newsz > KERN_BASE)
+		return -1;
+	char *i = 0;
+	char *old_addr = (char *)PG_ROUNDUP(oldsz);
+	char *new_addr = (char *)PG_ROUNDUP(newsz);
+	char *mem;
+	pte_t *pte;
+	if(old_addr <= new_addr) {
+		for(i = old_addr; i < new_addr; i += PG_SIZE) {
+			mem = mem_alloc();
+			if(!mem) {
+				return -1;
+			}
+			map_page(pgdir, i, V2P(mem), PG_SIZE, PTE_W|PTE_U);
+		}
+	}
+	else {
+		for(i = new_addr; i < old_addr; i += PG_SIZE) {
+			pte = get_pte(pgdir, i, false);
+			if(pte) {
+				mem_free(P2V(*pte & ~0xfff));
+				*pte = 0;
+			}
+			else {
+				break;
+			}
+		}
+	}
+	return 0;
+}
+

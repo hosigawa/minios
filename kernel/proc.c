@@ -30,6 +30,7 @@ struct proc *alloc_proc()
 	p->kstack = (uint)mem_alloc();
 	if(!p->kstack) {
 		p->status = UNUSED;
+		return NULL;
 	}
 	p->pid = next_pid++;
 	p->status = EMBRYO;
@@ -57,7 +58,6 @@ void scheduler()
 				swtch_uvm(p);
 				swtch(&scheduler_context, p->context);
 				swtch_kvm();
-				printf("swtch task\n");
 			}
 		}
 	}
@@ -70,6 +70,7 @@ void user_init()
 	if(!p)
 		panic("user_init error\n");
 	p->pgdir = set_kvm();
+	p->mem_size = PG_SIZE;
 	init_uvm(p->pgdir, _binary__obj_initcode_start, (int)_binary__obj_initcode_size);
 	
 	memset(p->tf, 0, sizeof(*p->tf));
@@ -83,5 +84,23 @@ void user_init()
   	p->tf->eip = 0;
 
 	p->status = READY;
+}
+
+int fork() 
+{
+	struct proc *p = alloc_proc();
+	if(!p)
+		return -1;
+	p->pgdir = cp_uvm(run_proc->pgdir, run_proc->mem_size);
+	if(!p->pgdir) {
+		p->status = UNUSED;
+		return -1;
+	}
+	*p->tf = *run_proc->tf;
+	p->tf->eax = 0;
+	p->mem_size = run_proc->mem_size;
+	p->status = READY;
+
+	return p->pid;
 }
 

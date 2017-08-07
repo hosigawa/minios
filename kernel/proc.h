@@ -22,15 +22,16 @@ struct context {
 struct trap_frame;
 
 struct proc {
-	uint pid;
+	int pid;
 	uint kstack;
-	uint mem_top;
+	uint mem_size;
 	struct trap_frame *tf;
 	struct context *context;
 	int status;
 	pde_t *pgdir;
 };
 
+int fork();
 void forkret();
 struct proc *alloc_proc();
 void scheduler();

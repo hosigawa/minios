@@ -9,7 +9,7 @@ struct mem_header{
 
 void mem_init();
 char *mem_alloc();
-void mem_free(char *p);
+void mem_free(void *p);
 int size_of_free_memory();
 int size_of_free_page();
 

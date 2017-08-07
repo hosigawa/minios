@@ -82,6 +82,9 @@ void init_kvm();
 pde_t *set_kvm();
 void swtch_kvm();
 int init_uvm(pde_t *pdir, char *start, int size);
+pde_t *cp_uvm(pde_t *pgdir, int mem_size);
+void free_uvm(pde_t *pgdir);
+int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz);
 
 struct proc;
 void swtch_uvm(struct proc *p);

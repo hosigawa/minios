@@ -22,9 +22,9 @@ char *mem_alloc()
 	return (char *)header;
 }
 
-void mem_free(char *p)
+void mem_free(void *p)
 {
-	if((uint)p % PG_SIZE || p < end || V2P(p) >= PHYSICAL_END)
+	if((uint)p % PG_SIZE || (char *)p < end || V2P(p) >= PHYSICAL_END)
     	panic("mem_free error\n");
 	struct mem_header *header = (struct mem_header *)p;
 	header->next = free_list;

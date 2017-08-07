@@ -29,6 +29,8 @@ q: qemu
 
 g: qemu-gdb
 
+c: clean
+
 qemu: makeproject
 	qemu-system-x86_64 -m 512 -serial mon:stdio -drive file=minios.img,index=0,media=disk,format=raw -smp 1
 

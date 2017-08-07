@@ -21,26 +21,26 @@ void init_idt()
 
 void trap(struct trap_frame *tf) 
 {
-	cli();
 	if(tf->trapno == T_SYSCALL) {
+		cli();
 		sys_call();
-		sti();
 		return;
 	}
 
 	switch(tf->trapno) {
 		case GET_IRQ(IRQ_TIMER):
-			tick++;/*
-			if(tick % 500 == 0) {
-				printf("timer 500, ready to sleep pid:%d\n", run_proc->pid);
-				run_proc->status = READY;
-				swtch(&run_proc->context, scheduler_context);
-			}*/
+			tick++;
+			if(tick >= 1) {
+				tick = 0;
+				if(run_proc && run_proc->status == RUNNING) {
+					run_proc->status = READY;
+					swtch(&run_proc->context, scheduler_context);
+				}
+			}
 			break;
 		default:
 			panic("trap occurd, trapno:%d; errno:%d\n", tf->trapno, tf->errno);
 			break;
 	}
-	sti();
 }
 
