@@ -1,3 +1,8 @@
+#include "mmu.h"
+
 .globl start
 start:
-	jmp start
+	movl $SYS_PRINT, %eax
+	int $T_SYSCALL
+loop:
+	jmp loop

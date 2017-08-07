@@ -1,6 +1,8 @@
 #ifndef __TRAP_H__
 #define __TRAP_H__
 
+#include "mmu.h"
+
 // Gate descriptors for interrupts and traps
 struct gate_desc {
   uint off_15_0 : 16;   // low 16 bits of offset in segment
@@ -34,8 +36,6 @@ struct gate_desc {
   (gate).p = 1;                                           \
   (gate).off_31_16 = (uint)(off) >> 16;                  \
 }
-
-#define T_SYSCALL 64
 
 struct trap_frame {
 	// push stack by alltraps from trapasm.S

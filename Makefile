@@ -48,7 +48,7 @@ $(OBJDIR)bootblock: kernel/boot/bootasm.S kernel/boot/bootmain.c
 	./kernel/boot/sign.pl $@
 
 $(OBJDIR)kernelblock: $(OBJS) $(ASM_OBJS) $(OBJDIR)initcode kernel/kernel.ld
-	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o $@ $(OBJS) $(ASM_OBJS) -b binary initcode
+	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o $@ $(OBJS) $(ASM_OBJS) -b binary $(OBJDIR)initcode
 
 kernel/vectors.S: kernel/vectors.pl
 	perl kernel/vectors.pl > kernel/vectors.S

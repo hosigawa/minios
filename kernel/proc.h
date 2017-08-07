@@ -24,6 +24,7 @@ struct trap_frame;
 struct proc {
 	uint pid;
 	uint kstack;
+	uint mem_top;
 	struct trap_frame *tf;
 	struct context *context;
 	int status;

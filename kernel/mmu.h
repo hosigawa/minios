@@ -89,5 +89,9 @@
 #define PTE_PS          0x080   // Page Size
 #define PTE_MBZ         0x180   // Bits must be zero
 
+//sys call
+#define T_SYSCALL 64
+#define SYS_PRINT 1
+
 #endif
 

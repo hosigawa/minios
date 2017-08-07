@@ -58,7 +58,6 @@ void scheduler()
 				swtch(&scheduler_context, p->context);
 				swtch_kvm();
 				printf("swtch task\n");
-				break;
 			}
 		}
 	}
@@ -66,12 +65,12 @@ void scheduler()
 
 void user_init()
 {
-	extern char _binary_initcode_start[], _binary_initcode_size[];
+	extern char _binary__obj_initcode_start[], _binary__obj_initcode_size[];
 	struct proc *p = alloc_proc();
 	if(!p)
 		panic("user_init error\n");
 	p->pgdir = set_kvm();
-	init_uvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
+	init_uvm(p->pgdir, _binary__obj_initcode_start, (int)_binary__obj_initcode_size);
 	
 	memset(p->tf, 0, sizeof(*p->tf));
   

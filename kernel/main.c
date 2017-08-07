@@ -25,9 +25,6 @@ int main()
 	sys_info("\nMINIOS ver.%s start...\n\n", MINIOS_VERSION);
 
 	scheduler();
-
-	sys_info("kernal go on ...\n");
-
-	for(;;);
+	return -1;
 }
 

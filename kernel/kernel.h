@@ -13,9 +13,11 @@
 #include "mmu.h"
 #include "timer.h"
 #include "proc.h"
+#include "syscall.h"
 
 #define LOG cprintf
 #define sys_info cprintf
+#define err_info cprintf
 #define printf cprintf
 
 #endif
