@@ -35,6 +35,8 @@ int fork();
 void forkret();
 struct proc *alloc_proc();
 void scheduler();
+void sched();
+void yield();
 void user_init();
 
 #endif

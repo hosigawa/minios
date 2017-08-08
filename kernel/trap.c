@@ -33,8 +33,7 @@ void trap(struct trap_frame *tf)
 			if(tick >= 1) {
 				tick = 0;
 				if(run_proc && run_proc->status == RUNNING) {
-					run_proc->status = READY;
-					swtch(&run_proc->context, scheduler_context);
+					yield();
 				}
 			}
 			break;

@@ -104,3 +104,14 @@ int fork()
 	return p->pid;
 }
 
+void sched()
+{
+	swtch(&run_proc->context, scheduler_context);
+}
+
+void yield()
+{
+	run_proc->status = READY;
+	sched();
+}
+
