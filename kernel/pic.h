@@ -19,6 +19,7 @@
 
 #define IRQ_TIMER 0
 #define IRQ_COM1 14
+#define IRQ_IDE 14
 
 #define GET_IRQ(a) (T_IRQ0 + (a))
 

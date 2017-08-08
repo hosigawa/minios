@@ -32,6 +32,14 @@ static inline void insl(int port, void *addr, int cnt)
 	);
 }
 
+static inline void outsl(int port, const void *addr, int cnt)
+{
+  asm volatile("cld; rep outsl" :
+      	"=S" (addr), "=c" (cnt) :
+      	"d" (port), "0" (addr), "1" (cnt) :
+      	"cc");
+}
+
 static inline void stosb(void *addr, int data, int size) 
 {
 	asm volatile(

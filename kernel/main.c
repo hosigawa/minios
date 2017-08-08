@@ -16,11 +16,12 @@ int main()
 	init_uart();
 	mem_init(end, P2V(4*1024*1024));
 	init_kvm();
+	mem_init(P2V(4*1024*1024), P2V(PHYSICAL_END));
 	init_gdt();
 	init_idt();
 	init_timer();
-	mem_init(P2V(4*1024*1024), P2V(PHYSICAL_END));
-	user_init();
+	init_ide();
+	//user_init();
 
 	sys_info("\nMINIOS ver.%s start...\n\n", MINIOS_VERSION);
 

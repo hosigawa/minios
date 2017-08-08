@@ -1,3 +1,4 @@
 .obj/
 ./tools/mkfs
 minios.img
+fs.img

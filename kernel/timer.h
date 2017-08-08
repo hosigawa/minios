@@ -12,6 +12,7 @@
 #define TIME_HZ 100
 
 void init_timer();
+void timer_proc();
 
 #endif
 

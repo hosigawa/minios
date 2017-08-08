@@ -3,9 +3,6 @@
 struct gate_desc idt[256];
 extern uint vectors[];
 
-uint tick = 0;
-
-void swtch(struct context **old, struct context *new);
 extern struct proc *run_proc;
 extern struct context *scheduler_context;
 
@@ -29,13 +26,10 @@ void trap(struct trap_frame *tf)
 
 	switch(tf->trapno) {
 		case GET_IRQ(IRQ_TIMER):
-			tick++;
-			if(tick >= 1) {
-				tick = 0;
-				if(run_proc && run_proc->status == RUNNING) {
-					yield();
-				}
-			}
+			timer_proc();
+			break;
+		case GET_IRQ(IRQ_IDE):
+			ide_proc();
 			break;
 		default:
 			panic("trap occurd, trapno:%d; errno:%d\n", tf->trapno, tf->errno);

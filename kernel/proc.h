@@ -23,12 +23,15 @@ struct trap_frame;
 
 struct proc {
 	int pid;
+	bool killed;
 	uint kstack;
 	uint mem_size;
 	struct trap_frame *tf;
 	struct context *context;
 	int status;
 	pde_t *pgdir;
+	struct proc *parent;
+	void *sleep_chan;
 };
 
 int fork();
@@ -38,6 +41,8 @@ void scheduler();
 void sched();
 void yield();
 void user_init();
+void sleep(void *chan);
+void wakeup(void *chan);
 
 #endif
 

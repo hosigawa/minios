@@ -10,7 +10,7 @@ void mem_init(char *vstart, char *vend)
 	for(; s < e; s += PG_SIZE) {
 		mem_free(s);
 	}
-	printf("mem_init: free page is %d\n", size_of_free_page());
+	//printf("mem_init: free page is %d\n", size_of_free_page());
 }
 
 char *mem_alloc() 

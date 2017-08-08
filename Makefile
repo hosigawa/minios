@@ -17,7 +17,7 @@ SRCS = $(wildcard $(addsuffix *.c, $(SRCDIR)))
 ASM_SRCS = $(wildcard $(addsuffix *.S, $(SRCDIR)))
 
 OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(SRCS:.c=.o)))
-ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o))) $(OBJDIR)kernel/vectors.o
+ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o)))
 
 .PHONY: all mkobjdir makeproject q qemu
 
@@ -26,6 +26,7 @@ makeproject: mkobjdir kernel/vectors.S minios.img
 all: makeproject
 
 q: qemu
+qf: qemu-fs
 
 g: qemu-gdb
 
@@ -33,6 +34,11 @@ c: clean
 
 qemu: makeproject
 	qemu-system-x86_64 -m 512 -serial mon:stdio -drive file=minios.img,index=0,media=disk,format=raw -smp 1
+
+qemu-fs: makeproject
+	qemu-system-x86_64 -m 512 -smp 1 -serial mon:stdio \
+	-drive file=minios.img,index=0,media=disk,format=raw \
+	-drive file=fs.img,index=1,media=disk,format=raw
 
 qemu-gdb: makeproject
 	qemu-system-x86_64 -m 512 -serial mon:stdio -drive file=minios.img,index=0,media=disk,format=raw -S -gdb tcp::1111

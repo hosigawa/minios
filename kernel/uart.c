@@ -26,10 +26,10 @@ void init_uart()
   	inb(COM1+0);
   	enable_pic(IRQ_COM1);
   
-	char *p;
+	//char *p;
   	// Announce that we're here.
-  	for(p="uart init...\n"; *p; p++)
-    	uart_putc(*p);
+  	//for(p="uart init...\n"; *p; p++)
+    //	uart_putc(*p);
 }
 
 void uart_putc(int c)

@@ -34,6 +34,7 @@ struct proc *alloc_proc()
 	}
 	p->pid = next_pid++;
 	p->status = EMBRYO;
+	p->killed = false;
 	uint sp = p->kstack + PG_SIZE;
 	sp -= sizeof(struct trap_frame);
 	p->tf = (struct trap_frame *)sp;
@@ -98,6 +99,7 @@ int fork()
 	}
 	*p->tf = *run_proc->tf;
 	p->tf->eax = 0;
+	p->parent = run_proc;
 	p->mem_size = run_proc->mem_size;
 	p->status = READY;
 
@@ -113,5 +115,24 @@ void yield()
 {
 	run_proc->status = READY;
 	sched();
+}
+
+void sleep(void *chan)
+{
+	run_proc->sleep_chan = chan;
+	run_proc->status = SLEPING;
+	sched();
+
+	run_proc->sleep_chan = 0;
+}
+
+void wakeup(void *chan)
+{
+	int i = 0;
+	for(; i < MAX_PROC; i++) {
+		struct proc *p = proc_table + i;
+		if(p->status == SLEPING && p->sleep_chan == chan)
+			p->status = READY;
+	}
 }
 
