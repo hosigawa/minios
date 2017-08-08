@@ -17,7 +17,7 @@ SRCS = $(wildcard $(addsuffix *.c, $(SRCDIR)))
 ASM_SRCS = $(wildcard $(addsuffix *.S, $(SRCDIR)))
 
 OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(SRCS:.c=.o)))
-ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o)))
+ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o))) $(OBJDIR)kernel/vectors.o
 
 .PHONY: all mkobjdir makeproject q qemu
 
@@ -47,13 +47,13 @@ $(OBJDIR)bootblock: kernel/boot/bootasm.S kernel/boot/bootmain.c
 	$(CC) $(CFLAGS) -nostdinc -I $(SRCDIR) -c kernel/boot/bootasm.S -o $(OBJDIR)bootasm.o
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7c00 -o $(OBJDIR)bootblock.o $(OBJDIR)bootasm.o $(OBJDIR)bootmain.o
 	$(OBJCOPY) -S -O binary -j .text $(OBJDIR)bootblock.o $@
-	./kernel/boot/sign.pl $@
+	perl ./tools/sign.pl $@
 
 $(OBJDIR)kernelblock: $(OBJS) $(ASM_OBJS) $(OBJDIR)initcode kernel/kernel.ld
 	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o $@ $(OBJS) $(ASM_OBJS) -b binary $(OBJDIR)initcode
 
-kernel/vectors.S: kernel/vectors.pl
-	perl kernel/vectors.pl > kernel/vectors.S
+kernel/vectors.S: tools/vectors.pl
+	perl tools/vectors.pl > kernel/vectors.S
 
 $(OBJDIR)%.o: %.S
 	$(CC) $(CFLAGS) -O -nostdinc -I $(SRCDIR) -c -o $@ $<
