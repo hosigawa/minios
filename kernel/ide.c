@@ -79,10 +79,10 @@ void ide_io()
 	ide_wait(false);
 	outb(0x3f6, 0);  // generate interrupt
   	outb(0x1f2, 1);  // number of sectors
-  	outb(0x1f3, buf->sector & 0xff);
-  	outb(0x1f4, (buf->sector >> 8) & 0xff);
-  	outb(0x1f5, (buf->sector >> 16) & 0xff);
-  	outb(0x1f6, 0xe0 | ((buf->device & 1)<<4) | ((buf->sector >> 24) & 0x0f));
+  	outb(0x1f3, buf->sec & 0xff);
+  	outb(0x1f4, (buf->sec >> 8) & 0xff);
+  	outb(0x1f5, (buf->sec >> 16) & 0xff);
+  	outb(0x1f6, 0xe0 | ((buf->dev & 1)<<4) | ((buf->sec >> 24) & 0x0f));
   	if(buf->flags & B_DIRTY){
   	  outb(0x1f7, IDE_CMD_WRITE);
   	  outsl(0x1f0, buf->data, 128);

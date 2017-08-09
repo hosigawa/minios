@@ -1,7 +1,7 @@
 #ifndef __IDE_H__
 #define __IDE_H__
 
-#include "bio.h"
+#include "fs.h"
 
 #define SECTOR_SIZE   512
 #define IDE_BSY       0x80

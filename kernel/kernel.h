@@ -15,7 +15,7 @@
 #include "proc.h"
 #include "syscall.h"
 #include "ide.h"
-#include "bio.h"
+#include "fs.h"
 
 #define LOG cprintf
 #define sys_info cprintf
