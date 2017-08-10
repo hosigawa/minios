@@ -26,7 +26,6 @@ makeproject: mkobjdir kernel/vectors.S minios.img
 all: makeproject
 
 q: qemu
-
 qf: qemu-fs
 
 g: qemu-gdb

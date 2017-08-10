@@ -21,7 +21,7 @@ int main()
 	init_idt();
 	init_timer();
 	init_ide();
-	//user_init();
+	user_init();
 
 	sys_info("\nMINIOS ver.%s start...\n\n", MINIOS_VERSION);
 

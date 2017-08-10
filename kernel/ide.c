@@ -15,7 +15,6 @@ void init_ide()
   	for(i=0; i<1000; i++){
   		if(inb(0x1f7) != 0){
       		disk1 = true;
-			sys_info("disk1 found\n");
       		break;
     	}
   	}
@@ -61,7 +60,7 @@ void ide_rw(struct block_buf *buf)
 	else {
 		while(p->qnext)
 			p = p->qnext;
-		p->next = buf;
+		p->qnext = buf;
 	}
 	if(buf == ide_queue)
 		ide_io();
@@ -75,7 +74,6 @@ void ide_io()
 	struct block_buf *buf = ide_queue;
 	if(!buf)
 		return;
-	ide_queue = ide_queue->qnext;
 	ide_wait(false);
 	outb(0x3f6, 0);  // generate interrupt
   	outb(0x1f2, 1);  // number of sectors

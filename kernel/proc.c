@@ -10,9 +10,13 @@ void swtch(struct context **old, struct context *new);
 
 void trapret();
 
+static bool first = true;
 void forkret()
 {
-
+	if(first) {
+		init_fs(1);
+		first = false;
+	}
 }
 
 struct proc *alloc_proc()

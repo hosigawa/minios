@@ -37,8 +37,8 @@ void sys_call()
 
 int sys_print()
 {
-	char *arg = (char *)get_arg_uint(0);
-	cprintf("%s", arg);
+	//char *arg = (char *)get_arg_uint(0);
+	//cprintf("%s", arg);
 	return 0;
 }
 
