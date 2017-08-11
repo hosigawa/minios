@@ -6,6 +6,8 @@
 #define B_VALID 0x2  // buffer has been read from disk
 #define B_DIRTY 0x4  // buffer needs to be written to disk
 #define NDIRECT 12
+#define NINDIRECT (BLOCK_SIZE / sizeof(uint))
+#define MAXFILE (NDIRECT + NINDIRECT)
 #define INODE_NUM 50
 #define I_VALID 0x2
 
@@ -13,6 +15,11 @@
 #define IBLOCK(inum) (inum / IPER + sb.inodestart)
 #define BPER (BLOCK_SIZE * 8)
 #define BBLOCK(bnum) (bnum / BPER + sb.bmapstart)
+
+#define T_DIR 1
+#define T_FILE 2
+#define DIR_NM_SZ 14
+#define ROOTINO 1
 
 struct block_buf {
 	int flags;
@@ -32,6 +39,11 @@ struct dinode {
   	short nlink;          // Number of links to inode in file system
   	uint size;            // Size of file (bytes)
   	uint addrs[NDIRECT+1];   // Data block addresses
+};
+
+struct dirent {
+	short inum;
+	char name[DIR_NM_SZ];
 };
 
 struct inode {
@@ -67,9 +79,6 @@ void fill_inode(struct inode *ip);
 int readi(struct inode *ip, char *dst, int offset, int num);
 int writei(struct inode *ip, char *dst, int offset, int num);
 uint bmap(struct inode *ip, int n);
-uint balloc(int dev);
-void bfree(int dev, uint n);
-void bzero(int dev, int num);
 
 #endif
 

@@ -11,7 +11,7 @@ LDFLAGS = -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
 OBJDIR = .obj/
 
 SRCDIR =\
-		./kernel/
+		./kernel/\
 
 SRCS = $(wildcard $(addsuffix *.c, $(SRCDIR)))
 ASM_SRCS = $(wildcard $(addsuffix *.S, $(SRCDIR)))
@@ -29,6 +29,8 @@ q: qemu
 qf: qemu-fs
 
 g: qemu-gdb
+
+m: $(OBJDIR)app/mkfs
 
 c: clean
 
@@ -72,8 +74,8 @@ $(OBJDIR)initcode: kernel/boot/initcode.S
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $(OBJDIR)initcode.out $(OBJDIR)initcode.o
 	$(OBJCOPY) -S -O binary $(OBJDIR)initcode.out $@
 
-mkfs: tools/mkfs.c fs.h
-	gcc -Werror -Wall -I $(SRCDIR) -o tools/mkfs $<
+$(OBJDIR)app/mkfs: tools/mkfs.c kernel/fs.h
+	gcc -Werror -Wall -I $(SRCDIR) -o $@ $<
 
 mkobjdir:
 	@test -d $(OBJDIR) || (mkdir $(OBJDIR) && mkdir $(addprefix $(OBJDIR), $(subst ./,,$(SRCDIR))))

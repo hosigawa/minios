@@ -5,6 +5,17 @@ struct block_buf *head;
 struct super_block sb;
 struct inode inodes[INODE_NUM];
 
+uint balloc(int dev);
+void bfree(int dev, uint n);
+
+void bzero(int dev, int num)
+{
+	struct block_buf *buf = bread(dev, num);
+	memset(buf->data, 0, BLOCK_SIZE);
+	bwrite(buf);
+	brelse(buf);
+}
+
 void binit()
 {
 	int i;
@@ -195,14 +206,6 @@ void bfree(int dev, uint n)
 	int b = n % BPER;
 	int m = 1 << (b % 8);
 	buf->data[b/8] &= ~m;
-	bwrite(buf);
-	brelse(buf);
-}
-
-void bzero(int dev, int num)
-{
-	struct block_buf *buf = bread(dev, num);
-	memset(buf->data, 0, BLOCK_SIZE);
 	bwrite(buf);
 	brelse(buf);
 }
