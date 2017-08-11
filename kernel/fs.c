@@ -27,9 +27,8 @@ struct block_buf *bread(int dev, int sec)
 	return buf;
 }
 
-void bwrite(int dev, int sec)
+void bwrite(struct block_buf *buf)
 {
-	struct block_buf *buf = bget(dev, sec);
 	buf->flags |= B_DIRTY;
 	ide_rw(buf);
 }
@@ -91,28 +90,120 @@ void init_fs(int dev)
 struct inode *iget(int dev, int inum)
 {
 	int i = 0;
+	struct inode *empty = NULL;
 	for(; i < INODE_NUM; i++){
-		if(inodes[i].dev == dev && inodes[i].inum == inum){
+		if(inodes[i].ref > 0 && inodes[i].dev == dev && inodes[i].inum == inum){
 			inodes[i].ref++;
 			return inodes + i;
 		}
-
+		if(!empty && inodes[i].ref == 0){
+			empty = inodes + i;
+		}
 	}
+	if(!empty)
+		panic("no empty inodes\n");
+	empty->dev = dev;
+	empty->inum = inum;
+	empty->ref = 1;
+	empty->flags = 0;
+	
+	return empty;
 }
 
 void irelese(struct inode *ip)
 {
+	if(--ip->ref <= 0) {
+
+	}
 }
 
-void readi(struct inode *ip, char *dst)
+int readi(struct inode *ip, char *dst, int offset, int num)
 {
+	struct block_buf *buf;
+	int rd, intr;
+	if(offset + num > ip->di.size)
+		num = ip->di.size - offset;
+	for(rd = 0, intr = 0; rd < num; rd += intr, offset += intr, dst += intr) {
+		buf = bread(ip->dev, bmap(ip, offset/BLOCK_SIZE));
+		intr = min(BLOCK_SIZE - offset % BLOCK_SIZE, num - rd);
+		memmove(dst, buf->data + offset % BLOCK_SIZE, intr);
+		brelse(buf);
+	}
+	return rd;
 }
 
-void writei(struct inode *ip, char *dst)
+int writei(struct inode *ip, char *dst, int offset, int num)
 {
+	return 0;
 }
 
-int get_block_num(struct inode *ip, int n)
+uint bmap(struct inode *ip, int n)
 {
+	if(n < NDIRECT){
+		if(ip->di.addrs[n] == 0){
+			ip->di.addrs[n] = balloc(ip->dev);
+		}
+		return ip->di.addrs[n];
+	}
+	n -= NDIRECT;
+	if(ip->di.addrs[NDIRECT] == 0)
+		ip->di.addrs[NDIRECT] = balloc(ip->dev);
+	struct block_buf *buf = bread(ip->dev, ip->di.addrs[NDIRECT]);
+	uint seq = *((uint*)buf->data + n);
+	if(seq == 0) {
+		*((uint *)buf->data + n) = seq = balloc(ip->dev);
+		bwrite(buf);
+	}
+	brelse(buf);
+	return seq;
+}
+
+void fill_inode(struct inode *ip)
+{
+	if(!(ip->flags & I_VALID)) {
+		struct block_buf *buf = bread(ip->dev, IBLOCK(ip->inum));
+		memmove(&ip->di, (struct dinode *)buf->data + ip->inum % IPER, sizeof(struct dinode));
+		ip->flags |= I_VALID;
+		brelse(buf);
+	}
+}
+
+uint balloc(int dev)
+{
+	int i, bi, m;
+	for(i = 0; i < sb.size; i += BPER) {
+		struct block_buf *buf = bread(dev, BBLOCK(i));
+		for(bi = 0; bi < BPER && bi + i < sb.size; bi++) {
+			m = 1 << (bi % 8);
+			if((buf->data[bi/8] & m) == 0){
+				buf->data[bi/8] |= m;
+				bwrite(buf);
+				bzero(dev, i + bi);
+				brelse(buf);
+				return bi;;
+			}
+		}
+		brelse(buf);
+	}
+	panic("balloc out of range\n");
+	return 0;
+}
+
+void bfree(int dev, uint n)
+{
+	struct block_buf *buf = bread(dev, BBLOCK(n));
+	int b = n % BPER;
+	int m = 1 << (b % 8);
+	buf->data[b/8] &= ~m;
+	bwrite(buf);
+	brelse(buf);
+}
+
+void bzero(int dev, int num)
+{
+	struct block_buf *buf = bread(dev, num);
+	memset(buf->data, 0, BLOCK_SIZE);
+	bwrite(buf);
+	brelse(buf);
 }
 

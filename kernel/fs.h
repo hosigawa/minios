@@ -7,6 +7,12 @@
 #define B_DIRTY 0x4  // buffer needs to be written to disk
 #define NDIRECT 12
 #define INODE_NUM 50
+#define I_VALID 0x2
+
+#define IPER (BLOCK_SIZE / sizeof(struct dinode))
+#define IBLOCK(inum) (inum / IPER + sb.inodestart)
+#define BPER (BLOCK_SIZE * 8)
+#define BBLOCK(bnum) (bnum / BPER + sb.bmapstart)
 
 struct block_buf {
 	int flags;
@@ -49,7 +55,7 @@ struct super_block {
 
 void binit();
 struct block_buf *bread(int dev, int sec);
-void bwrite(int dev, int sec);
+void bwrite(struct block_buf *buf);
 struct block_buf *bget(int dev, int sec);
 void brelse(struct block_buf *buf);
 
@@ -57,9 +63,13 @@ void init_fs(int dev);
 void readsb(int dev, struct super_block *sb);
 struct inode *iget(int dev, int inum);
 void irelese(struct inode *ip);
-void readi(struct inode *ip, char *dst);
-void writei(struct inode *ip, char *dst);
-int get_block_num(struct inode *ip, int n);
+void fill_inode(struct inode *ip);
+int readi(struct inode *ip, char *dst, int offset, int num);
+int writei(struct inode *ip, char *dst, int offset, int num);
+uint bmap(struct inode *ip, int n);
+uint balloc(int dev);
+void bfree(int dev, uint n);
+void bzero(int dev, int num);
 
 #endif
 
