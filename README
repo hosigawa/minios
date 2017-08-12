@@ -4,5 +4,5 @@ Learning XV6, a simple, Unix-like teaching operating system from MIT
 	ssh-keygen -t rsa -C "youremail@example.com"
 
 #clone xv6 from here:
-	https://github.com/mit-pdos/xv6-public.git
+	git clone git://github.com/mit-pdos/xv6-public.git
 

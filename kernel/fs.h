@@ -75,10 +75,11 @@ void init_fs(int dev);
 void readsb(int dev, struct super_block *sb);
 struct inode *iget(int dev, int inum);
 void irelese(struct inode *ip);
-void fill_inode(struct inode *ip);
 int readi(struct inode *ip, char *dst, int offset, int num);
 int writei(struct inode *ip, char *dst, int offset, int num);
 uint bmap(struct inode *ip, int n);
+
+struct inode *namei(const char *path);
 
 #endif
 

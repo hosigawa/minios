@@ -101,3 +101,12 @@ void cputc(int c)
 	uart_putc(c);
 }
 
+int strncmp(const char *dst, const char *src, int len)
+{
+	do {
+		if(*dst++ != *src++)
+			return -1;
+	} while(*dst && *src && --len > 0);
+	return 0;
+}
+

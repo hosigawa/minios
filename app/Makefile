@@ -10,8 +10,7 @@ LDFLAGS = -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
 
 OBJDIR = .obj/
 
-SRCDIR =\
-		./\
+SRCDIR = ./
 
 SRCS = $(wildcard $(addsuffix *.c, $(SRCDIR)))
 
@@ -37,7 +36,7 @@ $(OBJDIR)mkfs: ../tools/mkfs.c ../kernel/fs.h
 	gcc -Werror -Wall -I ../kernel -o $@ $<
 
 mkobjdir:
-	@test -d $(OBJDIR) || (mkdir $(OBJDIR) && mkdir $(addprefix $(OBJDIR), $(subst ./,,$(SRCDIR))))
+	@test -d $(OBJDIR) || (mkdir $(OBJDIR))
 
 clean:
 	rm -f fs.img

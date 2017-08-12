@@ -7,6 +7,8 @@ struct inode inodes[INODE_NUM];
 
 uint balloc(int dev);
 void bfree(int dev, uint n);
+void fill_inode(struct inode *ip);
+struct inode *dirlookup(struct inode *ip, const char *name);
 
 void bzero(int dev, int num)
 {
@@ -95,6 +97,7 @@ void init_fs(int dev)
 		readsb(dev, &sb);
 		sys_info("load disk 1; size:%d, nblocks:%d, ninodes:%d, nlog:%d, logstart:%d, inodestart:%d, bmapstart:%d\n",
 				sb.size, sb.nblocks, sb.ninodes, sb.nlog, sb.logstart, sb.inodestart, sb.bmapstart);
+		namei("init");
 	}
 }
 
@@ -208,5 +211,42 @@ void bfree(int dev, uint n)
 	buf->data[b/8] &= ~m;
 	bwrite(buf);
 	brelse(buf);
+}
+
+struct inode *namei(const char *path)
+{
+	struct inode *dp = iget(1, 1);
+	fill_inode(dp);
+	struct inode *ip = dirlookup(dp, path);
+	if(ip) {
+		fill_inode(ip);
+		char data[ip->di.size];
+		readi(ip, data, 0, ip->di.size);
+		printf("data:\n%s\n", data);
+	}
+	else {
+		printf("can't find %s\n", path);
+	}
+	irelese(ip);
+	return ip;
+}
+
+struct inode *dirlookup(struct inode *ip, const char *name)
+{
+	if(ip->di.type != T_DIR) {
+		panic("%s is not direct\n", name);
+		return NULL;
+	}
+	struct dirent de;
+	int off = 0;
+	for(; off < ip->di.size; off += sizeof(struct dirent)) {
+		readi(ip, (char *)&de, off, sizeof(struct dirent));
+		if(de.inum == 0)
+			continue;
+		if(strncmp(de.name, name, DIR_NM_SZ) == 0) {
+			return iget(ip->dev, de.inum);
+		}
+	}
+	return NULL;
 }
 
