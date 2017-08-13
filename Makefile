@@ -12,6 +12,7 @@ OBJDIR = .obj/
 
 SRCDIR =\
 		./kernel/\
+		./kernel/user/\
 
 SRCS = $(wildcard $(addsuffix *.c, $(SRCDIR)))
 ASM_SRCS = $(wildcard $(addsuffix *.S, $(SRCDIR)))

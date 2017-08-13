@@ -3,8 +3,8 @@
 struct proc *run_proc;
 
 int (*syscalls[])(void) = {
-	[SYS_PRINT] = sys_print,
-	[SYS_FORK] = sys_fork,
+	[SYS_print] = sys_print,
+	[SYS_fork] = sys_fork,
 };
 
 int get_arg_int(int n)

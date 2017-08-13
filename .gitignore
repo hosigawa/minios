@@ -1,5 +1,7 @@
 .obj/
 app/.obj/
+app/_*
+app/fs.img
 minios.img
 fs.img
 

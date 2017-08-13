@@ -79,7 +79,7 @@ int readi(struct inode *ip, char *dst, int offset, int num);
 int writei(struct inode *ip, char *dst, int offset, int num);
 uint bmap(struct inode *ip, int n);
 
-struct inode *namei(const char *path);
+struct inode *namei(char *path);
 
 #endif
 

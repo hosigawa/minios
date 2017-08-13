@@ -3,7 +3,7 @@
 .globl start
 start:
 	pushl $0
-	movl $SYS_FORK, %eax
+	movl $SYS_fork, %eax
 	int $T_SYSCALL
 	cmp $0, %eax
 	je procb
@@ -11,7 +11,7 @@ start:
 proca:
 	pushl $stra
 	pushl 0
-	movl $SYS_PRINT, %eax
+	movl $SYS_print, %eax
 	int $T_SYSCALL
 	popl %eax
 	popl %eax
@@ -20,7 +20,7 @@ proca:
 procb:
 	pushl $strb
 	pushl 0
-	movl $SYS_PRINT, %eax
+	movl $SYS_print, %eax
 	int $T_SYSCALL
 	popl %eax
 	popl %eax

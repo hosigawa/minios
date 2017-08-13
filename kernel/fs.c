@@ -7,8 +7,9 @@ struct inode inodes[INODE_NUM];
 
 uint balloc(int dev);
 void bfree(int dev, uint n);
-void fill_inode(struct inode *ip);
+void load_inode(struct inode *ip);
 struct inode *dirlookup(struct inode *ip, const char *name);
+char *path_decode(char *path, char *name);
 
 void bzero(int dev, int num)
 {
@@ -97,7 +98,16 @@ void init_fs(int dev)
 		readsb(dev, &sb);
 		sys_info("load disk 1; size:%d, nblocks:%d, ninodes:%d, nlog:%d, logstart:%d, inodestart:%d, bmapstart:%d\n",
 				sb.size, sb.nblocks, sb.ninodes, sb.nlog, sb.logstart, sb.inodestart, sb.bmapstart);
-		namei("init");
+		struct inode *ip = namei("/init");
+		if(ip) {
+			load_inode(ip);
+			char data[ip->di.size];
+			readi(ip, data, 0, ip->di.size);
+			printf("data:\n%s\n", data);
+		}
+		else {
+			printf("no such file or direct\n");
+		}
 	}
 }
 
@@ -172,7 +182,7 @@ uint bmap(struct inode *ip, int n)
 	return seq;
 }
 
-void fill_inode(struct inode *ip)
+void load_inode(struct inode *ip)
 {
 	if(!(ip->flags & I_VALID)) {
 		struct block_buf *buf = bread(ip->dev, IBLOCK(ip->inum));
@@ -213,21 +223,26 @@ void bfree(int dev, uint n)
 	brelse(buf);
 }
 
-struct inode *namei(const char *path)
+struct inode *namei(char *path)
 {
-	struct inode *dp = iget(1, 1);
-	fill_inode(dp);
-	struct inode *ip = dirlookup(dp, path);
-	if(ip) {
-		fill_inode(ip);
-		char data[ip->di.size];
-		readi(ip, data, 0, ip->di.size);
-		printf("data:\n%s\n", data);
+	struct inode *ip = iget(1, 1);
+	struct inode *next;
+	char name[DIR_NM_SZ];
+	while((path = path_decode(path, name)) != 0) {
+		load_inode(ip);
+		if(ip->di.type != T_DIR){
+			err_info("ip isnt dir\n");
+			irelese(ip);
+			return NULL;
+		}
+		next = dirlookup(ip, name);
+		if(!next) {
+			irelese(ip);
+			return NULL;
+		}
+		irelese(ip);
+		ip = next;
 	}
-	else {
-		printf("can't find %s\n", path);
-	}
-	irelese(ip);
 	return ip;
 }
 
@@ -248,5 +263,28 @@ struct inode *dirlookup(struct inode *ip, const char *name)
 		}
 	}
 	return NULL;
+}
+
+char *path_decode(char *path, char *name)
+{
+	char *sub_path;
+	if(*path == '/')
+		path++;
+	if(!*path)
+		return NULL;
+	sub_path = path;
+	while(*path != '/' && *path)
+		path++;
+	int len = path - sub_path;
+	if(len >= DIR_NM_SZ) {
+		memmove(name, sub_path, DIR_NM_SZ);
+	}
+	else {
+		memmove(name, sub_path, len);
+		name[len] = 0;
+	}
+	if(*path == '/')
+		path++;
+	return path;
 }
 

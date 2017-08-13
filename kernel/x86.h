@@ -93,7 +93,12 @@ static inline void sti()
 
 static inline void ltr(ushort sel)
 {
-  asm volatile("ltr %0" : : "r" (sel));
+  	asm volatile("ltr %0" : : "r" (sel));
+}
+
+static inline void INT(int num)
+{
+	asm volatile("int %0" : : "r" (num));
 }
 
 #endif
