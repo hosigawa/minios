@@ -91,5 +91,8 @@ void swtch_uvm(struct proc *p);
 void map_page(pde_t *pdir, void *va, uint la, uint size, int perm);
 pte_t *get_pte(pde_t *pdir, void *va, bool bcreate);
 
+struct inode;
+int load_uvm(pde_t *pdir, struct inode *ip, char *va, int off, int len);
+
 #endif
 

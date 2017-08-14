@@ -11,6 +11,7 @@ void sys_call();
 //syscall functions
 int sys_print();
 int sys_fork();
+int sys_exec();
 
 #endif
 

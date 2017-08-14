@@ -3,6 +3,7 @@
 
 void print(char *msg);
 int fork();
+int exec(char *path, char **argv);
 
 #endif
 

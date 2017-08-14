@@ -7,7 +7,6 @@ struct inode inodes[INODE_NUM];
 
 uint balloc(int dev);
 void bfree(int dev, uint n);
-void load_inode(struct inode *ip);
 struct inode *dirlookup(struct inode *ip, const char *name);
 char *path_decode(char *path, char *name);
 
@@ -98,16 +97,6 @@ void init_fs(int dev)
 		readsb(dev, &sb);
 		sys_info("load disk 1; size:%d, nblocks:%d, ninodes:%d, nlog:%d, logstart:%d, inodestart:%d, bmapstart:%d\n",
 				sb.size, sb.nblocks, sb.ninodes, sb.nlog, sb.logstart, sb.inodestart, sb.bmapstart);
-		struct inode *ip = namei("/init");
-		if(ip) {
-			load_inode(ip);
-			char data[ip->di.size];
-			readi(ip, data, 0, ip->di.size);
-			printf("data:\n%s\n", data);
-		}
-		else {
-			printf("no such file or direct\n");
-		}
 	}
 }
 

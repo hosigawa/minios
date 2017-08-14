@@ -77,7 +77,7 @@ pte_t *get_pte(pde_t *pdir, void *va, bool bcreate)
 	}
 	else {
 		if(!bcreate)
-			return 0;
+			return NULL;
 		pttab = (pte_t *)mem_alloc();
 		if(!pttab)
 			panic("create PTE error\n");
@@ -120,10 +120,10 @@ pde_t *cp_uvm(pde_t *pgdir, int mem_size)
 	uint i = 0;
 	for(; i < (uint)mem_size; i += PG_SIZE) {
 		pte_t *pte = get_pte(pgdir, (char *)i, false);
-		if(!pte) {
-			panic("pte not exist\n");
-			return NULL;
-		}
+		if(!pte) 
+			panic("cp_uvm pde not exist\n");
+		if(!(*pte & PTE_P))
+			panic("cp_uvm pte not exist");
 		new_mem = mem_alloc();
 		if(!new_mem) {
 			panic("free uvm\n");
@@ -170,7 +170,7 @@ int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz)
 	else {
 		for(i = new_addr; i < old_addr; i += PG_SIZE) {
 			pte = get_pte(pgdir, i, false);
-			if(pte) {
+			if(pte && *pte & PTE_P) {
 				mem_free(P2V(*pte & ~0xfff));
 				*pte = 0;
 			}
@@ -178,6 +178,30 @@ int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz)
 				break;
 			}
 		}
+	}
+	return newsz;
+}
+
+int load_uvm(pde_t *pdir, struct inode *ip, char *va, int off, int len)
+{
+	if((uint)va % PG_SIZE != 0) {
+		panic("va not page aligned\n");
+		return -1;
+	}
+	uint addr;
+	pte_t *pte;
+	int i;
+	for(i = 0; i < len; i += PG_SIZE) {
+		pte = get_pte(pdir, va + i, false);
+		if(!pte)
+			panic("load_uvm pde not exists\n");
+		if(!(*pte & PTE_P))
+			panic("load_uvm pte not exists\n");
+		addr = *pte & ~0xfff;
+		if(len - i < PG_SIZE)
+			readi(ip, P2V(addr), off + i, len - i);
+		else
+			readi(ip, P2V(addr), off + i, PG_SIZE);
 	}
 	return 0;
 }

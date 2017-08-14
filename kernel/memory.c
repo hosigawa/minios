@@ -25,7 +25,7 @@ char *mem_alloc()
 void mem_free(void *p)
 {
 	if((uint)p % PG_SIZE || (char *)p < end || V2P(p) >= PHYSICAL_END)
-    	panic("mem_free error\n");
+    	panic("mem_free error: %p\n", p);
 	struct mem_header *header = (struct mem_header *)p;
 	header->next = free_list;
 	free_list = header;

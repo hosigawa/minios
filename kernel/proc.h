@@ -43,6 +43,7 @@ void yield();
 void user_init();
 void sleep(void *chan);
 void wakeup(void *chan);
+int exec(char *path, char **argv);
 
 #endif
 

@@ -140,3 +140,52 @@ void wakeup(void *chan)
 	}
 }
 
+int exec(char *path, char **argv)
+{
+	struct inode *ip = namei(path);
+	if(!ip) {
+		err_info("%s: no such file or directory\n", path);
+		return -1;
+	}
+
+	load_inode(ip);
+	struct elfhdr elf;
+	readi(ip, (char *)&elf, 0, sizeof(struct elfhdr));
+	if(elf.magic != ELF_MAGIC) {
+		err_info("elf magic error: %p\n", elf.magic);
+		irelese(ip);
+		return -1;
+	}
+
+	pde_t *pdir = set_kvm();
+	if(!pdir)
+		panic("exec set_kvm\n");
+
+	struct proghdr ph;
+	uint size = 0;
+	uint off = elf.phoff;
+	int num = 0;
+	while(num++ < elf.phnum) {
+		readi(ip, (char *)&ph, off, sizeof(struct proghdr));
+		off += sizeof(struct proghdr);
+		if(ph.type != ELF_PROG_LOAD)
+			continue;
+		size = resize_uvm(pdir, size, ph.va + ph.memsz);
+		load_uvm(pdir, ip, (char *)ph.va, ph.offset, ph.filesz);
+	}
+	irelese(ip);
+	size = PG_ROUNDUP(size);
+	size = resize_uvm(pdir, size, size + 2 * PG_SIZE);
+	
+	pde_t *old = run_proc->pgdir;
+	run_proc->pgdir = pdir;
+	run_proc->mem_size = size;
+	run_proc->tf->esp = size;
+	run_proc->tf->eip = elf.entry;
+
+	swtch_uvm(run_proc);
+
+	free_uvm(old);
+	return 0;
+}
+

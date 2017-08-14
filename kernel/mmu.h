@@ -93,6 +93,7 @@
 #define T_SYSCALL 64
 #define SYS_print 128
 #define SYS_fork 1
+#define SYS_exec 2
 
 #endif
 

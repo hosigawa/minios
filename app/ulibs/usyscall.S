@@ -8,4 +8,6 @@
 		ret;
 
 SYS_CALL(print);
+SYS_CALL(fork);
+SYS_CALL(exec);
 

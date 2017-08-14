@@ -16,6 +16,7 @@
 #include "syscall.h"
 #include "ide.h"
 #include "fs.h"
+#include "elf.h"
 
 #define LOG cprintf
 #define sys_info cprintf

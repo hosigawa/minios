@@ -5,6 +5,7 @@ struct proc *run_proc;
 int (*syscalls[])(void) = {
 	[SYS_print] = sys_print,
 	[SYS_fork] = sys_fork,
+	[SYS_exec] = sys_exec,
 };
 
 int get_arg_int(int n)
@@ -37,13 +38,20 @@ void sys_call()
 
 int sys_print()
 {
-	//char *arg = (char *)get_arg_uint(0);
-	//cprintf("%s", arg);
+	char *arg = (char *)get_arg_uint(0);
+	cprintf("%s", arg);
 	return 0;
 }
 
 int sys_fork() 
 {
 	return fork();
+}
+
+int sys_exec()
+{
+	char *path = (char *)get_arg_uint(0);
+	char *argv = (char *)get_arg_uint(1);
+	return exec(path, &argv);
 }
 

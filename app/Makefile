@@ -10,15 +10,18 @@ LDFLAGS = -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
 
 OBJDIR = .obj/
 
-SRCDIR = ./src/
+SRCDIR = ./src/\
+		./ulibs/
 
-INCDIR = ../kernel/user/
-
-ULIBS = ../.obj/kernel/user/usyscall.o
+INCDIR = -I./src\
+		-I./ulibs\
+		-I../kernel\
 
 SRCS = $(wildcard $(addsuffix *.c, $(SRCDIR)))
+ASM_SRCS = $(wildcard $(addsuffix *.S, $(SRCDIR)))
 
 OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(SRCS:.c=.o)))
+ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o)))
 
 APPS =\
 	_init
@@ -33,17 +36,20 @@ fs.img: $(OBJDIR)mkfs $(APPS)
 	$< $@ $(APPS)
 	@cp -f $@ ../
 
-$(OBJDIR)%.o: $(SRCDIR)%.c
-	$(CC) $(CFLAGS) -O -nostdinc -I$(SRCDIR) -I$(INCDIR) -c -o $@ $<
+$(OBJDIR)%.o: %.c
+	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
 
-_%: $(OBJDIR)%.o $(ULIBS)
+$(OBJDIR)%.o: %.S
+	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
+
+_%: $(OBJS) $(ASM_OBJS)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
 
 $(OBJDIR)mkfs: ../tools/mkfs.c ../kernel/fs.h
 	gcc -Werror -Wall -I ../kernel -o $@ $<
 
 mkobjdir:
-	@test -d $(OBJDIR) || (mkdir $(OBJDIR))
+	@test -d $(OBJDIR) || (mkdir $(OBJDIR) && mkdir $(addprefix $(OBJDIR), $(subst ./,,$(SRCDIR))))
 
 clean:
 	rm -f fs.img
