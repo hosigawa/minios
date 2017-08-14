@@ -89,7 +89,6 @@ pte_t *get_pte(pde_t *pdir, void *va, bool bcreate)
 
 void swtch_uvm(struct proc *p)
 {
-	cli();
 	gdt[SEG_TSS] = SEG16(STS_T32A, &ts, sizeof(ts)-1, 0);
 	gdt[SEG_TSS].s = 0;
 	ts.ss0 = SEG_KDATA << 3;
@@ -98,7 +97,6 @@ void swtch_uvm(struct proc *p)
 	ltr(SEG_TSS << 3);	
 	
 	lcr3(V2P(p->pgdir));
-	sti();
 }
 
 int init_uvm(pde_t *pdir, char *start, int size)

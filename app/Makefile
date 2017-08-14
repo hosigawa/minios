@@ -24,7 +24,8 @@ OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(SRCS:.c=.o)))
 ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o)))
 
 APPS =\
-	_init
+	_init\
+	_sh\
 
 .PHONY: all mkobjdir mkfs
 
@@ -42,7 +43,7 @@ $(OBJDIR)%.o: %.c
 $(OBJDIR)%.o: %.S
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
 
-_%: $(OBJS) $(ASM_OBJS)
+_%: $(OBJDIR)src/%.o $(ASM_OBJS)
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
 
 $(OBJDIR)mkfs: ../tools/mkfs.c ../kernel/fs.h

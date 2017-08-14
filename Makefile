@@ -25,8 +25,9 @@ makeproject: mkobjdir kernel/vectors.S minios.img
 
 all: makeproject
 
+m: minios.img
 q: qemu
-qf: qemu-fs
+r: qemu-fs
 
 g: qemu-gdb
 
@@ -43,7 +44,10 @@ qemu-fs: makeproject
 	-drive file=fs.img,index=1,media=disk,format=raw
 
 qemu-gdb: makeproject
-	qemu-system-x86_64 -m 512 -serial mon:stdio -drive file=minios.img,index=0,media=disk,format=raw -S -gdb tcp::1111
+	qemu-system-x86_64 -m 512 -serial mon:stdio \
+	-drive file=minios.img,index=0,media=disk,format=raw \
+	-drive file=fs.img,index=1,media=disk,format=raw \
+	-S -gdb tcp::1111
 
 minios.img:	$(OBJDIR)bootblock $(OBJDIR)kernelblock
 	dd if=/dev/zero of=$@ count=10000
