@@ -9,6 +9,7 @@ enum PROC_STATUS {
 	READY,
 	RUNNING,
 	SLEPING,
+	ZOMBIE,
 };
 
 struct context {
@@ -44,6 +45,8 @@ void user_init();
 void sleep(void *chan);
 void wakeup(void *chan);
 int exec(char *path, char **argv);
+void exit();
+int wait();
 
 #endif
 

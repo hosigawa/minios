@@ -2,8 +2,9 @@
 
 int main() 
 {
-	for(;;)
-		print("in sh ...\n");
+	//for(;;)
+	print("in sh ...\n");
+	//print("");
 	for(;;);
 	return 0;
 }

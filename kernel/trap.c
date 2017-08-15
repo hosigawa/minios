@@ -3,9 +3,6 @@
 struct gate_desc idt[256];
 extern uint vectors[];
 
-extern struct proc *run_proc;
-extern struct context *scheduler_context;
-
 void init_idt() 
 {
 	int i = 0;
@@ -19,7 +16,6 @@ void init_idt()
 void trap(struct trap_frame *tf) 
 {
 	if(tf->trapno == T_SYSCALL) {
-		cli();
 		sys_call();
 		return;
 	}

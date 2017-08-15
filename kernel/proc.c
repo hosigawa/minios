@@ -1,8 +1,7 @@
 #include "kernel.h"
 
 struct proc proc_table[MAX_PROC];
-struct context *scheduler_context;
-struct proc *run_proc;
+extern struct cpu cpu;
 
 uint next_pid = 0;
 
@@ -17,6 +16,7 @@ void forkret()
 		init_fs(1);
 		first = false;
 	}
+	printf("fork ret\n");
 }
 
 struct proc *alloc_proc()
@@ -36,7 +36,7 @@ struct proc *alloc_proc()
 		p->status = UNUSED;
 		return NULL;
 	}
-	p->pid = next_pid++;
+	p->pid = ++next_pid;
 	p->status = EMBRYO;
 	p->killed = false;
 	uint sp = p->kstack + PG_SIZE;
@@ -52,19 +52,24 @@ struct proc *alloc_proc()
 
 void scheduler()
 {
+	struct proc *p;
+	int i;
 	while(1) {
 		sti();
-		int i = 0;
-		for(; i < MAX_PROC; i++) {
-			struct proc *p = proc_table + i;
+		//pushcli();
+		for(i = 0; i < MAX_PROC; i++) {
+			p = proc_table + i;
 			if(p->status == READY) {
+				//printf("run pid: %d, eip: %p\n", p->pid, p->tf->eip);
 				p->status = RUNNING;
-				run_proc = p;
+				cpu.cur_proc = p;
 				swtch_uvm(p);
-				swtch(&scheduler_context, p->context);
+				swtch(&cpu.context, p->context);
 				swtch_kvm();
+				cpu.cur_proc = NULL;
 			}
 		}
+		//popsti();
 	}
 }
 
@@ -96,15 +101,15 @@ int fork()
 	struct proc *p = alloc_proc();
 	if(!p)
 		return -1;
-	p->pgdir = cp_uvm(run_proc->pgdir, run_proc->mem_size);
+	p->pgdir = cp_uvm(cpu.cur_proc->pgdir, cpu.cur_proc->mem_size);
 	if(!p->pgdir) {
 		p->status = UNUSED;
 		return -1;
 	}
-	*p->tf = *run_proc->tf;
+	*p->tf = *cpu.cur_proc->tf;
 	p->tf->eax = 0;
-	p->parent = run_proc;
-	p->mem_size = run_proc->mem_size;
+	p->parent = cpu.cur_proc;
+	p->mem_size = cpu.cur_proc->mem_size;
 	p->status = READY;
 
 	return p->pid;
@@ -112,22 +117,30 @@ int fork()
 
 void sched()
 {
-	swtch(&run_proc->context, scheduler_context);
+	//if(cpu.ncli != 1)
+	//	panic("pid:%d sched clinum:%d\n", cpu.cur_proc->pid, cpu.ncli);
+	//if(read_eflags() & FL_IF)
+	//	panic("pid:%d sched FL_IF\n", cpu.cur_proc->pid);
+	swtch(&cpu.cur_proc->context, cpu.context);
 }
 
 void yield()
 {
-	run_proc->status = READY;
+	//pushcli();
+	cpu.cur_proc->status = READY;
 	sched();
+	//popsti();
 }
 
 void sleep(void *chan)
 {
-	run_proc->sleep_chan = chan;
-	run_proc->status = SLEPING;
+	//pushcli();
+	cpu.cur_proc->sleep_chan = chan;
+	cpu.cur_proc->status = SLEPING;
 	sched();
 
-	run_proc->sleep_chan = 0;
+	cpu.cur_proc->sleep_chan = 0;
+	//popsti();
 }
 
 void wakeup(void *chan)
@@ -143,6 +156,7 @@ void wakeup(void *chan)
 int exec(char *path, char **argv)
 {
 	struct inode *ip = namei(path);
+	printf("run %s\n", path);
 	if(!ip) {
 		err_info("%s: no such file or directory\n", path);
 		return -1;
@@ -177,15 +191,44 @@ int exec(char *path, char **argv)
 	size = PG_ROUNDUP(size);
 	size = resize_uvm(pdir, size, size + 2 * PG_SIZE);
 	
-	pde_t *old = run_proc->pgdir;
-	run_proc->pgdir = pdir;
-	run_proc->mem_size = size;
-	run_proc->tf->esp = size;
-	run_proc->tf->eip = elf.entry;
+	pde_t *old = cpu.cur_proc->pgdir;
+	cpu.cur_proc->pgdir = pdir;
+	cpu.cur_proc->mem_size = size;
+	cpu.cur_proc->tf->esp = size;
+	cpu.cur_proc->tf->eip = elf.entry;
 
-	swtch_uvm(run_proc);
+	swtch_uvm(cpu.cur_proc);
 
 	free_uvm(old);
+	printf("run end\n");
 	return 0;
 }
 
+void exit() 
+{
+
+}
+
+int wait()
+{
+	int pid;
+	struct proc *p;
+	int i;
+	while(1) {
+		for(i = 0; i < MAX_PROC; i++) {
+			p = proc_table + i;
+			if(p->status == ZOMBIE && p->parent == cpu.cur_proc) {
+				pid = p->pid;
+				mem_free((char *)p->kstack);
+				p->kstack = NULL;
+				free_uvm(p->pgdir);
+				p->pid = 0;
+				p->parent = NULL;
+				p->status = UNUSED;
+				return pid;
+			}
+		}
+		sleep(cpu.cur_proc);
+	}
+	return 0;
+}

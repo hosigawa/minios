@@ -3,6 +3,15 @@
 
 #include "type.h"
 
+struct proc;
+struct context;
+struct cpu {
+	struct proc *cur_proc;
+	int ncli;
+	bool intble;
+	struct context *context;
+};
+
 static inline unsigned char inb(unsigned short port) 
 {
 	unsigned char data;
@@ -100,6 +109,24 @@ static inline void INT(int num)
 {
 	asm volatile("int %0" : : "r" (num));
 }
+
+static inline uint read_eflags(void)
+{
+  uint eflags;
+  asm volatile("pushfl; popl %0" : "=r" (eflags));
+  return eflags;
+}
+
+static inline uint read_eip(void)
+{
+  uint eip;
+  asm volatile("movl %%eip, %0" : "=r" (eip));
+  return eip;
+}
+
+void init_cpu();
+void pushcli();
+void popsti();
 
 #endif
 

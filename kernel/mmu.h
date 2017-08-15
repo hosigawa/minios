@@ -94,6 +94,8 @@
 #define SYS_print 128
 #define SYS_fork 1
 #define SYS_exec 2
+#define SYS_exit 3
+#define SYS_wait 4
 
 #endif
 

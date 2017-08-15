@@ -6,6 +6,8 @@ int (*syscalls[])(void) = {
 	[SYS_print] = sys_print,
 	[SYS_fork] = sys_fork,
 	[SYS_exec] = sys_exec,
+	[SYS_exit] = sys_exit,
+	[SYS_wait] = sys_wait,
 };
 
 int get_arg_int(int n)
@@ -39,7 +41,9 @@ void sys_call()
 int sys_print()
 {
 	char *arg = (char *)get_arg_uint(0);
+	pushcli();
 	cprintf("%s", arg);
+	popsti();
 	return 0;
 }
 
@@ -53,5 +57,16 @@ int sys_exec()
 	char *path = (char *)get_arg_uint(0);
 	char *argv = (char *)get_arg_uint(1);
 	return exec(path, &argv);
+}
+
+int sys_exit()
+{
+	exit();
+	return 0;
+}
+
+int sys_wait()
+{
+	return wait();
 }
 

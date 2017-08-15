@@ -12,6 +12,8 @@ void sys_call();
 int sys_print();
 int sys_fork();
 int sys_exec();
+int sys_exit();
+int sys_wait();
 
 #endif
 

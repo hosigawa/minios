@@ -89,6 +89,7 @@ void cprintf(char *fmt, ...) {
 
 void panic(char *fmt, ...)
 {
+	cli();
 	uint *argp = (uint*)(&fmt + 1);
 	cprintf("MINIOS PANIC: ");
 	vprintf(fmt, argp);

@@ -17,6 +17,7 @@ int main()
 	mem_init(end, P2V(4*1024*1024));
 	init_kvm();
 	mem_init(P2V(4*1024*1024), P2V(PHYSICAL_END));
+	init_cpu();
 	init_gdt();
 	init_idt();
 	init_timer();

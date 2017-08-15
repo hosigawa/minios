@@ -1,7 +1,6 @@
 #include "kernel.h"
 
-extern struct proc *run_proc;
-extern struct context *scheduler_context;
+extern struct cpu cpu;
 
 uint tick = 0;
 
@@ -18,7 +17,7 @@ void timer_proc()
 	tick++;
 	if(tick >= 1) {
 		tick = 0;
-		if(run_proc && run_proc->status == RUNNING) {
+		if(cpu.cur_proc && cpu.cur_proc->status == RUNNING) {
 			yield();
 		}
 	}

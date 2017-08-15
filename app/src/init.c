@@ -2,17 +2,23 @@
 
 int main()
 {
-	print("run in c code here ...\n");
-	int pid = fork();
-	char *argv[] = {0};
-	if(pid == 0) {
-		exec("/sh", argv);
-	}
-	else {
-		for(;;)
+	while(1) {
+		print("run in c code here ...\n");
+		char *argv[] = {0};
+		int pid = fork();
+		if(pid == 0) {
+			print("ready to exec /sh\n");
+			exec("/sh", argv);
+		}
+		else {
 			print("return to parent\n");
+		}
+		
+		int wtpid;
+		while((wtpid = wait() > 0));
+		print("init error\n");
 	}
-	for(;;);
+
 	return 0;
 }
 
