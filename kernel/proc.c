@@ -16,7 +16,9 @@ void forkret()
 		init_fs(1);
 		first = false;
 	}
-	printf("fork ret\n");
+	else {
+		popsti();
+	}
 }
 
 struct proc *alloc_proc()
@@ -60,7 +62,6 @@ void scheduler()
 		for(i = 0; i < MAX_PROC; i++) {
 			p = proc_table + i;
 			if(p->status == READY) {
-				//printf("run pid: %d, eip: %p\n", p->pid, p->tf->eip);
 				p->status = RUNNING;
 				cpu.cur_proc = p;
 				swtch_uvm(p);
@@ -117,30 +118,30 @@ int fork()
 
 void sched()
 {
-	//if(cpu.ncli != 1)
-	//	panic("pid:%d sched clinum:%d\n", cpu.cur_proc->pid, cpu.ncli);
-	//if(read_eflags() & FL_IF)
-	//	panic("pid:%d sched FL_IF\n", cpu.cur_proc->pid);
+	if(cpu.ncli != 1)
+		panic("pid:%d sched ncli:%d\n", cpu.cur_proc->pid, cpu.ncli);
+	if(read_eflags() & FL_IF)
+		panic("pid:%d sched FL_IF\n", cpu.cur_proc->pid);
 	swtch(&cpu.cur_proc->context, cpu.context);
 }
 
 void yield()
 {
-	//pushcli();
+	pushcli();
 	cpu.cur_proc->status = READY;
 	sched();
-	//popsti();
+	popsti();
 }
 
 void sleep(void *chan)
 {
-	//pushcli();
+	pushcli();
 	cpu.cur_proc->sleep_chan = chan;
 	cpu.cur_proc->status = SLEPING;
 	sched();
 
 	cpu.cur_proc->sleep_chan = 0;
-	//popsti();
+	popsti();
 }
 
 void wakeup(void *chan)
@@ -156,7 +157,6 @@ void wakeup(void *chan)
 int exec(char *path, char **argv)
 {
 	struct inode *ip = namei(path);
-	printf("run %s\n", path);
 	if(!ip) {
 		err_info("%s: no such file or directory\n", path);
 		return -1;
@@ -200,7 +200,6 @@ int exec(char *path, char **argv)
 	swtch_uvm(cpu.cur_proc);
 
 	free_uvm(old);
-	printf("run end\n");
 	return 0;
 }
 
