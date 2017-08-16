@@ -93,6 +93,7 @@ pte_t *get_pte(pde_t *pdir, void *va, bool bcreate);
 
 struct inode;
 int load_uvm(pde_t *pdir, struct inode *ip, char *va, int off, int len);
+void clear_pte(pde_t *pdir, void *va);
 
 #endif
 

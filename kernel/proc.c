@@ -2,6 +2,7 @@
 
 struct proc proc_table[MAX_PROC];
 extern struct cpu cpu;
+struct proc *init_proc;
 
 uint next_pid = 0;
 
@@ -27,7 +28,7 @@ struct proc *alloc_proc()
 	int i = 0;
 	for(;i < MAX_PROC; i++) {
 		p = proc_table + i;
-		if(p->status == UNUSED)
+		if(p->stat == UNUSED)
 			break;
 		p = NULL;
 	}
@@ -35,12 +36,12 @@ struct proc *alloc_proc()
 		return NULL;
 	p->kstack = (uint)mem_alloc();
 	if(!p->kstack) {
-		p->status = UNUSED;
+		p->stat = UNUSED;
 		return NULL;
 	}
 	p->pid = ++next_pid;
-	p->status = EMBRYO;
-	p->killed = false;
+	p->stat = EMBRYO;
+	p->killed = 0;
 	uint sp = p->kstack + PG_SIZE;
 	sp -= sizeof(struct trap_frame);
 	p->tf = (struct trap_frame *)sp;
@@ -61,8 +62,8 @@ void scheduler()
 		//pushcli();
 		for(i = 0; i < MAX_PROC; i++) {
 			p = proc_table + i;
-			if(p->status == READY) {
-				p->status = RUNNING;
+			if(p->stat == READY) {
+				p->stat = RUNNING;
 				cpu.cur_proc = p;
 				swtch_uvm(p);
 				swtch(&cpu.context, p->context);
@@ -81,11 +82,12 @@ void user_init()
 	if(!p)
 		panic("user_init error\n");
 	p->pgdir = set_kvm();
-	p->mem_size = PG_SIZE;
+	p->vsz = PG_SIZE;
 	init_uvm(p->pgdir, _binary__obj_initcode_start, (int)_binary__obj_initcode_size);
 	
 	memset(p->tf, 0, sizeof(*p->tf));
-  
+
+	init_proc = p;
 	p->tf->cs = (SEG_UCODE << 3) | DPL_USER;
   	p->tf->ds = (SEG_UDATA << 3) | DPL_USER;
   	p->tf->es = p->tf->ds;
@@ -94,7 +96,8 @@ void user_init()
   	p->tf->esp = PG_SIZE;
   	p->tf->eip = 0;
 
-	p->status = READY;
+	p->parent = NULL;
+	p->stat = READY;
 }
 
 int fork() 
@@ -102,16 +105,16 @@ int fork()
 	struct proc *p = alloc_proc();
 	if(!p)
 		return -1;
-	p->pgdir = cp_uvm(cpu.cur_proc->pgdir, cpu.cur_proc->mem_size);
+	p->pgdir = cp_uvm(cpu.cur_proc->pgdir, cpu.cur_proc->vsz);
 	if(!p->pgdir) {
-		p->status = UNUSED;
+		p->stat = UNUSED;
 		return -1;
 	}
 	*p->tf = *cpu.cur_proc->tf;
 	p->tf->eax = 0;
 	p->parent = cpu.cur_proc;
-	p->mem_size = cpu.cur_proc->mem_size;
-	p->status = READY;
+	p->vsz = cpu.cur_proc->vsz;
+	p->stat = READY;
 
 	return p->pid;
 }
@@ -128,7 +131,7 @@ void sched()
 void yield()
 {
 	pushcli();
-	cpu.cur_proc->status = READY;
+	cpu.cur_proc->stat = READY;
 	sched();
 	popsti();
 }
@@ -137,10 +140,10 @@ void sleep(void *chan)
 {
 	pushcli();
 	cpu.cur_proc->sleep_chan = chan;
-	cpu.cur_proc->status = SLEPING;
+	cpu.cur_proc->stat = SLEEPING;
 	sched();
 
-	cpu.cur_proc->sleep_chan = 0;
+	cpu.cur_proc->sleep_chan = NULL;
 	popsti();
 }
 
@@ -149,8 +152,8 @@ void wakeup(void *chan)
 	int i = 0;
 	for(; i < MAX_PROC; i++) {
 		struct proc *p = proc_table + i;
-		if(p->status == SLEPING && p->sleep_chan == chan)
-			p->status = READY;
+		if(p->stat == SLEEPING && p->sleep_chan == chan)
+			p->stat = READY;
 	}
 }
 
@@ -189,13 +192,16 @@ int exec(char *path, char **argv)
 	}
 	irelese(ip);
 	size = PG_ROUNDUP(size);
-	size = resize_uvm(pdir, size, size + 2 * PG_SIZE);
+	size = resize_uvm(pdir, size, size + 3 * PG_SIZE);
+	clear_pte(pdir, (char *)(size - 3 * PG_SIZE));
 	
 	pde_t *old = cpu.cur_proc->pgdir;
 	cpu.cur_proc->pgdir = pdir;
-	cpu.cur_proc->mem_size = size;
+	cpu.cur_proc->vsz = size;
 	cpu.cur_proc->tf->esp = size;
 	cpu.cur_proc->tf->eip = elf.entry;
+	memset(cpu.cur_proc->name, 0, PROC_NM_SZ);
+	memmove(cpu.cur_proc->name, path, PROC_NM_SZ);
 
 	swtch_uvm(cpu.cur_proc);
 
@@ -205,7 +211,27 @@ int exec(char *path, char **argv)
 
 void exit() 
 {
+	struct proc *p;
+	int i;
+	if(cpu.cur_proc == init_proc)
+		panic("init exit!!\n");
+	cpu.cur_proc->killed = 1;
+	
+	pushcli();
 
+	for(i = 0; i < MAX_PROC; i++) {
+		p = proc_table + i;
+		if(p->parent == cpu.cur_proc)
+			p->parent = init_proc;
+			if(p->stat == ZOMBIE)
+				wakeup(init_proc);
+	}
+	
+	cpu.cur_proc->stat = ZOMBIE;
+	wakeup(cpu.cur_proc->parent);
+	
+	sched();
+	panic("exit zombie\n");
 }
 
 int wait()
@@ -216,14 +242,15 @@ int wait()
 	while(1) {
 		for(i = 0; i < MAX_PROC; i++) {
 			p = proc_table + i;
-			if(p->status == ZOMBIE && p->parent == cpu.cur_proc) {
+			if(p->stat == ZOMBIE && p->parent == cpu.cur_proc) {
 				pid = p->pid;
 				mem_free((char *)p->kstack);
 				p->kstack = NULL;
 				free_uvm(p->pgdir);
 				p->pid = 0;
 				p->parent = NULL;
-				p->status = UNUSED;
+				p->stat = UNUSED;
+				memset(p->name, 0, PROC_NM_SZ);
 				return pid;
 			}
 		}
@@ -231,3 +258,4 @@ int wait()
 	}
 	return 0;
 }
+

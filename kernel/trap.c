@@ -2,6 +2,7 @@
 
 struct gate_desc idt[256];
 extern uint vectors[];
+extern struct cpu cpu;
 
 void init_idt() 
 {
@@ -28,8 +29,15 @@ void trap(struct trap_frame *tf)
 			ide_proc();
 			break;
 		default:
-			panic("trap occurd, trapno:%d; errno:%d\n", tf->trapno, tf->errno);
+			if(!cpu.cur_proc || (tf->cs & 3) == 0)
+				panic("system trap occurd, trapno:%d; errno:%d\n", tf->trapno, tf->errno);
+			
+			printf("pid:%d abort, trapno:%d, errno:%d, eip:%p\n", cpu.cur_proc->pid, tf->trapno, tf->errno, tf->eip);
+			cpu.cur_proc->killed = 1;
 			break;
 	}
+
+	if(cpu.cur_proc && cpu.cur_proc->killed == 1 && (tf->cs & 3) == DPL_USER)
+		exit();
 }
 

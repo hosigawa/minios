@@ -1,4 +1,4 @@
-#include "mmu.h"
+#include "syscall.h"
 
 .globl start
 start:

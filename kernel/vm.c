@@ -206,3 +206,11 @@ int load_uvm(pde_t *pdir, struct inode *ip, char *va, int off, int len)
 	return 0;
 }
 
+void clear_pte(pde_t *pdir, void *va)
+{
+	pte_t *pte = get_pte(pdir, va, false);
+	if(pte && *pte & PTE_P) {
+		*pte &= ~PTE_U;
+	}
+}
+

@@ -25,11 +25,11 @@ struct block_buf {
 	int flags;
 	int dev;
 	int sec;
+	int ref;
 	struct block_buf *prev;
 	struct block_buf *next;
 	struct block_buf *qnext;
 	char data[BLOCK_SIZE];
-	int ref;
 };
 
 struct dinode {

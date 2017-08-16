@@ -1,19 +1,14 @@
 #ifndef __SYSCALL_H__
 #define __SYSCALL_H__
 
-#include "mmu.h"
-
-int get_arg_int(int n);
-uint get_arg_uint(int n);
-char *get_arg_str(int n);
-void sys_call();
-
-//syscall functions
-int sys_print();
-int sys_fork();
-int sys_exec();
-int sys_exit();
-int sys_wait();
+//sys call
+#define T_SYSCALL 64
+#define SYS_vprintf 128
+#define SYS_ps 127
+#define SYS_fork 1
+#define SYS_exec 2
+#define SYS_exit 3
+#define SYS_wait 4
 
 #endif
 

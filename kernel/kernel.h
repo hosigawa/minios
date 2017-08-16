@@ -14,6 +14,7 @@
 #include "timer.h"
 #include "proc.h"
 #include "syscall.h"
+#include "sysproc.h"
 #include "ide.h"
 #include "fs.h"
 #include "elf.h"

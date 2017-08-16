@@ -3,11 +3,12 @@
 extern struct cpu cpu;
 
 int (*syscalls[])(void) = {
-	[SYS_print] = sys_print,
+	[SYS_vprintf] = sys_vprintf,
 	[SYS_fork] = sys_fork,
 	[SYS_exec] = sys_exec,
 	[SYS_exit] = sys_exit,
 	[SYS_wait] = sys_wait,
+	[SYS_ps] = sys_ps,
 };
 
 int get_arg_int(int n)
@@ -38,11 +39,12 @@ void sys_call()
 	cpu.cur_proc->tf->eax = syscalls[seq]();
 }
 
-int sys_print()
+int sys_vprintf()
 {
-	char *arg = (char *)get_arg_uint(0);
+	char *fmt = (char *)get_arg_uint(0);
+	uint *argp = (uint *)get_arg_uint(1);
 	pushcli();
-	cprintf("%s", arg);
+	vprintf(fmt, argp);
 	popsti();
 	return 0;
 }
@@ -68,5 +70,30 @@ int sys_exit()
 int sys_wait()
 {
 	return wait();
+}
+
+int sys_ps()
+{
+	struct proc_info *pi = (struct proc_info *)get_arg_uint(0);
+	int size = get_arg_int(1);
+	
+	extern struct proc proc_table[];
+	struct proc *p;
+	int i = 0, j = 0; 
+	for(; i < MAX_PROC; i++) {
+		p = proc_table + i;
+		if(p->stat != UNUSED) {
+			pi[j].pid = p->pid;
+			memmove(pi[j].name, p->name, PROC_NM_SZ);
+			pi[j].vsz = p->vsz;
+			pi[j].stat = p->stat;
+			pi[j].ppid = p->parent ? p->parent->pid : 0;
+
+			j++;
+			if(j >= size)
+				break;
+		}
+	}
+	return 0;
 }
 

@@ -19,15 +19,18 @@ ASM_SRCS = $(wildcard $(addsuffix *.S, $(SRCDIR)))
 OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(SRCS:.c=.o)))
 ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o)))
 
-.PHONY: all mkobjdir makeproject q qemu
+.PHONY: all mkobjdir makeproject q qemu r m fs
 
 makeproject: mkobjdir kernel/vectors.S minios.img
 
 all: makeproject
 
 m: minios.img
-q: qemu-fs
-r: qemu-fs
+q: fs qemu-fs
+r: fs qemu-fs
+
+fs:
+	@cd app && make && cd ../
 
 g: qemu-gdb
 

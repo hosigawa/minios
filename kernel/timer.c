@@ -17,7 +17,7 @@ void timer_proc()
 	tick++;
 	if(tick >= 1) {
 		tick = 0;
-		if(cpu.cur_proc && cpu.cur_proc->status == RUNNING) {
+		if(cpu.cur_proc && cpu.cur_proc->stat == RUNNING) {
 			yield();
 		}
 	}
