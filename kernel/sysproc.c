@@ -3,7 +3,7 @@
 extern struct cpu cpu;
 
 int (*syscalls[])(void) = {
-	[SYS_vprintf] = sys_vprintf,
+	[SYS_cprintf] = sys_cprintf,
 	[SYS_fork] = sys_fork,
 	[SYS_exec] = sys_exec,
 	[SYS_exit] = sys_exit,
@@ -39,12 +39,12 @@ void sys_call()
 	cpu.cur_proc->tf->eax = syscalls[seq]();
 }
 
-int sys_vprintf()
+int sys_cprintf()
 {
 	char *fmt = (char *)get_arg_uint(0);
 	uint *argp = (uint *)get_arg_uint(1);
 	pushcli();
-	vprintf(fmt, argp);
+	cprintfarg(fmt, argp);
 	popsti();
 	return 0;
 }

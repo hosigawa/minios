@@ -11,7 +11,7 @@ struct proc_info {
 	int ppid;
 };
 
-int vprintf(char *fmt, uint *argp);
+int cprintf(char *fmt, uint *argp);
 int fork();
 int exec(char *path, char **argv);
 int exit();

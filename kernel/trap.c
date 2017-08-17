@@ -28,6 +28,12 @@ void trap(struct trap_frame *tf)
 		case GET_IRQ(IRQ_IDE):
 			ide_proc();
 			break;
+		case GET_IRQ(IRQ_KBD):
+			kbd_proc();
+			break;
+		case GET_IRQ(IRQ_COM1):
+			uart_proc();
+			break;
 		default:
 			if(!cpu.cur_proc || (tf->cs & 3) == 0)
 				panic("system trap occurd, trapno:%d; errno:%d\n", tf->trapno, tf->errno);

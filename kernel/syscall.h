@@ -3,7 +3,7 @@
 
 //sys call
 #define T_SYSCALL 64
-#define SYS_vprintf 128
+#define SYS_cprintf 128
 #define SYS_ps 127
 #define SYS_fork 1
 #define SYS_exec 2

@@ -15,11 +15,13 @@ void init_timer()
 void timer_proc()
 {
 	tick++;
-	if(tick >= 1) {
+	if(tick == 0xefffffff)
 		tick = 0;
+	if(!(tick % 1)) {
 		if(cpu.cur_proc && cpu.cur_proc->stat == RUNNING) {
 			yield();
 		}
+		tick = 0;
 	}
 }
 

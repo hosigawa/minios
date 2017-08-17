@@ -17,7 +17,7 @@ char *get_arg_str(int n);
 void sys_call();
 
 //syscall functions
-int sys_vprintf();
+int sys_cprintf();
 int sys_fork();
 int sys_exec();
 int sys_exit();

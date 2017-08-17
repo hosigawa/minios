@@ -39,3 +39,20 @@ void uart_putc(int c)
   	outb(COM1+0, c);
 }
 
+void uart_proc()
+{
+	if(!buart)
+		return;
+	int data = uart_getc();
+	console_proc(data);
+}
+
+int uart_getc()
+{
+  if(!buart)
+    return -1;
+  if(!(inb(COM1+5) & 0x01))
+    return -1;
+  return inb(COM1+0);
+}
+

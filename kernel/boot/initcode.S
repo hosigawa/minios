@@ -8,8 +8,9 @@ start:
 	movl $SYS_exec, %eax
 	int $T_SYSCALL
 
-loop:
-	jmp loop
+exit:
+	movl $SYS_exit, %eax;
+	int $T_SYSCALL
 
 init:
 	.string "/init\0"

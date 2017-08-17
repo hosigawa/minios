@@ -5,6 +5,8 @@
 
 void init_uart();
 void uart_putc(int c);
+void uart_proc();
+int uart_getc();
 
 #endif
 
