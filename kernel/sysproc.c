@@ -3,11 +3,17 @@
 extern struct cpu cpu;
 
 int (*syscalls[])(void) = {
-	[SYS_cprintf] = sys_cprintf,
 	[SYS_fork] = sys_fork,
+	[SYS_print] = sys_print,
 	[SYS_exec] = sys_exec,
 	[SYS_exit] = sys_exit,
 	[SYS_wait] = sys_wait,
+	[SYS_open] = sys_open,
+	[SYS_close] = sys_close,
+	[SYS_dup] = sys_dup,
+	[SYS_mknod] = sys_mknod,
+	[SYS_read] = sys_read,
+	[SYS_write] = sys_write,
 	[SYS_ps] = sys_ps,
 };
 
@@ -37,16 +43,6 @@ void sys_call()
 		cpu.cur_proc->tf->eax = -1;
 	}
 	cpu.cur_proc->tf->eax = syscalls[seq]();
-}
-
-int sys_cprintf()
-{
-	char *fmt = (char *)get_arg_uint(0);
-	uint *argp = (uint *)get_arg_uint(1);
-	pushcli();
-	cprintfarg(fmt, argp);
-	popsti();
-	return 0;
 }
 
 int sys_fork() 
@@ -94,6 +90,72 @@ int sys_ps()
 				break;
 		}
 	}
+	return 0;
+}
+
+int sys_open()
+{
+	char *path = (char *)get_arg_uint(0);
+	int mode = get_arg_int(1);
+	return file_open(path, mode);
+}
+
+int sys_close()
+{
+	int fd = get_arg_int(0);
+	struct file *f = get_file(fd);
+	if(!f)
+		return -1;
+	return file_close(f);
+}
+
+int sys_dup()
+{
+	int fd = get_arg_int(0);
+	struct file *f = get_file(fd);
+	if(!f)
+		return -1;
+	fd = fd_alloc(f);
+	file_dup(f);
+	return fd;
+}
+
+int sys_mknod()
+{
+	char *path = (char *)get_arg_uint(0);
+	int major = get_arg_int(1);
+	int minor = get_arg_int(2);
+	return file_mknod(path, major, minor);
+}
+
+int sys_read()
+{
+	int fd = get_arg_int(0);
+	char *dst = (char *)get_arg_uint(1);
+	int len = get_arg_int(2);
+
+	struct file *f = get_file(fd);
+	if(!f)
+		return -1;
+	return file_read(f, dst, len);
+}
+
+int sys_write()
+{
+	int fd = get_arg_int(0);
+	char *src = (char *)get_arg_uint(1);
+	int len = get_arg_int(2);
+
+	struct file *f = get_file(fd);
+	if(!f)
+		return -1;
+	return file_write(f, src, len);
+}
+
+int sys_print()
+{
+	char *src = (char *)get_arg_uint(0);
+	printf(src);
 	return 0;
 }
 

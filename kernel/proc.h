@@ -1,8 +1,11 @@
 #ifndef __PROC_H__
 #define __PROC_H__
 
+#include "file.h"
+
 #define MAX_PROC 64
 #define PROC_NM_SZ 64
+#define NOFILE 16
 
 enum PROC_STATUS {
 	UNUSED = 0,
@@ -33,6 +36,7 @@ struct proc {
 	struct context *context;
 	int stat;
 	pde_t *pgdir;
+	struct file *ofile[NOFILE];
 	struct proc *parent;
 	void *sleep_chan;
 };
@@ -40,7 +44,7 @@ struct proc {
 int fork();
 void forkret();
 struct proc *alloc_proc();
-void scheduler();
+void scheduler() __attribute__((noreturn));
 void sched();
 void yield();
 void user_init();

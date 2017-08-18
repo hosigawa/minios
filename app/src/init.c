@@ -2,6 +2,14 @@
 
 int main()
 {
+	int fd;
+	if((fd = open("/console", 0)) < 0) {
+		mknod("/console", 1, 1);
+		fd = open("/console", 0);
+	}
+	dup(fd);
+	dup(fd);
+
 	printf("init...\n");
 	char *argv[] = {"/sh", 0};
 	int pid, wtpid;

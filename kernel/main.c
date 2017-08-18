@@ -23,12 +23,12 @@ int main()
 	init_uart();
 	init_timer();
 	init_console();
+	init_file();
 	init_ide();
 	user_init();
 
 	sys_info("\nMINIOS ver.%s start...\n\n", MINIOS_VERSION);
 
 	scheduler();
-	return -1;
 }
 

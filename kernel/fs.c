@@ -7,7 +7,6 @@ struct inode inodes[INODE_NUM];
 
 uint balloc(int dev);
 void bfree(int dev, uint n);
-struct inode *dirlookup(struct inode *ip, const char *name);
 char *path_decode(char *path, char *name);
 
 void bzero(int dev, int num)
@@ -125,17 +124,16 @@ struct inode *iget(int dev, int inum)
 
 void irelese(struct inode *ip)
 {
-	if(--ip->ref <= 0) {
-
-	}
+	if(--ip->ref < 0)
+		panic("irelese\n");
 }
 
 int readi(struct inode *ip, char *dst, int offset, int num)
 {
 	struct block_buf *buf;
 	int rd, intr;
-	if(offset + num > ip->di.size)
-		num = ip->di.size - offset;
+	if(offset + num > ip->de.size)
+		num = ip->de.size - offset;
 	for(rd = 0, intr = 0; rd < num; rd += intr, offset += intr, dst += intr) {
 		buf = bread(ip->dev, bmap(ip, offset/BLOCK_SIZE));
 		intr = min(BLOCK_SIZE - offset % BLOCK_SIZE, num - rd);
@@ -145,23 +143,39 @@ int readi(struct inode *ip, char *dst, int offset, int num)
 	return rd;
 }
 
-int writei(struct inode *ip, char *dst, int offset, int num)
+int writei(struct inode *ip, char *src, int offset, int num)
 {
-	return 0;
+	struct block_buf *buf;
+	int wt, intr;
+	if(offset > ip->de.size)
+		return -1;
+	for(wt = 0, intr = 0; wt < num; wt += intr, offset += intr, src += intr) {
+		buf = bread(ip->dev, bmap(ip, offset/BLOCK_SIZE));
+		intr = min(BLOCK_SIZE - offset % BLOCK_SIZE, num - wt);
+		memmove(buf->data + offset % BLOCK_SIZE, src, intr);
+		bwrite(buf);
+		
+		brelse(buf);
+	}
+	if(offset > ip->de.size) {
+		ip->de.size = offset;
+		iupdate(ip);
+	}
+	return wt;
 }
 
 uint bmap(struct inode *ip, int n)
 {
 	if(n < NDIRECT){
-		if(ip->di.addrs[n] == 0){
-			ip->di.addrs[n] = balloc(ip->dev);
+		if(ip->de.addrs[n] == 0){
+			ip->de.addrs[n] = balloc(ip->dev);
 		}
-		return ip->di.addrs[n];
+		return ip->de.addrs[n];
 	}
 	n -= NDIRECT;
-	if(ip->di.addrs[NDIRECT] == 0)
-		ip->di.addrs[NDIRECT] = balloc(ip->dev);
-	struct block_buf *buf = bread(ip->dev, ip->di.addrs[NDIRECT]);
+	if(ip->de.addrs[NDIRECT] == 0)
+		ip->de.addrs[NDIRECT] = balloc(ip->dev);
+	struct block_buf *buf = bread(ip->dev, ip->de.addrs[NDIRECT]);
 	uint seq = *((uint*)buf->data + n);
 	if(seq == 0) {
 		*((uint *)buf->data + n) = seq = balloc(ip->dev);
@@ -175,7 +189,7 @@ void load_inode(struct inode *ip)
 {
 	if(!(ip->flags & I_VALID)) {
 		struct block_buf *buf = bread(ip->dev, IBLOCK(ip->inum));
-		memmove(&ip->di, (struct dinode *)buf->data + ip->inum % IPER, sizeof(struct dinode));
+		memmove(&ip->de, (struct dinode *)buf->data + ip->inum % IPER, sizeof(struct dinode));
 		ip->flags |= I_VALID;
 		brelse(buf);
 	}
@@ -212,17 +226,19 @@ void bfree(int dev, uint n)
 	brelse(buf);
 }
 
-struct inode *namei(char *path)
+struct inode *namex(char *path, char *name, bool bparent)
 {
 	struct inode *ip = iget(1, 1);
 	struct inode *next;
-	char name[DIR_NM_SZ];
 	while((path = path_decode(path, name)) != 0) {
 		load_inode(ip);
-		if(ip->di.type != T_DIR){
-			err_info("ip isnt dir\n");
+		if(ip->de.type != T_DIR){
+			err_info("ip isn't dir\n");
 			irelese(ip);
 			return NULL;
+		}
+		if(bparent && *path == 0) {
+			return ip;
 		}
 		next = dirlookup(ip, name);
 		if(!next) {
@@ -232,18 +248,33 @@ struct inode *namei(char *path)
 		irelese(ip);
 		ip = next;
 	}
+	if(bparent) {
+		irelese(ip);
+		return NULL;
+	}
 	return ip;
+}
+
+struct inode *namei(char *path)
+{
+	char name[DIR_NM_SZ];
+	return namex(path, name, false);
+}
+
+struct inode *namep(char *path, char *name)
+{
+	return namex(path, name, true);
 }
 
 struct inode *dirlookup(struct inode *ip, const char *name)
 {
-	if(ip->di.type != T_DIR) {
+	if(ip->de.type != T_DIR) {
 		panic("%s is not direct\n", name);
 		return NULL;
 	}
 	struct dirent de;
 	int off = 0;
-	for(; off < ip->di.size; off += sizeof(struct dirent)) {
+	for(; off < ip->de.size; off += sizeof(struct dirent)) {
 		readi(ip, (char *)&de, off, sizeof(struct dirent));
 		if(de.inum == 0)
 			continue;
@@ -275,5 +306,57 @@ char *path_decode(char *path, char *name)
 	if(*path == '/')
 		path++;
 	return path;
+}
+
+struct inode *ialloc(int dev, int type)
+{
+	int i;
+	struct block_buf *buf;
+	struct dinode *dp;
+
+	for(i = 1; i < sb.ninodes; i++) {
+		buf = bread(dev, IBLOCK(i));
+		dp = (struct dinode *)buf->data + i % IPER;
+		if(dp->type == 0) {
+			memset(dp, 0, sizeof(*dp));
+			dp->type = type;
+			bwrite(buf);
+			brelse(buf);
+			return iget(dev, i);
+		}
+		brelse(buf);
+	}
+	panic("dinode max\n");
+}
+
+void iupdate(struct inode *ip)
+{
+	struct dinode *dp;
+	struct block_buf *buf;
+	buf = bread(ip->dev, IBLOCK(ip->inum));
+	dp = (struct dinode *)buf->data + ip->inum % IPER;
+	memmove(dp, &ip->de, sizeof(*dp));
+	bwrite(buf);
+	brelse(buf);
+}
+
+void dir_link(struct inode *dp, char *name, int inum)
+{
+	if(dp->de.type != T_DIR) {
+		panic("%s is not direct\n", name);
+	}
+	struct dirent de;
+	int off = 0;
+	for(; off < dp->de.size; off += sizeof(struct dirent)) {
+		readi(dp, (char *)&de, off, sizeof(struct dirent));
+		if(de.inum == 0)
+			break;
+	}
+	memmove(de.name, name, DIR_NM_SZ);
+	de.inum = inum;
+
+	int ret = writei(dp, (char *)&de, off, sizeof(struct dirent));
+	if(ret != sizeof(struct dirent))
+		panic("dir_link\n");
 }
 

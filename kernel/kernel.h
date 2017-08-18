@@ -18,6 +18,7 @@
 #include "sysproc.h"
 #include "ide.h"
 #include "fs.h"
+#include "file.h"
 #include "elf.h"
 
 #define LOG cprintf

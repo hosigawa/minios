@@ -18,8 +18,11 @@
 
 #define T_DIR 1
 #define T_FILE 2
+#define T_DEV 3
 #define DIR_NM_SZ 14
 #define ROOTINO 1
+
+#include "type.h"
 
 struct block_buf {
 	int flags;
@@ -52,7 +55,7 @@ struct inode {
   	int ref;            // Reference count
   	int flags;          // I_VALID
 
-	struct dinode di;
+	struct dinode de;
 };
 
 struct super_block {
@@ -73,14 +76,20 @@ void brelse(struct block_buf *buf);
 
 void init_fs(int dev);
 void readsb(int dev, struct super_block *sb);
+struct inode *ialloc(int dev, int type);
 struct inode *iget(int dev, int inum);
 void irelese(struct inode *ip);
 int readi(struct inode *ip, char *dst, int offset, int num);
-int writei(struct inode *ip, char *dst, int offset, int num);
+int writei(struct inode *ip, char *src, int offset, int num);
 uint bmap(struct inode *ip, int n);
 
 void load_inode(struct inode *ip);
+struct inode *dirlookup(struct inode *ip, const char *name);
+struct inode *namex(char *path, char *name, bool bparent);
 struct inode *namei(char *path);
+struct inode *namep(char *path, char *name);
+void iupdate(struct inode *ip);
+void dir_link(struct inode *dp, char *name, int inum);
 
 #endif
 

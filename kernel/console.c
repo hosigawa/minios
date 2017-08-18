@@ -1,6 +1,7 @@
 #include "kernel.h"
 
-void cprintfint(int data, int base, bool sign) {
+void cprintfint(int data, int base, bool sign) 
+{
 	static char digitals[] = "0123456789ABCDEF";
 	char buf[32] = {0};
 
@@ -87,8 +88,24 @@ void cputc(int c)
 	uart_putc(c);
 }
 
+int console_read(struct inode *ip, char *dst, int len)
+{
+	printf("console_read\n");
+	return 0;
+}
+
+int console_write(struct inode *ip, char *src, int len)
+{
+	int i;
+	for(i = 0; i < len; i++) {
+		cputc(src[i]);
+	}
+	return 0;
+}
+
 void init_console()
 {
+	register_devrw(CONSOLE, console_read, console_write);
 	enable_pic(IRQ_KBD);
 	init_kdb();
 }

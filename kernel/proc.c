@@ -42,6 +42,9 @@ struct proc *alloc_proc()
 	p->pid = ++next_pid;
 	p->stat = EMBRYO;
 	p->killed = 0;
+	for(i = 0; i < NOFILE; i++) {
+		p->ofile[i] = NULL;
+	}
 	uint sp = p->kstack + PG_SIZE;
 	sp -= sizeof(struct trap_frame);
 	p->tf = (struct trap_frame *)sp;
@@ -102,6 +105,7 @@ void user_init()
 
 int fork() 
 {
+	int i;
 	struct proc *p = alloc_proc();
 	if(!p)
 		return -1;
@@ -109,6 +113,10 @@ int fork()
 	if(!p->pgdir) {
 		p->stat = UNUSED;
 		return -1;
+	}
+	for(i = 0; i < NOFILE; i++) {
+		if(cpu.cur_proc->ofile[i])
+			p->ofile[i] = file_dup(cpu.cur_proc->ofile[i]);
 	}
 	*p->tf = *cpu.cur_proc->tf;
 	p->tf->eax = 0;
@@ -217,6 +225,13 @@ void exit()
 		panic("init exit!!\n");
 	cpu.cur_proc->killed = 1;
 	
+	for(i = 0; i < NOFILE; i++) {
+		if(cpu.cur_proc->ofile[i]) {
+			file_close(cpu.cur_proc->ofile[i]);
+			cpu.cur_proc->ofile[i] = NULL;
+		}
+	}
+
 	pushcli();
 
 	for(i = 0; i < MAX_PROC; i++) {
