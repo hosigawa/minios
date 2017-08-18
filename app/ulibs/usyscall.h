@@ -11,7 +11,6 @@ struct proc_info {
 	int ppid;
 };
 
-void print(char *fmt);
 int fork();
 int exec(char *path, char **argv);
 int exit() __attribute__((noreturn));

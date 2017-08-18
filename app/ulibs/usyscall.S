@@ -7,7 +7,6 @@
 		int $T_SYSCALL;\
 		ret;
 
-SYS_CALL(print);
 SYS_CALL(fork);
 SYS_CALL(exec);
 SYS_CALL(exit);

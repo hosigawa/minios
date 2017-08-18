@@ -4,7 +4,6 @@
 //sys call
 #define T_SYSCALL 64
 #define SYS_ps 127
-#define SYS_print 128
 #define SYS_fork 1
 #define SYS_exec 2
 #define SYS_exit 3

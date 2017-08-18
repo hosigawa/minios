@@ -4,7 +4,6 @@ extern struct cpu cpu;
 
 int (*syscalls[])(void) = {
 	[SYS_fork] = sys_fork,
-	[SYS_print] = sys_print,
 	[SYS_exec] = sys_exec,
 	[SYS_exit] = sys_exit,
 	[SYS_wait] = sys_wait,
@@ -150,12 +149,5 @@ int sys_write()
 	if(!f)
 		return -1;
 	return file_write(f, src, len);
-}
-
-int sys_print()
-{
-	char *src = (char *)get_arg_uint(0);
-	printf(src);
-	return 0;
 }
 

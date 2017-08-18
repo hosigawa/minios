@@ -18,7 +18,6 @@ void sys_call();
 
 //syscall functions
 int sys_fork();
-int sys_print();
 int sys_exec();
 int sys_exit();
 int sys_wait();
