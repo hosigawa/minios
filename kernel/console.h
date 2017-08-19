@@ -4,11 +4,13 @@
 #include "kbd.h"
 #include "fs.h"
 
+#define INPUT_BUFF 128
+
 void cprintfint(int data, int base, bool sign);
 void cprintfarg(char *fmt, uint *argp);
 void cprintf(char *fmt, ...);
 void panic(char *fmt, ...) __attribute__((noreturn));
-void cputc(int c);
+void console_putc(int c);
 void init_console();
 void console_proc(int data);
 

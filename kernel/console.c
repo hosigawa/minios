@@ -1,5 +1,11 @@
 #include "kernel.h"
 
+struct _input {
+	int r;
+	int w;
+	char buf[INPUT_BUFF];
+}input;
+
 void cprintfint(int data, int base, bool sign) 
 {
 	static char digitals[] = "0123456789ABCDEF";
@@ -24,7 +30,7 @@ void cprintfint(int data, int base, bool sign)
 		buf[i++] = '-';
 
 	while(--i >= 0)
-		cputc(buf[i]);
+		console_putc(buf[i]);
 }
 
 void cprintfarg(char *fmt, uint *argp) 
@@ -35,7 +41,7 @@ void cprintfarg(char *fmt, uint *argp)
 	int i = 0;
 	for(;(c = fmt[i]&0xff) != 0; i++) {
 		if(c != '%'){
-			cputc(c);
+			console_putc(c);
 			continue;
 		}
 		c = fmt[++i]&0xff;
@@ -47,7 +53,7 @@ void cprintfarg(char *fmt, uint *argp)
 					s= "(null)";
 				}
 				for(; *s != 0; s++) {
-					cputc(*s);
+					console_putc(*s);
 				}
 			break;
 			case 'd':
@@ -58,11 +64,11 @@ void cprintfarg(char *fmt, uint *argp)
 				cprintfint(*argp++, 16, false);
 			break;
 			case '%':
-				cputc('%');
+				console_putc('%');
 			break;
 			default:
-				cputc('%');
-				cputc(c);
+				console_putc('%');
+				console_putc(c);
 			break;
 		}
 	}
@@ -82,7 +88,7 @@ void panic(char *fmt, ...)
 	for(;;);
 }
 
-void cputc(int c) 
+void console_putc(int c) 
 {
 	cga_putc(c);
 	uart_putc(c);
@@ -90,15 +96,27 @@ void cputc(int c)
 
 int console_read(struct inode *ip, char *dst, int len)
 {
-	printf("console_read\n");
-	return 0;
+	int tar = len;
+	if(input.r == input.w)
+		sleep(&input.r);
+	for(; input.r < input.w; input.r++) {
+		int c = input.buf[input.r];
+		*dst++ = c;
+		if(--len <= 0)
+			break;
+		if(c == '\n')
+			break;
+	}
+	input.w = 0;
+	input.r = 0;
+	return tar - len;
 }
 
 int console_write(struct inode *ip, char *src, int len)
 {
 	int i;
 	for(i = 0; i < len; i++) {
-		cputc(src[i]);
+		console_putc(src[i]);
 	}
 	return 0;
 }
@@ -112,6 +130,14 @@ void init_console()
 
 void console_proc(int data)
 {
-	printf("console in, data:%x\n", data);
+	data = (data == '\r' ? '\n' : data);
+	console_putc(data);
+	if(input.w < INPUT_BUFF) {
+		input.buf[input.w] = data;
+		input.w++;
+	}
+	if(data == '\n'){
+		wakeup(&input.r);
+	}
 }
 

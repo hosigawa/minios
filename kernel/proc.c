@@ -169,7 +169,6 @@ int exec(char *path, char **argv)
 {
 	struct inode *ip = namei(path);
 	if(!ip) {
-		err_info("%s: no such file or directory\n", path);
 		return -1;
 	}
 

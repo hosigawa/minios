@@ -13,7 +13,6 @@ char *STATUS[] = {
 
 int main()
 {
-	printf("ps...\n");
 	memset(pi, 0, sizeof(struct proc_info) * 64);
 	ps(pi, 10);
 	int i = 0;
