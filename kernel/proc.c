@@ -99,6 +99,7 @@ void user_init()
   	p->tf->esp = PG_SIZE;
   	p->tf->eip = 0;
 
+	p->wd = namei("/");
 	p->parent = NULL;
 	p->stat = READY;
 }
@@ -122,6 +123,7 @@ int fork()
 	p->tf->eax = 0;
 	p->parent = cpu.cur_proc;
 	p->vsz = cpu.cur_proc->vsz;
+	p->wd = idup(cpu.cur_proc->wd);
 	p->stat = READY;
 
 	return p->pid;
@@ -201,11 +203,30 @@ int exec(char *path, char **argv)
 	size = PG_ROUNDUP(size);
 	size = resize_uvm(pdir, size, size + 3 * PG_SIZE);
 	clear_pte(pdir, (char *)(size - 3 * PG_SIZE));
+
+	uint sp = size;
+	uint ustack[10];
+	int argc;
+	int sz = 0;
+	for(argc = 0; argv[argc]; argc++) {
+		sz = strlen(argv[argc]) + 1;
+		sp -= sz;
+		if(copy_out(pdir, (char *)sp, argv[argc], sz) < 0)
+			panic("copy ustack error\n");
+		ustack[argc + 2] = sp;
+	}
+	ustack[argc + 2] = 0;
+
+	ustack[0] = argc;
+	ustack[1] = sp - argc * 4;
+
+	sp -= (argc * 4 + 8);
+	copy_out(pdir, (char *)sp, (char *)ustack, argc * 4 + 8);
 	
 	pde_t *old = cpu.cur_proc->pgdir;
 	cpu.cur_proc->pgdir = pdir;
 	cpu.cur_proc->vsz = size;
-	cpu.cur_proc->tf->esp = size;
+	cpu.cur_proc->tf->esp = sp;
 	cpu.cur_proc->tf->eip = elf.entry;
 	memset(cpu.cur_proc->name, 0, PROC_NM_SZ);
 	memmove(cpu.cur_proc->name, path, PROC_NM_SZ);
@@ -230,6 +251,8 @@ void exit()
 			cpu.cur_proc->ofile[i] = NULL;
 		}
 	}
+	irelese(cpu.cur_proc->wd);
+	cpu.cur_proc->wd = NULL;
 
 	pushcli();
 

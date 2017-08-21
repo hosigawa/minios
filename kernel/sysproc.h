@@ -34,6 +34,7 @@ int sys_mknod();
 int sys_read();
 int sys_write();
 int sys_fstat();
+int sys_pwd();
 int sys_ps();
 
 #endif

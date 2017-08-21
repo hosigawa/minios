@@ -85,3 +85,11 @@ void cputc(int fd, char c)
 	write(fd, &c, 1);
 }
 
+int strlen(char *src)
+{
+	int len = 0;
+	while(*src++)
+		len++;
+	return len;
+}
+

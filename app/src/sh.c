@@ -1,9 +1,14 @@
 #include "libc.h"
 
+char wd[14];
+
 int getcmd(char *buf, int len)
 {
 	int ret;
-	printf("$");
+	memset(wd, 0, 14);
+	if(pwd(wd) < 0)
+		return -1;
+	printf("[root@%s]$", wd);
 	memset(buf, 0, len);
 	ret = read(stdin, buf, len);
 	if(ret <= 0)
@@ -12,20 +17,39 @@ int getcmd(char *buf, int len)
 	return 0;
 }
 
-int run_cmd(char *buff)
+int get_token(char **argv, char *buf)
 {
-	char *argv[] = {0};
-	if(*buff == 0 || *buff == '\n')
+	int seq = 0;
+	bool btk = false;
+	while(*buf) {
+		if(*buf == ' ' || *buf == '\t') {
+			*buf = 0;
+			btk = false;
+		}
+		else if(!btk) {
+			argv[seq] = buf;
+			seq++;
+			btk = true;
+		}
+		buf++;
+	}
+	return 0;
+}
+
+int run_cmd(char *buf)
+{
+	char *argv[10] = {0};
+	if(*buf == 0 || *buf == '\n')
 		exit();
-	exec(buff, argv);
-	printf("-sh: %s: command not found\n", buff);
+	get_token(argv, buf);
+	exec(argv[0], argv);
+	printf("-sh: %s: command not found\n", argv[0]);
 	exit();
 }
 
-int main() 
+int main(int argc, char **argv) 
 {
 	printf("init sh...\n");
-	//char *argv[] = {"ps", 0};
 	char buf[100];
 
 	while(getcmd(buf, sizeof(buf)) >= 0) {	

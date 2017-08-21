@@ -360,3 +360,9 @@ void dir_link(struct inode *dp, char *name, int inum)
 		panic("dir_link\n");
 }
 
+struct inode *idup(struct inode *ip)
+{
+	ip->ref++;
+	return ip;
+}
+

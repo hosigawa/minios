@@ -38,6 +38,7 @@ int read(int fd, char *dst, int len);
 int write(int fd, char *src, int len);
 int fstat(int fd, struct file_stat *st);
 int ps(struct proc_info *pi, int len);
+int pwd(char *wd);
 
 #endif
 

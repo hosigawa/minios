@@ -36,3 +36,11 @@ int strncmp(const char *dst, const char *src, int len)
 	return 0;
 }
 
+int strlen(char *src)
+{
+	int len = 0;
+	while(*src++)
+		len++;
+	return len;
+}
+

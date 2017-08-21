@@ -214,3 +214,24 @@ void clear_pte(pde_t *pdir, void *va)
 	}
 }
 
+int copy_out(pde_t *pdir, char *dst, char *src, int len)
+{
+	int i;
+	pte_t *pte;
+	char *pa, *va;
+	int intr = 0;
+	int off;
+	for(i = intr; i < len; i += intr, dst += intr, src += intr) {
+		va = PG_ROUNDDOWN(dst);
+		off = (uint)dst - (uint)va;
+		intr = min(len - i, PG_SIZE - off);
+		pte = get_pte(pdir, va, false);
+		if(!pte || !(*pte & PTE_P) || !(*pte & PTE_U)) {
+			return -1;
+		}
+		pa = (char *)(*pte & ~0xfff);
+		memmove(P2V(pa + off), src, intr);
+	}
+	return 0;
+}
+

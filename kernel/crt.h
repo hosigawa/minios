@@ -8,6 +8,7 @@ void *memmove(void *dst, void *src, int len);
 void *memset(void *dst, int data, int len);
 int strcmp(const char *dst, const char *src);
 int strncmp(const char *dst, const char *src, int len);
+int strlen(char *src);
 
 #endif
 

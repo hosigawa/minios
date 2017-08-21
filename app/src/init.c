@@ -1,6 +1,6 @@
 #include "libc.h"
 
-int main()
+int main(int argc, char **argv)
 {
 	int fd;
 	if((fd = open("/console", 0)) < 0) {
@@ -10,13 +10,12 @@ int main()
 	dup(fd);
 	dup(fd);
 
-	printf("init...\n");
-	char *argv[] = {"/sh", 0};
+	char *sh_argv[] = {"/sh", "aa", "bb", 0};
 	int pid, wtpid;
 	while(1) {
 		pid = fork();
 		if(pid == 0) {
-			exec("/sh", argv);
+			exec("/sh", sh_argv);
 			printf("exec sh failre\n");
 			return 0;
 		}

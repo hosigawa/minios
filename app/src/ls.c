@@ -1,6 +1,11 @@
 #include "libc.h"
 
-void ls(char *path) 
+void print_file(char *path, struct file_stat *st)
+{
+	printf("%s  %s  %d  %d\n", path, (st->type == T_DIR) ? "D" : (st->type == T_DEV) ? "DEV" : "F", st->nlink, st->size);
+}
+
+void ls(char *path, bool details) 
 {
 	int fd;
 	fd = open(path, 0);
@@ -17,33 +22,48 @@ void ls(char *path)
 	struct dirent de;
 	int ret;
 	printf("name    type    link    size\n");
-	if(stat.type == T_FILE) {
-		printf("%s  %s  %d  %d\n", path, (sub.type == T_DIR) ? "D" : (sub.type == T_DEV) ? "DEV" : "F", sub.nlink, sub.size);
-	}
-	else if(stat.type == T_DIR) {
+	if(stat.type == T_DIR) {
 		int sfd;
 		while((ret = read(fd, (char *)&de, sizeof(de))) == sizeof(de)) {
 			if(de.inum == 0)
 				continue;
-			sfd = open(de.name, 0);
-			if(sfd < 0)
-				continue;
-			if(fstat(sfd, &sub) < 0){
+			if(details) {
+				sfd = open(de.name, 0);
+				if(sfd < 0)
+					continue;
+				if(fstat(sfd, &sub) < 0){
+					close(sfd);
+					continue;
+				}
+				print_file(de.name, &sub);
 				close(sfd);
-				continue;
 			}
-			printf("%s  %s  %d  %d\n", de.name, (sub.type == T_DIR) ? "D" : (sub.type == T_DEV) ? "DEV" : "F", sub.nlink, sub.size);
-			close(sfd);
+			else {
+				printf("%s ", de.name);
+			}
 		}
+		if(!details)
+			printf("\n");
 	}
-	else if(stat.type == T_DEV) {
-		printf("%s  %s  %d  %d\n", path, (sub.type == T_DIR) ? "D" : (sub.type == T_DEV) ? "DEV" : "F", sub.nlink, sub.size);
+	else {
+		print_file(path, &stat);
 	}
 	close(fd);
 }
 
-int main()
+int main(int argc, char** argv)
 {
-	ls(".");
+	if(argc == 1)
+		ls(".", false);
+	else if(argc == 2){
+		if(argv[1][0] == '-'){
+			if(argv[1][1] == 'l')
+			ls(".", true);
+		}
+		else
+			ls(argv[1], false);
+	}
+	else {
+	}
 	return 0;
 }

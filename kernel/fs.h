@@ -78,6 +78,7 @@ void init_fs(int dev);
 void readsb(int dev, struct super_block *sb);
 struct inode *ialloc(int dev, int type);
 struct inode *iget(int dev, int inum);
+struct inode *idup(struct inode *ip);
 void irelese(struct inode *ip);
 int readi(struct inode *ip, char *dst, int offset, int num);
 int writei(struct inode *ip, char *src, int offset, int num);

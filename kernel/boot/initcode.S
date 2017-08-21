@@ -16,5 +16,6 @@ init:
 	.string "/init\0"
 
 argv:
+	.long init
 	.long 0
 

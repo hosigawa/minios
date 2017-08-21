@@ -14,6 +14,7 @@ int (*syscalls[])(void) = {
 	[SYS_read] = sys_read,
 	[SYS_write] = sys_write,
 	[SYS_fstat] = sys_fstat,
+	[SYS_pwd] = sys_pwd,
 	[SYS_ps] = sys_ps,
 };
 
@@ -53,8 +54,8 @@ int sys_fork()
 int sys_exec()
 {
 	char *path = (char *)get_arg_uint(0);
-	char *argv = (char *)get_arg_uint(1);
-	return exec(path, &argv);
+	char **argv = (char **)get_arg_uint(1);
+	return exec(path, argv);
 }
 
 int sys_exit()
@@ -164,5 +165,30 @@ int sys_fstat()
 	fs->nlink = f->ip->de.nlink;
 	fs->size = f->ip->de.size;
 	return 0;
+}
+
+int sys_pwd()
+{
+	char *wd = (char *)get_arg_uint(0);
+	struct inode *dp = dirlookup(cpu.cur_proc->wd, "..");
+	if(!dp)
+		return -1;
+	if(dp->inum == cpu.cur_proc->wd->inum) {
+		memmove(wd, "/", 1);
+		irelese(dp);
+		return 0;
+	}
+	struct dirent de;
+	int off = 0;
+	while(readi(dp, (char *)&de, off, sizeof(de)) == sizeof(de)) {
+		if(de.inum == cpu.cur_proc->wd->inum && strcmp(de.name, ".") < 0 && strcmp(de.name, "..") < 0) {
+			memmove(wd, de.name, sizeof(de));
+			irelese(dp);
+			return 0;
+		}
+		off += sizeof(de);
+	}
+	irelese(dp);
+	return -2;
 }
 
