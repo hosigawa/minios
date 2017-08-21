@@ -278,7 +278,7 @@ struct inode *dirlookup(struct inode *ip, const char *name)
 		readi(ip, (char *)&de, off, sizeof(struct dirent));
 		if(de.inum == 0)
 			continue;
-		if(strncmp(de.name, name, DIR_NM_SZ) == 0) {
+		if(strcmp(de.name, name) == 0) {
 			return iget(ip->dev, de.inum);
 		}
 	}

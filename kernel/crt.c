@@ -15,12 +15,24 @@ void *memset(void *dst, int data, int len)
 	return dst;
 }
 
-int strncmp(const char *dst, const char *src, int len)
+int strcmp(const char *dst, const char *src)
 {
 	do {
 		if(*dst++ != *src++)
 			return -1;
-	} while(*dst && *src && --len > 0);
+	} while(*src || *dst);
+	return 0;
+}
+
+int strncmp(const char *dst, const char *src, int len)
+{
+	int i;
+	for(i = 0; i < len; i++) {
+		if(*dst++ != *src++)
+			return -1;
+		if(*dst == 0)
+			return -1;
+	}
 	return 0;
 }
 

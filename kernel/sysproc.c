@@ -13,6 +13,7 @@ int (*syscalls[])(void) = {
 	[SYS_mknod] = sys_mknod,
 	[SYS_read] = sys_read,
 	[SYS_write] = sys_write,
+	[SYS_fstat] = sys_fstat,
 	[SYS_ps] = sys_ps,
 };
 
@@ -149,5 +150,19 @@ int sys_write()
 	if(!f)
 		return -1;
 	return file_write(f, src, len);
+}
+
+int sys_fstat()
+{
+	int fd = get_arg_int(0);
+	struct file_stat *fs = (struct file_stat *)get_arg_uint(1);
+	struct file *f = get_file(fd);
+	if(!f)
+		return -1;
+	load_inode(f->ip);
+	fs->type = f->ip->de.type;
+	fs->nlink = f->ip->de.nlink;
+	fs->size = f->ip->de.size;
+	return 0;
 }
 

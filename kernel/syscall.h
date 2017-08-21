@@ -14,6 +14,7 @@
 #define SYS_mknod 8
 #define SYS_read 9
 #define SYS_write 10
+#define SYS_fstat 11
 
 #endif
 

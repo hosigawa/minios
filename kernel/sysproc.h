@@ -11,6 +11,12 @@ struct proc_info {
 	int ppid;
 };
 
+struct file_stat {
+	short type;           // File type
+  	short nlink;          // Number of links to inode in file system
+  	uint size;            // Size of file (bytes)
+};
+
 int get_arg_int(int n);
 uint get_arg_uint(int n);
 char *get_arg_str(int n);
@@ -27,6 +33,7 @@ int sys_dup();
 int sys_mknod();
 int sys_read();
 int sys_write();
+int sys_fstat();
 int sys_ps();
 
 #endif

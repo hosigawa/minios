@@ -31,20 +31,29 @@ struct file *get_file(int fd)
 
 int file_read(struct file *f, char *dst, int len)
 {
+	int ret;
 	load_inode(f->ip);
 	if(f->ip->de.type == T_DEV) {
 		return devrw[f->ip->de.major].read(f->ip, dst, len);
 	}
-	return 0;
+	ret = readi(f->ip, dst, f->off, len);
+	f->off += ret;
+
+	return ret;
 }
 
 int file_write(struct file *f, char *src, int len)
 {
+	int ret;
 	load_inode(f->ip);
 	if(f->ip->de.type == T_DEV) {
 		return devrw[f->ip->de.major].write(f->ip, src, len);
 	}
-	return 0;
+	
+	ret = writei(f->ip, src, f->off, len);
+	f->off += ret;
+
+	return ret;
 }
 
 struct file *file_dup(struct file *f)
@@ -144,7 +153,7 @@ int file_open(char *path, int mode)
 			return -1;
 		}
 		load_inode(ip);
-		if(ip->de.type == T_DIR) {
+		if(ip->de.type == T_DIR && mode > 0) {
 			irelese(ip);
 			return -2;
 		}

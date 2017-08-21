@@ -33,6 +33,7 @@ APPS =\
 	_init\
 	_sh\
 	_ps\
+	_ls\
 
 .PHONY: all mkobjdir mkfs
 
