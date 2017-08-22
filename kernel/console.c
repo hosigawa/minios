@@ -1,6 +1,6 @@
 #include "kernel.h"
 
-extern struct cpu cpu;
+extern struct CPU cpu;
 
 struct _input {
 	int r;

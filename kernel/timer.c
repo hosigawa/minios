@@ -1,6 +1,6 @@
 #include "kernel.h"
 
-extern struct cpu cpu;
+extern struct CPU cpu;
 
 uint tick = 0;
 

@@ -2,7 +2,7 @@
 
 struct gate_desc idt[256];
 extern uint vectors[];
-extern struct cpu cpu;
+extern struct CPU cpu;
 
 void init_idt() 
 {
