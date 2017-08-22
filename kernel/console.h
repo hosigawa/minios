@@ -7,8 +7,6 @@
 #define BACKSPACE 0x100
 #define INPUT_BUFF 128
 
-#define C(x) ((x) - '@')
-
 void cprintfint(int data, int base, bool sign);
 void cprintfarg(char *fmt, uint *argp);
 void cprintf(char *fmt, ...);
