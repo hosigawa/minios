@@ -18,6 +18,7 @@ char *mem_alloc()
 	struct mem_header *header = free_list;
 	if(free_list) {
 		free_list = free_list->next;
+		memset(header, 0, PG_SIZE);
 	}
 	return (char *)header;
 }

@@ -13,7 +13,7 @@ exit:
 	int $T_SYSCALL
 
 init:
-	.string "/init\0"
+	.string "/bin/init\0"
 
 argv:
 	.long init

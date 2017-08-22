@@ -42,6 +42,7 @@ void rinode(uint inum, struct dinode *ip);
 void rsect(uint sec, void *buf);
 uint _ialloc(ushort type);
 void iappend(uint inum, void *p, int n);
+uint create_dir(char *name, uint pinode);
 
 // convert to intel byte order
 ushort
@@ -70,7 +71,7 @@ int
 main(int argc, char *argv[])
 {
   int i, cc, fd;
-  uint rootino, inum, off;
+  uint rootino, bin, home, dev, inum, off;
   struct dirent de;
   char buf[BLOCK_SIZE];
   struct dinode din;
@@ -129,6 +130,10 @@ main(int argc, char *argv[])
   strcpy(de.name, "..");
   iappend(rootino, &de, sizeof(de));
 
+  bin = create_dir("bin", rootino);
+  home = create_dir("home", rootino);
+  dev = create_dir("dev", rootino);
+
   for(i = 2; i < argc; i++){
     assert(index(argv[i], '/') == 0);
 
@@ -149,7 +154,7 @@ main(int argc, char *argv[])
     bzero(&de, sizeof(de));
     de.inum = xshort(inum);
     strncpy(de.name, argv[i], DIR_NM_SZ);
-    iappend(rootino, &de, sizeof(de));
+    iappend(bin, &de, sizeof(de));
 
     while((cc = read(fd, buf, sizeof(buf))) > 0)
       iappend(inum, buf, cc);
@@ -180,6 +185,29 @@ wsect(uint sec, void *buf)
     perror("write");
     exit(1);
   }
+}
+
+uint create_dir(char *name, uint pinode)
+{
+  struct dirent de;
+  uint new_dir = _ialloc(T_DIR);
+
+  bzero(&de, sizeof(de));
+  de.inum = xshort(new_dir);
+  strcpy(de.name, ".");
+  iappend(new_dir, &de, sizeof(de));
+
+  bzero(&de, sizeof(de));
+  de.inum = xshort(pinode);
+  strcpy(de.name, "..");
+  iappend(new_dir, &de, sizeof(de));
+  
+  bzero(&de, sizeof(de));
+  de.inum = xshort(new_dir);
+  strcpy(de.name, name);
+  iappend(pinode, &de, sizeof(de));
+
+  return new_dir;
 }
 
 void

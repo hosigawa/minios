@@ -1,7 +1,7 @@
 #include "kernel.h"
 
 struct proc proc_table[MAX_PROC];
-extern struct cpu cpu;
+extern struct CPU cpu;
 struct proc *init_proc;
 
 uint next_pid = 0;
@@ -99,7 +99,7 @@ void user_init()
   	p->tf->esp = PG_SIZE;
   	p->tf->eip = 0;
 
-	p->wd = namei("/");
+	p->cwd = namei("/");
 	p->parent = NULL;
 	p->stat = READY;
 }
@@ -123,7 +123,7 @@ int fork()
 	p->tf->eax = 0;
 	p->parent = cpu.cur_proc;
 	p->vsz = cpu.cur_proc->vsz;
-	p->wd = idup(cpu.cur_proc->wd);
+	p->cwd = idup(cpu.cur_proc->cwd);
 	p->stat = READY;
 
 	return p->pid;
@@ -175,12 +175,16 @@ int exec(char *path, char **argv)
 	}
 
 	load_inode(ip);
+	if(ip->de.type == T_DIR) {
+		irelese(ip);
+		return -2;
+	}
 	struct elfhdr elf;
 	readi(ip, (char *)&elf, 0, sizeof(struct elfhdr));
 	if(elf.magic != ELF_MAGIC) {
 		err_info("elf magic error: %p\n", elf.magic);
 		irelese(ip);
-		return -1;
+		return -3;
 	}
 
 	pde_t *pdir = set_kvm();
@@ -229,7 +233,16 @@ int exec(char *path, char **argv)
 	cpu.cur_proc->tf->esp = sp;
 	cpu.cur_proc->tf->eip = elf.entry;
 	memset(cpu.cur_proc->name, 0, PROC_NM_SZ);
-	memmove(cpu.cur_proc->name, path, PROC_NM_SZ);
+
+	int i = 0;
+	int str_len = 0, tot_len = 0;
+	for(i = 0; i < argc; i++) {
+		str_len = strlen(argv[i]);
+		memmove(cpu.cur_proc->name+tot_len, argv[i], str_len);
+		tot_len += str_len;
+		memmove(cpu.cur_proc->name+tot_len, " ", 1);
+		tot_len += 1;
+	}
 
 	swtch_uvm(cpu.cur_proc);
 
@@ -251,8 +264,8 @@ void exit()
 			cpu.cur_proc->ofile[i] = NULL;
 		}
 	}
-	irelese(cpu.cur_proc->wd);
-	cpu.cur_proc->wd = NULL;
+	irelese(cpu.cur_proc->cwd);
+	cpu.cur_proc->cwd = NULL;
 
 	pushcli();
 

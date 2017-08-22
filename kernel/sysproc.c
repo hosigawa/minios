@@ -1,6 +1,6 @@
 #include "kernel.h"
 
-extern struct cpu cpu;
+extern struct CPU cpu;
 
 int (*syscalls[])(void) = {
 	[SYS_fork] = sys_fork,
@@ -15,6 +15,8 @@ int (*syscalls[])(void) = {
 	[SYS_write] = sys_write,
 	[SYS_fstat] = sys_fstat,
 	[SYS_pwd] = sys_pwd,
+	[SYS_mkdir] = sys_mkdir,
+	[SYS_chdir] = sys_chdir,
 	[SYS_ps] = sys_ps,
 };
 
@@ -170,19 +172,20 @@ int sys_fstat()
 int sys_pwd()
 {
 	char *wd = (char *)get_arg_uint(0);
-	struct inode *dp = dirlookup(cpu.cur_proc->wd, "..");
+	struct inode *dp = dirlookup(cpu.cur_proc->cwd, "..");
+	load_inode(dp);
 	if(!dp)
 		return -1;
-	if(dp->inum == cpu.cur_proc->wd->inum) {
-		memmove(wd, "/", 1);
+	if(dp->inum == cpu.cur_proc->cwd->inum) {
+		memmove(wd, "/", 2);
 		irelese(dp);
 		return 0;
 	}
 	struct dirent de;
 	int off = 0;
 	while(readi(dp, (char *)&de, off, sizeof(de)) == sizeof(de)) {
-		if(de.inum == cpu.cur_proc->wd->inum && strcmp(de.name, ".") < 0 && strcmp(de.name, "..") < 0) {
-			memmove(wd, de.name, sizeof(de));
+		if(de.inum == cpu.cur_proc->cwd->inum && strcmp(de.name, ".") < 0 && strcmp(de.name, "..") < 0) {
+			memmove(wd, de.name, strlen(de.name)+1);
 			irelese(dp);
 			return 0;
 		}
@@ -190,5 +193,27 @@ int sys_pwd()
 	}
 	irelese(dp);
 	return -2;
+}
+
+int sys_mkdir()
+{
+	char *path = (char *)get_arg_uint(0);
+	return file_mkdir(path, 0, 0);
+}
+
+int sys_chdir()
+{
+	char *path = (char *)get_arg_uint(0);
+	struct inode *dp = namei(path);
+	if(!dp)
+		return -1;
+	load_inode(dp);
+	if(dp->de.type != T_DIR) {
+		irelese(dp);
+		return -2;
+	}
+	irelese(cpu.cur_proc->cwd);
+	cpu.cur_proc->cwd = dp;
+	return 0;
 }
 

@@ -1,11 +1,23 @@
 #include "libc.h"
 
+bool bdetails = false;
+
 void print_file(char *path, struct file_stat *st)
 {
-	printf("%s  %s  %d  %d\n", path, (st->type == T_DIR) ? "D" : (st->type == T_DEV) ? "DEV" : "F", st->nlink, st->size);
+	printf("%s  %d  %d  %s\n", (st->type == T_DIR) ? "D" : (st->type == T_DEV) ? "C" : "-", st->nlink, st->size, path);
 }
 
-void ls(char *path, bool details) 
+void fmt_name(char *name, char *path, char *de)
+{
+	memset(name, 0, 64);
+	int len = strlen(path);
+	memmove(name, path, len);
+	if(name[len-1] != '/')
+		memmove(name+len, "/", 1);
+	memmove(name+len+1, de, strlen(de));
+}
+
+void ls(char *path) 
 {
 	int fd;
 	fd = open(path, 0);
@@ -21,14 +33,17 @@ void ls(char *path, bool details)
 	}
 	struct dirent de;
 	int ret;
-	printf("name    type    link    size\n");
+	if(bdetails)
+		printf("type  link  size  name\n");
 	if(stat.type == T_DIR) {
 		int sfd;
+		char name[64];
 		while((ret = read(fd, (char *)&de, sizeof(de))) == sizeof(de)) {
 			if(de.inum == 0)
 				continue;
-			if(details) {
-				sfd = open(de.name, 0);
+			if(bdetails) {
+				fmt_name(name, path, de.name);
+				sfd = open(name, 0);
 				if(sfd < 0)
 					continue;
 				if(fstat(sfd, &sub) < 0){
@@ -42,7 +57,7 @@ void ls(char *path, bool details)
 				printf("%s ", de.name);
 			}
 		}
-		if(!details)
+		if(!bdetails)
 			printf("\n");
 	}
 	else {
@@ -51,19 +66,41 @@ void ls(char *path, bool details)
 	close(fd);
 }
 
-int main(int argc, char** argv)
+int get_opt(char *arg)
 {
-	if(argc == 1)
-		ls(".", false);
-	else if(argc == 2){
-		if(argv[1][0] == '-'){
-			if(argv[1][1] == 'l')
-			ls(".", true);
+	while(*arg) {
+		if(*arg == '-'){
+			arg++;
+			continue;
 		}
-		else
-			ls(argv[1], false);
-	}
-	else {
+		if(*arg == 'l')
+			bdetails = true;
+		else {
+			printf("ls: %s: unknow option\n", arg);
+			return -1;
+		}
+		arg++;
 	}
 	return 0;
 }
+
+int main(int argc, char** argv)
+{
+	char *path = ".";
+	int i;
+	for(i = 1; i < argc; i++) {
+		switch(argv[i][0]){
+			case '-':
+				if(get_opt(argv[i]) < 0)
+					return -1;
+				break;
+			default:
+				path = argv[i];
+				break;
+		}
+	}
+
+	ls(path);
+	return 0;
+}
+

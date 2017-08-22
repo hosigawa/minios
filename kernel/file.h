@@ -42,6 +42,7 @@ struct inode *file_create(char *path, int type, int major, int minor);
 int file_open(char *path, int mode);
 int file_close(struct file *f);
 int file_mknod(char *path, int major, int minor);
+int file_mkdir(char *path, int major, int minor);
 struct file *get_file(int fd);
 
 #endif

@@ -1,5 +1,7 @@
 #include "kernel.h"
 
+extern struct CPU cpu;
+
 struct block_buf bufs[BLOCK_BUF_NUM];
 struct block_buf *head;
 struct super_block sb;
@@ -228,8 +230,12 @@ void bfree(int dev, uint n)
 
 struct inode *namex(char *path, char *name, bool bparent)
 {
-	struct inode *ip = iget(1, 1);
-	struct inode *next;
+	struct inode *ip, *next;
+	if(*path == '/')
+		ip = iget(1, 1);
+	else
+		ip = idup(cpu.cur_proc->cwd);
+
 	while((path = path_decode(path, name)) != 0) {
 		load_inode(ip);
 		if(ip->de.type != T_DIR){

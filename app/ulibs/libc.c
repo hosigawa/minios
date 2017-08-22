@@ -93,3 +93,21 @@ int strlen(char *src)
 	return len;
 }
 
+int strcmp(const char *dst, const char *src)
+{
+	do {
+		if(*dst++ != *src++)
+			return -1;
+	} while(*src || *dst);
+	return 0;
+}
+
+void *memmove(void *dst, void *src, int len) 
+{
+	char *d = dst;
+	char *s = src;;
+	while(len-- > 0)
+		*d++ = *s++;
+	return dst;
+}
+

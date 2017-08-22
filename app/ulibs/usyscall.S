@@ -19,5 +19,7 @@ SYS_CALL(read)
 SYS_CALL(write)
 SYS_CALL(fstat)
 SYS_CALL(pwd)
+SYS_CALL(mkdir)
+SYS_CALL(chdir)
 SYS_CALL(ps)
 

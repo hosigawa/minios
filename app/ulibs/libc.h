@@ -13,6 +13,8 @@ void cputc(int fd, char c);
 void cprintfarg(int fd, char *fmt, uint *argp); 
 void cprintfint(int fd, int data, int base, bool sign);
 int strlen(char *src);
+int strcmp(const char *dst, const char *src);
+void *memmove(void *dst, void *src, int len);
 
 #endif
 

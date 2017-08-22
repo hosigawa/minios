@@ -1,5 +1,7 @@
 #include "kernel.h"
 
+extern struct cpu cpu;
+
 struct _input {
 	int r;
 	int w;
@@ -91,7 +93,13 @@ void panic(char *fmt, ...)
 void console_putc(int c) 
 {
 	cga_putc(c);
-	uart_putc(c);
+	if(c == BACKSPACE){
+    	uart_putc('\b'); 
+		uart_putc(' '); 
+		uart_putc('\b');
+	}
+	else
+		uart_putc(c);
 }
 
 int console_read(struct inode *ip, char *dst, int len)
@@ -130,14 +138,28 @@ void init_console()
 
 void console_proc(int data)
 {
-	data = (data == '\r' ? '\n' : data);
-	console_putc(data);
-	if(input.w < INPUT_BUFF) {
-		input.buf[input.w] = data;
-		input.w++;
-	}
-	if(data == '\n'){
+	switch(data) {
+	case '\b': 
+		data = BACKSPACE;
+		input.buf[input.w] = 0;
+		input.w--;
+		console_putc(data);
+		break;
+	case C('D'):
+		cpu.cur_proc->killed = 1;
 		wakeup(&input.r);
+		break;
+	default:
+		data = (data == '\r' ? '\n' : data);
+		if(input.w < INPUT_BUFF) {
+			input.buf[input.w] = data;
+			input.w++;
+		}
+		console_putc(data);
+		if(data == '\n'){
+			wakeup(&input.r);
+		}
+		break;
 	}
 }
 

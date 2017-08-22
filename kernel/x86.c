@@ -1,6 +1,6 @@
 #include "kernel.h"
 
-struct cpu cpu;
+struct CPU cpu;
 
 void init_cpu() 
 {

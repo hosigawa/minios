@@ -1,13 +1,17 @@
 #include "libc.h"
 
 char wd[14];
+char *env = "/bin/";
 
 int getcmd(char *buf, int len)
 {
 	int ret;
 	memset(wd, 0, 14);
-	if(pwd(wd) < 0)
+	ret = pwd(wd);
+	if(ret < 0){
+		printf("pwd ret is %d\n", ret);
 		return -1;
+	}
 	printf("[root@%s]$", wd);
 	memset(buf, 0, len);
 	ret = read(stdin, buf, len);
@@ -19,6 +23,11 @@ int getcmd(char *buf, int len)
 
 int get_token(char **argv, char *buf)
 {
+	int i;
+	for(i = 0; i < 10; i++)
+	{
+		argv[i] = 0;
+	}
 	int seq = 0;
 	bool btk = false;
 	while(*buf) {
@@ -36,13 +45,16 @@ int get_token(char **argv, char *buf)
 	return 0;
 }
 
-int run_cmd(char *buf)
+int run_cmd(char **argv)
 {
-	char *argv[10] = {0};
-	if(*buf == 0 || *buf == '\n')
+	char real[64] = {0};
+	if(exec(argv[0], argv) == -2) {
+		printf("-sh: %s: is a directory\n", argv[0]);
 		exit();
-	get_token(argv, buf);
-	exec(argv[0], argv);
+	}
+	memmove(real, env, strlen(env));
+	memmove(real+strlen(env), argv[0], strlen(argv[0])+1);
+	exec(real, argv);
 	printf("-sh: %s: command not found\n", argv[0]);
 	exit();
 }
@@ -50,11 +62,23 @@ int run_cmd(char *buf)
 int main(int argc, char **argv) 
 {
 	printf("init sh...\n");
+	chdir("/home");
 	char buf[100];
+	char *sargv[10];
 
-	while(getcmd(buf, sizeof(buf)) >= 0) {	
+	while(getcmd(buf, sizeof(buf)) >= 0) {
+		if(*buf == 0 || *buf == '\n')
+			continue;
+		get_token(sargv, buf);
+		if(strcmp(sargv[0], "cd") == 0){
+			if(!sargv[1])
+				continue;
+			if(chdir(sargv[1]) < 0)
+				printf("-sh: cd: %s: No such file or directory\n", sargv[1]);
+			continue;
+		}
 		if(fork() == 0)
-			run_cmd(buf);
+			run_cmd(sargv);
 		wait();
 	}
 

@@ -5,7 +5,7 @@
 
 struct proc;
 struct context;
-struct cpu {
+struct CPU {
 	struct proc *cur_proc;
 	int ncli;
 	bool intble;

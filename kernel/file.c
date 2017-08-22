@@ -1,6 +1,6 @@
 #include "kernel.h"
 
-extern struct cpu cpu;
+extern struct CPU cpu;
 
 struct devrw devrw[MAX_DEV];
 struct file file_table[NFILE];
@@ -124,6 +124,13 @@ struct inode *file_create(char *path, int type, int major, int minor)
 	ip->de.nlink = 1;
 	iupdate(ip);
 
+	if(type == T_DIR){
+		dp->de.nlink++;
+		iupdate(dp);
+		dir_link(ip, ".", ip->inum);
+		dir_link(ip, "..", dp->inum);
+	}
+
 	dir_link(dp, name, ip->inum);
 	irelese(dp);
 
@@ -133,6 +140,15 @@ struct inode *file_create(char *path, int type, int major, int minor)
 int file_mknod(char *path, int major, int minor) 
 {
 	struct inode *ip = file_create(path, T_DEV, major, minor);
+	if(!ip)
+		return -1;
+	irelese(ip);
+	return 0;
+}
+
+int file_mkdir(char *path, int major, int minor)
+{
+	struct inode *ip = file_create(path, T_DIR, major, minor);
 	if(!ip)
 		return -1;
 	irelese(ip);

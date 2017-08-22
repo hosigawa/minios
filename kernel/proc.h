@@ -37,7 +37,7 @@ struct proc {
 	int stat;
 	pde_t *pgdir;
 	struct file *ofile[NOFILE];
-	struct inode *wd;
+	struct inode *cwd;
 	struct proc *parent;
 	void *sleep_chan;
 };

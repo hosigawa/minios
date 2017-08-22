@@ -16,6 +16,8 @@
 #define SYS_write 10
 #define SYS_fstat 11
 #define SYS_pwd 12
+#define SYS_mkdir 13
+#define SYS_chdir 14
 
 #endif
 
