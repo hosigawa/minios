@@ -1,16 +1,9 @@
-#include "libc.h"
-#include "x86.h"
+#include "stdio.h"
 
 void printf(char *fmt, ...)
 {
 	uint *argp = (uint*)(&fmt + 1);
 	cprintfarg(stdout, fmt, argp);
-}
-
-void *memset(void *dst, int data, int len)
-{
-	stosb(dst, data, len);
-	return dst;
 }
 
 void cprintfint(int fd, int data, int base, bool sign) 
@@ -83,31 +76,5 @@ void cprintfarg(int fd, char *fmt, uint *argp)
 void cputc(int fd, char c)
 {
 	write(fd, &c, 1);
-}
-
-int strlen(char *src)
-{
-	int len = 0;
-	while(*src++)
-		len++;
-	return len;
-}
-
-int strcmp(const char *dst, const char *src)
-{
-	do {
-		if(*dst++ != *src++)
-			return -1;
-	} while(*src || *dst);
-	return 0;
-}
-
-void *memmove(void *dst, void *src, int len) 
-{
-	char *d = dst;
-	char *s = src;;
-	while(len-- > 0)
-		*d++ = *s++;
-	return dst;
 }
 

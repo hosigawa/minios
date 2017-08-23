@@ -1,4 +1,4 @@
-#include "libc.h"
+#include "stdio.h"
 
 char cwd[14];
 char *env = "/bin/";

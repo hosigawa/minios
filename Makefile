@@ -19,6 +19,9 @@ ASM_SRCS = $(wildcard $(addsuffix *.S, $(SRCDIR)))
 OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(SRCS:.c=.o)))
 ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o)))
 
+COM_DIR = libs/.obj/
+COM_LIBS = $(COM_DIR)libc.o
+
 .PHONY: all mkobjdir makeproject q qemu r m fs
 
 makeproject: mkobjdir kernel/vectors.S minios.img
@@ -64,8 +67,8 @@ $(OBJDIR)bootblock: kernel/boot/bootasm.S kernel/boot/bootmain.c
 	$(OBJCOPY) -S -O binary -j .text $(OBJDIR)bootblock.o $@
 	perl ./tools/sign.pl $@
 
-$(OBJDIR)kernelblock: $(OBJS) $(ASM_OBJS) $(OBJDIR)initcode kernel/kernel.ld
-	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o $@ $(OBJS) $(ASM_OBJS) -b binary $(OBJDIR)initcode
+$(OBJDIR)kernelblock: $(OBJS) $(ASM_OBJS) $(OBJDIR)initcode $(COM_LIBS) kernel/kernel.ld
+	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o $@ $(OBJS) $(ASM_OBJS) $(COM_LIBS) -b binary $(OBJDIR)initcode
 
 kernel/vectors.S: tools/vectors.pl
 	perl tools/vectors.pl > kernel/vectors.S
@@ -84,7 +87,11 @@ $(OBJDIR)initcode: kernel/boot/initcode.S
 $(OBJDIR)app/mkfs: tools/mkfs.c kernel/fs.h
 	gcc -Werror -Wall -I $(SRCDIR) -o $@ $<
 
+$(COM_DIR)%.o: libs/%.c
+	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
+
 mkobjdir:
+	@test -d $(COM_DIR) || mkdir $(COM_DIR)
 	@test -d $(OBJDIR) || (mkdir $(OBJDIR) && mkdir $(addprefix $(OBJDIR), $(subst ./,,$(SRCDIR))))
 
 clean:

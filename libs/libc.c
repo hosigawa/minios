@@ -1,4 +1,6 @@
-#include "kernel.h"
+#include "libc.h"
+#include "../kernel/x86.h"
+#include "../kernel/type.h"
 
 void *memmove(void *dst, void *src, int len) 
 {

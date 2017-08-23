@@ -18,6 +18,7 @@ SRCDIR = ./src/\
 INCDIR = -I./src\
 		-I./ulibs\
 		-I../kernel\
+		-I../libs\
 
 SRCS = $(wildcard $(addsuffix *.c, $(SRCDIR)))
 
@@ -28,6 +29,9 @@ OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(SRCS:.c=.o)))
 
 LIB_C_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(LIB_C_SRCS:.c=.o)))
 LIB_ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(LIB_ASM_SRCS:.S=.o)))
+
+COM_DIR = ../libs/.obj/
+COM_LIBS = $(COM_DIR)libc.o
 
 APPS =\
 	_init\
@@ -53,13 +57,17 @@ $(OBJDIR)%.o: %.c
 $(OBJDIR)%.o: %.S
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
 
-_%: $(OBJDIR)src/%.o $(LIB_C_OBJS) $(LIB_ASM_OBJS)
+_%: $(OBJDIR)src/%.o $(LIB_C_OBJS) $(LIB_ASM_OBJS) $(COM_LIBS)
 	$(LD) $(LDFLAGS) -N -e _start -Ttext 0 -o $@ $^
+
+$(COM_DIR)%.o: ../libs/%.c
+	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
 
 $(OBJDIR)mkfs: ../tools/mkfs.c ../kernel/fs.h
 	gcc -Werror -Wall -I ../kernel -o $@ $<
 
 mkobjdir:
+	@test -d $(COM_DIR) || mkdir $(COM_DIR)
 	@test -d $(OBJDIR) || (mkdir $(OBJDIR) && mkdir $(addprefix $(OBJDIR), $(subst ./,,$(SRCDIR))))
 
 clean:

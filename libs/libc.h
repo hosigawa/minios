@@ -1,5 +1,5 @@
-#ifndef __CRT_H__
-#define __CRT_H__
+#ifndef __LIBC_H__
+#define __LIBC_H__
 
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))

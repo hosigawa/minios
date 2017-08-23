@@ -1,4 +1,4 @@
-#include "libc.h"
+#include "stdio.h"
 
 struct proc_info pi[64];
 

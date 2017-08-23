@@ -3,8 +3,9 @@
 
 #include "type.h"
 #include "x86.h"
+#include "param.h"
 #include "console.h"
-#include "crt.h"
+#include "../libs/libc.h"
 #include "memory.h"
 #include "vm.h"
 #include "trap.h"
