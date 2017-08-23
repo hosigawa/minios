@@ -93,6 +93,7 @@ struct inode *file_create(char *path, int type, int major, int minor)
 {
 	struct inode *dp, *ip;
 	char name[DIR_NM_SZ];
+	int off;
 	dp = namep(path, name);
 	if(!dp) {
 		return NULL;
@@ -103,7 +104,7 @@ struct inode *file_create(char *path, int type, int major, int minor)
 		return NULL;
 	}
 
-	ip = dirlookup(dp, name);
+	ip = dir_lookup(dp, name, &off);
 	if(ip) {
 		irelese(dp);
 		load_inode(ip);
@@ -195,6 +196,69 @@ int file_close(struct file *f)
 			irelese(f->ip);
 		f->type = FD_NONE;
 	}
+	return 0;
+}
+
+bool dir_empty(struct inode *dp)
+{
+	int off;
+	struct dirent de;
+	for(off = 2 * sizeof(de); off < dp->de.size; off += sizeof(de)) {
+		if(readi(dp, (char *)&de, off, sizeof(de)) != sizeof(de))
+			panic("dir_empty\n");
+		if(de.inum != 0)
+			return false;
+	}
+	return true;
+}
+
+int file_unlink(char *path)
+{
+	struct inode *dp, *ip;
+	char name[DIR_NM_SZ];
+	int off;
+	dp = namep(path, name);
+	if(!dp)
+		return -1;
+	load_inode(dp);
+	
+	if(strcmp(name, "..") == 0 || strcmp(name, ".") == 0) {
+		irelese(dp);
+		return -2;
+	}
+
+	ip = dir_lookup(dp, name, &off);
+	if(!ip) {
+		irelese(dp);
+		return -3;
+	}
+	load_inode(ip);
+
+	if(ip->de.nlink < 1) {
+		irelese(dp);
+		irelese(ip);
+		return -4;
+	}
+
+	if(ip->de.type == T_DIR && !dir_empty(ip)){
+		irelese(dp);
+		irelese(ip);
+		return -5;
+	}
+
+	struct dirent de;
+	memset(&de, 0, sizeof(de));
+	writei(dp, (char *)&de, off, sizeof(de));
+	if(ip->de.type == T_DIR) {
+		dp->de.nlink--;
+		iupdate(dp);
+	}
+	irelese(dp);
+
+	ip->de.nlink--;
+	iupdate(ip);
+	irelese(ip);
+
 	return 0;
 }
 

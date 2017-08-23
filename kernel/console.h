@@ -13,7 +13,7 @@ void cprintf(char *fmt, ...);
 void panic(char *fmt, ...) __attribute__((noreturn));
 void console_putc(int c);
 void init_console();
-void console_proc(int data);
+void console_proc(int (*getc)(void));
 
 int console_read(struct inode *ip, char *dst, int len);
 int console_write(struct inode *ip, char *dst, int len);

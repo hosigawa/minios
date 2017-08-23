@@ -1,18 +1,12 @@
 #include "libc.h"
 
-char wd[14];
+char cwd[14];
 char *env = "/bin/";
 
 int getcmd(char *buf, int len)
 {
 	int ret;
-	memset(wd, 0, 14);
-	ret = pwd(wd);
-	if(ret < 0){
-		printf("pwd ret is %d\n", ret);
-		return -1;
-	}
-	printf("[root@%s]$", wd);
+	printf("[root@%s]$", cwd);
 	memset(buf, 0, len);
 	ret = read(stdin, buf, len);
 	if(ret <= 0)
@@ -63,6 +57,13 @@ int main(int argc, char **argv)
 {
 	printf("init sh...\n");
 	chdir("/home");
+	memset(cwd, 0, 14);
+	int ret = pwd(cwd);
+	if(ret < 0){
+		printf("pwd ret is %d\n", ret);
+		return -1;
+	}
+
 	char buf[100];
 	char *sargv[10];
 
@@ -75,6 +76,14 @@ int main(int argc, char **argv)
 				continue;
 			if(chdir(sargv[1]) < 0)
 				printf("-sh: cd: %s: No such file or directory\n", sargv[1]);
+			else {
+				memset(cwd, 0, 14);
+				ret = pwd(cwd);
+				if(ret < 0){
+					printf("pwd ret is %d\n", ret);
+					break;;
+				}
+			}
 			continue;
 		}
 		if(fork() == 0)

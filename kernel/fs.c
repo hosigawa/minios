@@ -128,6 +128,39 @@ void irelese(struct inode *ip)
 {
 	if(--ip->ref < 0)
 		panic("irelese\n");
+	if(ip->ref == 0 && (ip->flags & I_VALID) && ip->de.nlink == 0) {
+		ip->de.type = 0;
+		ip->flags = 0;
+		itrunc(ip);
+		iupdate(ip);
+	}
+}
+
+void itrunc(struct inode *ip)
+{
+	struct block_buf *buf;
+	uint *p;
+	int i;
+	for(i = 0; i < NDIRECT; i++) {
+		if(ip->de.addrs[i]) {
+			bfree(ip->dev, ip->de.addrs[i]);
+			ip->de.addrs[i] = 0;
+		}
+	}
+	if(ip->de.addrs[NDIRECT]) {
+		buf = bread(ip->dev, ip->de.addrs[NDIRECT]);
+		p = (uint *)buf->data;
+		for(i = 0; i < BLOCK_SIZE / sizeof(uint); i++) {
+			if(p[i])
+				bfree(ip->dev, p[i]);
+		}
+		brelse(buf);
+		bfree(ip->dev, ip->de.addrs[NDIRECT]);
+		ip->de.addrs[NDIRECT] = 0;
+	}
+
+	ip->de.size = 0;
+	iupdate(ip);
 }
 
 int readi(struct inode *ip, char *dst, int offset, int num)
@@ -223,6 +256,8 @@ void bfree(int dev, uint n)
 	struct block_buf *buf = bread(dev, BBLOCK(n));
 	int b = n % BPER;
 	int m = 1 << (b % 8);
+	if((buf->data[b/8] & m) == 0)
+		panic("bfree free block\n");
 	buf->data[b/8] &= ~m;
 	bwrite(buf);
 	brelse(buf);
@@ -231,6 +266,7 @@ void bfree(int dev, uint n)
 struct inode *namex(char *path, char *name, bool bparent)
 {
 	struct inode *ip, *next;
+	int off;
 	if(*path == '/')
 		ip = iget(1, 1);
 	else
@@ -246,7 +282,7 @@ struct inode *namex(char *path, char *name, bool bparent)
 		if(bparent && *path == 0) {
 			return ip;
 		}
-		next = dirlookup(ip, name);
+		next = dir_lookup(ip, name, &off);
 		if(!next) {
 			irelese(ip);
 			return NULL;
@@ -272,16 +308,16 @@ struct inode *namep(char *path, char *name)
 	return namex(path, name, true);
 }
 
-struct inode *dirlookup(struct inode *ip, const char *name)
+struct inode *dir_lookup(struct inode *ip, char *name, int *off)
 {
 	if(ip->de.type != T_DIR) {
 		panic("%s is not direct\n", name);
 		return NULL;
 	}
 	struct dirent de;
-	int off = 0;
-	for(; off < ip->de.size; off += sizeof(struct dirent)) {
-		readi(ip, (char *)&de, off, sizeof(struct dirent));
+	*off = 0;
+	for(; *off < ip->de.size; *off += sizeof(struct dirent)) {
+		readi(ip, (char *)&de, *off, sizeof(struct dirent));
 		if(de.inum == 0)
 			continue;
 		if(strcmp(de.name, name) == 0) {

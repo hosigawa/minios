@@ -136,30 +136,65 @@ void init_console()
 	init_kdb();
 }
 
-void console_proc(int data)
-{
+bool udrl = false;
+void proc_udrl(int data) {
 	switch(data) {
-	case '\b': 
-		data = BACKSPACE;
-		input.buf[input.w] = 0;
-		input.w--;
-		console_putc(data);
-		break;
-	case C('D'):
-		cpu.cur_proc->killed = 1;
-		wakeup(&input.r);
-		break;
-	default:
-		data = (data == '\r' ? '\n' : data);
-		if(input.w < INPUT_BUFF) {
-			input.buf[input.w] = data;
-			input.w++;
+		case '\x5b':
+			return;
+		case '\x41':
+			break;
+		case '\x42':
+			break;
+		case '\x43':
+			/*console_putc('\x1b');
+			console_putc('\x5b');
+			console_putc('\x43');*/
+			break;
+		case '\x44':
+			/*console_putc('\x1b');
+			console_putc('\x5b');
+			console_putc('\x44');*/
+			break;
+	}
+	udrl = false;
+}
+
+void console_proc(int (*getc)(void))
+{
+	int data;
+	while((data = getc()) > 0) {
+		if(udrl){
+			proc_udrl(data);
+			continue;
 		}
-		console_putc(data);
-		if(data == '\n'){
-			wakeup(&input.r);
+		switch(data) {
+			case '\x1b':
+				udrl = true;
+				break;
+			case '\b': 
+				if(input.w == 0)
+					break;
+				data = BACKSPACE;
+				input.buf[input.w] = 0;
+				input.w--;
+				console_putc(data);
+				break;
+			case C('D'):
+				cpu.cur_proc->killed = 1;
+				wakeup(&input.r);
+				break;
+			default:
+				data = (data == '\r' ? '\n' : data);
+				if(input.w < INPUT_BUFF) {
+					input.buf[input.w] = data;
+					input.w++;
+				}
+				console_putc(data);
+				if(data == '\n'){
+					wakeup(&input.r);
+				}
+				break;
 		}
-		break;
 	}
 }
 

@@ -35,6 +35,7 @@ APPS =\
 	_ps\
 	_ls\
 	_mkdir\
+	_rm\
 
 .PHONY: all mkobjdir mkfs
 

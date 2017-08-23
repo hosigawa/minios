@@ -82,12 +82,17 @@ void wait_kbc_ready()
 	}
 }
 
-void kbd_proc()
+int kbd_getc()
 {
 	int data = inb(KEY_DATA);
 	if(data & 0x80)
-		return;
+		return 0;
 	data = charcode[0][data];
-	console_proc(data);
+	return data;
+}
+
+void kbd_proc()
+{
+	console_proc(kbd_getc);
 }
 

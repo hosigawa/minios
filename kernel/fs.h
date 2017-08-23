@@ -80,12 +80,13 @@ struct inode *ialloc(int dev, int type);
 struct inode *iget(int dev, int inum);
 struct inode *idup(struct inode *ip);
 void irelese(struct inode *ip);
+void itrunc(struct inode *ip);
 int readi(struct inode *ip, char *dst, int offset, int num);
 int writei(struct inode *ip, char *src, int offset, int num);
 uint bmap(struct inode *ip, int n);
 
 void load_inode(struct inode *ip);
-struct inode *dirlookup(struct inode *ip, const char *name);
+struct inode *dir_lookup(struct inode *ip, char *name, int *off);
 struct inode *namex(char *path, char *name, bool bparent);
 struct inode *namei(char *path);
 struct inode *namep(char *path, char *name);

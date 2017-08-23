@@ -37,6 +37,7 @@ int sys_fstat();
 int sys_pwd();
 int sys_mkdir();
 int sys_chdir();
+int sys_unlink();
 int sys_ps();
 
 #endif

@@ -17,6 +17,7 @@ int (*syscalls[])(void) = {
 	[SYS_pwd] = sys_pwd,
 	[SYS_mkdir] = sys_mkdir,
 	[SYS_chdir] = sys_chdir,
+	[SYS_unlink] = sys_unlink,
 	[SYS_ps] = sys_ps,
 };
 
@@ -172,7 +173,8 @@ int sys_fstat()
 int sys_pwd()
 {
 	char *wd = (char *)get_arg_uint(0);
-	struct inode *dp = dirlookup(cpu.cur_proc->cwd, "..");
+	int off;
+	struct inode *dp = dir_lookup(cpu.cur_proc->cwd, "..", &off);
 	load_inode(dp);
 	if(!dp)
 		return -1;
@@ -182,7 +184,7 @@ int sys_pwd()
 		return 0;
 	}
 	struct dirent de;
-	int off = 0;
+	off = 0;
 	while(readi(dp, (char *)&de, off, sizeof(de)) == sizeof(de)) {
 		if(de.inum == cpu.cur_proc->cwd->inum && strcmp(de.name, ".") < 0 && strcmp(de.name, "..") < 0) {
 			memmove(wd, de.name, strlen(de.name)+1);
@@ -215,5 +217,11 @@ int sys_chdir()
 	irelese(cpu.cur_proc->cwd);
 	cpu.cur_proc->cwd = dp;
 	return 0;
+}
+
+int sys_unlink()
+{
+	char *path = (char *)get_arg_uint(0);
+	return file_unlink(path);
 }
 

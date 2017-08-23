@@ -18,6 +18,7 @@
 #define SYS_pwd 12
 #define SYS_mkdir 13
 #define SYS_chdir 14
+#define SYS_unlink 15
 
 #endif
 

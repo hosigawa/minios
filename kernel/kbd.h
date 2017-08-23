@@ -23,6 +23,7 @@
 
 void init_kdb();
 void wait_kbc_ready();
+int kbd_getc();
 void kbd_proc();
 
 #endif

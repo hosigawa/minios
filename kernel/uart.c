@@ -43,8 +43,8 @@ void uart_proc()
 {
 	if(!buart)
 		return;
-	int data = uart_getc();
-	console_proc(data);
+	//int data = uart_getc();
+	console_proc(uart_getc);
 }
 
 int uart_getc()
