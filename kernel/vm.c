@@ -15,8 +15,8 @@ struct kernel_map kmap[] = {
 
 void init_gdt() 
 {
-	gdt[SEG_KCODE] = SEG(STA_X|STA_R, 0, 0xffffffff, 0);
-	gdt[SEG_KDATA] = SEG(STA_W, 0, 0xffffffff, 0);
+	gdt[SEG_KCODE] = SEG(STA_X|STA_R, 0, 0xffffffff, DPL_KERN);
+	gdt[SEG_KDATA] = SEG(STA_W, 0, 0xffffffff, DPL_KERN);
 	gdt[SEG_UCODE] = SEG(STA_X|STA_R, 0, 0xffffffff, DPL_USER);
 	gdt[SEG_UDATA] = SEG(STA_W, 0, 0xffffffff, DPL_USER);
 
@@ -179,7 +179,7 @@ int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz)
 			}
 		}
 	}
-	return newsz;
+	return (int)new_addr;
 }
 
 int load_uvm(pde_t *pdir, struct inode *ip, char *va, int off, int len)

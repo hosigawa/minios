@@ -18,6 +18,7 @@ int (*syscalls[])(void) = {
 	[SYS_mkdir] = sys_mkdir,
 	[SYS_chdir] = sys_chdir,
 	[SYS_unlink] = sys_unlink,
+	[SYS_sbrk] = sys_sbrk,
 	[SYS_ps] = sys_ps,
 };
 
@@ -74,6 +75,7 @@ int sys_wait()
 
 int sys_ps()
 {
+	return size_of_free_memory();
 	struct proc_info *pi = (struct proc_info *)get_arg_uint(0);
 	int size = get_arg_int(1);
 	
@@ -223,5 +225,18 @@ int sys_unlink()
 {
 	char *path = (char *)get_arg_uint(0);
 	return file_unlink(path);
+}
+
+int sys_sbrk()
+{
+	int addsz = get_arg_int(0);
+	if(abs(addsz) % PG_SIZE)
+		return -1;
+	int addr = cpu.cur_proc->vsz;
+	int ret = resize_uvm(cpu.cur_proc->pgdir, addr, addr + addsz);
+	if(ret < 0)
+		return ret;
+	cpu.cur_proc->vsz = ret;
+	return addr;
 }
 

@@ -1,6 +1,9 @@
 #ifndef __MMU_H__
 #define __MMU_H__
 
+#include "param.h"
+
+#define DPL_KERN    0x0     // Kernel DPL
 #define DPL_USER    0x3     // User DPL
 
 // Eflags register
@@ -65,15 +68,10 @@
 
 #define CR4_PSE 0x00000010
 
-#define PG_SIZE 4096
 #define IO_END 0x100000
-//#define PHYSICAL_END 0x7D000000
-#define PHYSICAL_END 0xE000000
 #define KERN_BASE 0x80000000
 #define KERN_LINK 0x80100000
 #define DEV_SPACE 0xFE000000
-
-#define KSTACKSIZE 4096
 
 #define PG_ROUNDUP(sz)  (((sz)+PG_SIZE-1) & ~(PG_SIZE-1))
 #define PG_ROUNDDOWN(a) ((char*)((((unsigned int)(a)) & ~(PG_SIZE-1))))

@@ -205,8 +205,8 @@ int exec(char *path, char **argv)
 	}
 	irelese(ip);
 	size = PG_ROUNDUP(size);
-	size = resize_uvm(pdir, size, size + (USER_STACK + 1) * PG_SIZE);
-	clear_pte(pdir, (char *)(size - (USER_STACK + 1) * PG_SIZE));
+	size = resize_uvm(pdir, size, size + USTACKSIZE + PG_SIZE);
+	clear_pte(pdir, (char *)(size - (USTACKSIZE + PG_SIZE)));
 
 	uint sp = size;
 	uint ustack[10];
@@ -226,7 +226,7 @@ int exec(char *path, char **argv)
 
 	sp -= (argc * 4 + 8);
 	copy_out(pdir, (char *)sp, (char *)ustack, argc * 4 + 8);
-	
+
 	pde_t *old = cpu.cur_proc->pgdir;
 	cpu.cur_proc->pgdir = pdir;
 	cpu.cur_proc->vsz = size;

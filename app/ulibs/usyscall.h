@@ -41,6 +41,7 @@ int ps(struct proc_info *pi, int len);
 int mkdir(char *path);
 int chdir(char *path);
 int unlink(char *path);
+int sbrk(int sz);
 int pwd(char *wd);
 
 #endif

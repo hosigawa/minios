@@ -19,6 +19,7 @@
 #define SYS_mkdir 13
 #define SYS_chdir 14
 #define SYS_unlink 15
+#define SYS_sbrk 16
 
 #endif
 

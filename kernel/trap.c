@@ -35,7 +35,7 @@ void trap(struct trap_frame *tf)
 			uart_proc();
 			break;
 		default:
-			if(!cpu.cur_proc || (tf->cs & 3) == 0)
+			if(!cpu.cur_proc || (tf->cs & 3) == DPL_KERN)
 				panic("system trap occurd, trapno:%d; errno:%d\n", tf->trapno, tf->errno);
 			
 			printf("pid:%d abort, trapno:%d, errno:%d, eip:%p\n", cpu.cur_proc->pid, tf->trapno, tf->errno, tf->eip);

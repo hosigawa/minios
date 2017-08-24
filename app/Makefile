@@ -40,6 +40,7 @@ APPS =\
 	_ls\
 	_mkdir\
 	_rm\
+	_test\
 
 .PHONY: all mkobjdir mkfs
 

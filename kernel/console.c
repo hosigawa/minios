@@ -179,6 +179,7 @@ void console_proc(int (*getc)(void))
 				input.w--;
 				console_putc(data);
 				break;
+			case C('C'):
 			case C('D'):
 				cpu.cur_proc->killed = 1;
 				wakeup(&input.r);

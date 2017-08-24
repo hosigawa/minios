@@ -1,6 +1,7 @@
 #ifndef __LIBC_H__
 #define __LIBC_H__
 
+#define abs(x) ((x) > 0 ? (x) : -(x))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
