@@ -7,11 +7,12 @@ static struct malloc_header *head = NULL;
 
 static void check_head()
 {
-	int ret;
+	printf("head's size %d\n", head->size);
+	int ret = 0;
 	if(!head || head->used == 1)
 		return;
 	if((head->size + HEAD_SZ) % PG_SIZE == 0) {
-		ret = sbrk(head->size + HEAD_SZ);
+		ret = sbrk(-(head->size + HEAD_SZ));
 		head = head->prev;
 	}
 	else {
@@ -63,7 +64,7 @@ void *malloc(int sz)
 	np->next = p->next;
 	if(np->next)
 		np->next->prev = np;
-	p->size = sz;
+	p->size = sz - HEAD_SZ;
 	p->used = 1;
 	p->next = np;
 	if(p == head)

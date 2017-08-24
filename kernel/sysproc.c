@@ -237,6 +237,7 @@ int sys_sbrk()
 	if(ret < 0)
 		return ret;
 	cpu.cur_proc->vsz = ret;
+	swtch_uvm(cpu.cur_proc);
 	return addr;
 }
 

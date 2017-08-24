@@ -29,7 +29,6 @@ void mem_free(void *p)
     	panic("mem_free error: %p\n", p);
 	struct mem_header *header = (struct mem_header *)p;
 	header->next = free_list;
-	printf("free\n");
 	free_list = header;
 }
 
