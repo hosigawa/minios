@@ -40,7 +40,7 @@ APPS =\
 	_ls\
 	_mkdir\
 	_rm\
-	_test\
+	_malloc_test\
 
 .PHONY: all mkobjdir mkfs
 
@@ -59,7 +59,7 @@ $(OBJDIR)%.o: %.S
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
 
 _%: $(OBJDIR)src/%.o $(LIB_C_OBJS) $(LIB_ASM_OBJS) $(COM_LIBS)
-	$(LD) $(LDFLAGS) -N -e _start -Ttext 0 -o $@ $^
+	$(LD) $(LDFLAGS) -N -e _start -Ttext 0x1000 -o $@ $^
 
 $(COM_DIR)%.o: ../libs/%.c
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<

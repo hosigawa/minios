@@ -31,7 +31,7 @@ struct proc {
 	char name[PROC_NM_SZ];
 	int killed;
 	uint kstack;
-	uint vsz;
+	uint vend;
 	struct trap_frame *tf;
 	struct context *context;
 	int stat;

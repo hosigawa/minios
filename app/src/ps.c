@@ -13,8 +13,6 @@ char *STATUS[] = {
 
 int main()
 {
-	printf("sys mem is %d\n", ps(NULL, 1));
-	return 0;
 	memset(pi, 0, sizeof(struct proc_info) * 64);
 	ps(pi, 10);
 	int i = 0;

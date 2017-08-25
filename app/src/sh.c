@@ -46,9 +46,11 @@ int run_cmd(char **argv)
 		printf("-sh: %s: is a directory\n", argv[0]);
 		exit();
 	}
-	memmove(real, env, strlen(env));
-	memmove(real+strlen(env), argv[0], strlen(argv[0])+1);
-	exec(real, argv);
+	if(argv[0][0] != '/'){
+		memmove(real, env, strlen(env));
+		memmove(real+strlen(env), argv[0], strlen(argv[0])+1);
+		exec(real, argv);
+	}
 	printf("-sh: %s: command not found\n", argv[0]);
 	exit();
 }

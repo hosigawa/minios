@@ -14,7 +14,8 @@ static void check_head()
 	if((head->size + HEAD_SZ) % PG_SIZE == 0) {
 		tmp = head;
 		head = head->prev;
-		head->next = NULL;
+		if(head)
+			head->next = NULL;
 		ret = sbrk(-(tmp->size + HEAD_SZ));
 	}
 	else {
@@ -89,11 +90,11 @@ void free(void *data)
 		tmp = tmp->prev;
 	}
 	if(!exist) {
-		printf("free not exist\n");
+		printf("free not exist: %p\n", data);
 		exit();
 	}
-	if(p->used != 1){
-		printf("free error\n");
+	if(p->used == 0){
+		printf("double free: %p\n", data);
 		exit();
 	}
 	p->used = 0;

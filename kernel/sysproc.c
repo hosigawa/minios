@@ -75,7 +75,6 @@ int sys_wait()
 
 int sys_ps()
 {
-	return size_of_free_memory();
 	struct proc_info *pi = (struct proc_info *)get_arg_uint(0);
 	int size = get_arg_int(1);
 	
@@ -87,7 +86,7 @@ int sys_ps()
 		if(p->stat != UNUSED) {
 			pi[j].pid = p->pid;
 			memmove(pi[j].name, p->name, PROC_NM_SZ);
-			pi[j].vsz = p->vsz;
+			pi[j].vsz = p->vend - USER_LINK;
 			pi[j].stat = p->stat;
 			pi[j].ppid = p->parent ? p->parent->pid : 0;
 
@@ -232,11 +231,11 @@ int sys_sbrk()
 	int addsz = get_arg_int(0);
 	if(abs(addsz) % PG_SIZE)
 		return -1;
-	int addr = cpu.cur_proc->vsz;
+	int addr = cpu.cur_proc->vend;
 	int ret = resize_uvm(cpu.cur_proc->pgdir, addr, addr + addsz);
 	if(ret < 0)
 		return ret;
-	cpu.cur_proc->vsz = ret;
+	cpu.cur_proc->vend = ret;
 	swtch_uvm(cpu.cur_proc);
 	return addr;
 }

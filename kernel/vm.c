@@ -103,6 +103,8 @@ void swtch_uvm(struct proc *p)
 
 int init_uvm(pde_t *pdir, char *start, int size)
 {
+	if(size > PG_SIZE)
+		panic("init_uvm: binary size is too big\n");
 	char *pg = mem_alloc();
 	memset(pg, 0, PG_SIZE);
 	map_page(pdir, 0, V2P(pg), PG_SIZE, PTE_W|PTE_U);
@@ -117,13 +119,13 @@ pde_t *cp_uvm(pde_t *pgdir, int mem_size)
 	pde_t *new_pg = set_kvm();
 	if(!new_pg)
 		return NULL;
-	uint i = 0;
+	uint i = USER_LINK;
 	for(; i < (uint)mem_size; i += PG_SIZE) {
 		pte_t *pte = get_pte(pgdir, (char *)i, false);
 		if(!pte) 
-			panic("cp_uvm pde not exist\n");
+			panic("cp_uvm pde not exist, va:%p\n", i);
 		if(!(*pte & PTE_P))
-			panic("cp_uvm pte not exist");
+			panic("cp_uvm pte not exist, va:%p\n", i);
 		new_mem = mem_alloc();
 		if(!new_mem) {
 			panic("free uvm\n");
@@ -151,6 +153,8 @@ void free_uvm(pde_t *pgdir)
 
 int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz)
 {
+	if(oldsz < USER_LINK)
+		panic("resize_uvm: oldsz < USER_LINK\n");
 	if(newsz > KERN_BASE)
 		return -1;
 	char *i = 0;
@@ -175,7 +179,10 @@ int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz)
 				*pte = 0;
 			}
 			else {
-				break;
+				if(i < (char *)USER_LINK)
+					continue;
+				else
+					break;
 			}
 		}
 	}

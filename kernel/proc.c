@@ -85,7 +85,7 @@ void user_init()
 	if(!p)
 		panic("user_init error\n");
 	p->pgdir = set_kvm();
-	p->vsz = PG_SIZE;
+	p->vend = PG_SIZE;
 	init_uvm(p->pgdir, _binary__obj_initcode_start, (int)_binary__obj_initcode_size);
 	
 	memset(p->tf, 0, sizeof(*p->tf));
@@ -110,7 +110,7 @@ int fork()
 	struct proc *p = alloc_proc();
 	if(!p)
 		return -1;
-	p->pgdir = cp_uvm(cpu.cur_proc->pgdir, cpu.cur_proc->vsz);
+	p->pgdir = cp_uvm(cpu.cur_proc->pgdir, cpu.cur_proc->vend);
 	if(!p->pgdir) {
 		p->stat = UNUSED;
 		return -1;
@@ -122,7 +122,7 @@ int fork()
 	*p->tf = *cpu.cur_proc->tf;
 	p->tf->eax = 0;
 	p->parent = cpu.cur_proc;
-	p->vsz = cpu.cur_proc->vsz;
+	p->vend = cpu.cur_proc->vend;
 	p->cwd = idup(cpu.cur_proc->cwd);
 	p->stat = READY;
 
@@ -192,7 +192,7 @@ int exec(char *path, char **argv)
 		panic("exec set_kvm\n");
 
 	struct proghdr ph;
-	uint size = 0;
+	uint size = USER_LINK;
 	uint off = elf.phoff;
 	int num = 0;
 	while(num++ < elf.phnum) {
@@ -229,7 +229,7 @@ int exec(char *path, char **argv)
 
 	pde_t *old = cpu.cur_proc->pgdir;
 	cpu.cur_proc->pgdir = pdir;
-	cpu.cur_proc->vsz = size;
+	cpu.cur_proc->vend = size;
 	cpu.cur_proc->tf->esp = sp;
 	cpu.cur_proc->tf->eip = elf.entry;
 	memset(cpu.cur_proc->name, 0, PROC_NM_SZ);
