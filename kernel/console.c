@@ -8,9 +8,14 @@ struct _input {
 	char buf[INPUT_BUFF];
 }input;
 
+static void console_cputc(char *dst, int data)
+{
+	console_putc(data);
+}
+
 void cprintf(char *fmt, ...) {
 	uint *argp = (uint*)(&fmt + 1);
-	cprintfarg(fmt, argp, console_putc);
+	vprintf(fmt, argp, NULL, console_cputc);
 }
 
 void panic(char *fmt, ...)
@@ -18,7 +23,7 @@ void panic(char *fmt, ...)
 	cli();
 	uint *argp = (uint*)(&fmt + 1);
 	cprintf("MINIOS PANIC: ");
-	cprintfarg(fmt, argp, console_putc);
+	vprintf(fmt, argp, NULL, console_cputc);
 	for(;;);
 }
 

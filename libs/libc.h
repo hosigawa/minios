@@ -1,7 +1,7 @@
 #ifndef __LIBC_H__
 #define __LIBC_H__
 
-#include "type.h"
+#include "../kernel/type.h"
 
 #define abs(x) ((x) > 0 ? (x) : -(x))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
@@ -13,8 +13,9 @@ int strcmp(const char *dst, const char *src);
 int strncmp(const char *dst, const char *src, int len);
 int strlen(char *src);
 int sprintf(char *dst, char *fmt, ...);
-void vsprintf(char *dst, char *fmt, uint *argp);
-void vsprintfint(char *dst, int base, bool sign);
+typedef void (*cputc)(char *dst, int data);
+void vprintf(char *fmt, uint *argp, char *dst, cputc putc);
+char *vprintfint(int data, int base, bool sign, char *dst, cputc putc);
 
 #endif
 

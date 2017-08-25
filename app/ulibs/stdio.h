@@ -9,7 +9,6 @@
 #define stderr 2
 
 void printf(char *fmt, ...);
-void stdout_putc(int c);
 
 #endif
 

@@ -46,14 +46,14 @@ int strlen(char *src)
 	return len;
 }
 
-void vsprintf(char *dst, char *fmt, uint *argp)
+void vprintf(char *fmt, uint *argp, char *dst, cputc putc)
 {
 	int c;
 	char *s;
 	int i = 0;
 	for(;(c = fmt[i]&0xff) != 0; i++) {
 		if(c != '%'){
-			dst++ = c;
+			putc(dst++, c);
 			continue;
 		}
 		c = fmt[++i]&0xff;
@@ -65,28 +65,28 @@ void vsprintf(char *dst, char *fmt, uint *argp)
 					s= "(null)";
 				}
 				for(; *s != 0; s++) {
-					dst++ = *s;
+					putc(dst++, *s);
 				}
 			break;
 			case 'd':
-				dst = cprintfint(dst, *argp++, 10, true);
+				dst = vprintfint(*argp++, 10, true, dst, putc);
 			break;
 			case 'x':
 			case 'p':
-				dst = cprintfint(dst, *argp++, 16, false);
+				dst = vprintfint(*argp++, 16, false, dst, putc);
 			break;
 			case '%':
-				dst++ = '%';
+				putc(dst++, '%');
 			break;
 			default:
-				dst++ = '%';
-				dst++ = c;
+				putc(dst++, '%');
+				putc(dst++, c);
 			break;
 		}
 	}
 }
 
-char *vsprintfint(char *dst, int data, int base, bool sign) 
+char *vprintfint(int data, int base, bool sign, char *dst, cputc putc) 
 {
 	static char digitals[] = "0123456789ABCDEF";
 	char buf[32] = {0};
@@ -110,14 +110,19 @@ char *vsprintfint(char *dst, int data, int base, bool sign)
 		buf[i++] = '-';
 
 	while(--i >= 0)
-		dst++ = buf[i];
+		putc(dst++, buf[i]);
 	return dst;
+}
+
+static void sprintf_putc(char *dst, int data)
+{
+	*dst = data;
 }
 
 int sprintf(char *dst, char *fmt, ...)
 {
 	uint *argp = (uint*)(&fmt + 1);
-	vsprintf(dst, fmt, argp);
+	vprintf(fmt, argp, dst, sprintf_putc);
 	return 0;
 }
 

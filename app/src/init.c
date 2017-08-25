@@ -37,6 +37,9 @@ int main(int argc, char **argv)
 			printf("exec sh failre\n");
 			return 0;
 		}
+		memset(name, 0, 64);
+		sprintf(name, "/proc/%d", pid);
+		mknod(name, 2, pid);
 		while((wtpid = wait()) > 0) {
 			if(wtpid == pid)
 				break;
