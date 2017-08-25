@@ -3,10 +3,11 @@
 
 #include "fs.h"
 
-#define MAX_DEV 10
+#define MAX_DEV 100
 #define NFILE 1024
 
 #define CONSOLE 1
+#define PROCINFO 2
 
 #define FD_NONE 0
 #define FD_PIPE 1

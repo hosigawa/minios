@@ -111,6 +111,7 @@ int sys_close()
 	struct file *f = get_file(fd);
 	if(!f)
 		return -1;
+	cpu.cur_proc->ofile[fd] = NULL;
 	return file_close(f);
 }
 
@@ -164,7 +165,7 @@ int sys_fstat()
 	struct file *f = get_file(fd);
 	if(!f)
 		return -1;
-	load_inode(f->ip);
+	read_inode(f->ip);
 	fs->type = f->ip->de.type;
 	fs->nlink = f->ip->de.nlink;
 	fs->size = f->ip->de.size;
@@ -176,7 +177,7 @@ int sys_pwd()
 	char *wd = (char *)get_arg_uint(0);
 	int off;
 	struct inode *dp = dir_lookup(cpu.cur_proc->cwd, "..", &off);
-	load_inode(dp);
+	read_inode(dp);
 	if(!dp)
 		return -1;
 	if(dp->inum == cpu.cur_proc->cwd->inum) {
@@ -210,7 +211,7 @@ int sys_chdir()
 	struct inode *dp = namei(path);
 	if(!dp)
 		return -1;
-	load_inode(dp);
+	read_inode(dp);
 	if(dp->de.type != T_DIR) {
 		irelese(dp);
 		return -2;

@@ -8,77 +8,9 @@ struct _input {
 	char buf[INPUT_BUFF];
 }input;
 
-void cprintfint(int data, int base, bool sign) 
-{
-	static char digitals[] = "0123456789ABCDEF";
-	char buf[32] = {0};
-
-	uint abs_data = 0;
-	if(sign && (sign = data < 0))
-		abs_data = -data;
-	else
-		abs_data = data;
-
-	int i = 0;
-	do {
-		buf[i++] = digitals[abs_data % base];
-	}while((abs_data /= base) != 0);
-
-	if(base == 16) {
-		buf[i++] = 'x';
-		buf[i++] = '0';
-	}
-	if(sign)
-		buf[i++] = '-';
-
-	while(--i >= 0)
-		console_putc(buf[i]);
-}
-
-void cprintfarg(char *fmt, uint *argp) 
-{
-	int c;
-	//uint *argp;
-	char *s;
-	int i = 0;
-	for(;(c = fmt[i]&0xff) != 0; i++) {
-		if(c != '%'){
-			console_putc(c);
-			continue;
-		}
-		c = fmt[++i]&0xff;
-		if(c == 0)
-			break;
-		switch(c) {
-			case 's':
-				if((s = (char *)*argp++) == 0){
-					s= "(null)";
-				}
-				for(; *s != 0; s++) {
-					console_putc(*s);
-				}
-			break;
-			case 'd':
-				cprintfint(*argp++, 10, true);
-			break;
-			case 'x':
-			case 'p':
-				cprintfint(*argp++, 16, false);
-			break;
-			case '%':
-				console_putc('%');
-			break;
-			default:
-				console_putc('%');
-				console_putc(c);
-			break;
-		}
-	}
-}
-
 void cprintf(char *fmt, ...) {
 	uint *argp = (uint*)(&fmt + 1);
-	cprintfarg(fmt, argp);
+	cprintfarg(fmt, argp, console_putc);
 }
 
 void panic(char *fmt, ...)
@@ -86,7 +18,7 @@ void panic(char *fmt, ...)
 	cli();
 	uint *argp = (uint*)(&fmt + 1);
 	cprintf("MINIOS PANIC: ");
-	cprintfarg(fmt, argp);
+	cprintfarg(fmt, argp, console_putc);
 	for(;;);
 }
 
@@ -131,7 +63,6 @@ int console_write(struct inode *ip, char *src, int len)
 
 void init_console()
 {
-	register_devrw(CONSOLE, console_read, console_write);
 	enable_pic(IRQ_KBD);
 	init_kdb();
 }

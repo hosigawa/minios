@@ -26,6 +26,11 @@ struct file_stat {
   	uint size;            // Size of file (bytes)
 };
 
+#define O_RDONLY  0x000
+#define O_WRONLY  0x001
+#define O_RDWR    0x002
+#define O_CREATE  0x200
+
 int fork();
 int exec(char *path, char **argv);
 int exit() __attribute__((noreturn));

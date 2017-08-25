@@ -174,7 +174,7 @@ int exec(char *path, char **argv)
 		return -1;
 	}
 
-	load_inode(ip);
+	read_inode(ip);
 	if(ip->de.type == T_DIR) {
 		irelese(ip);
 		return -2;
@@ -306,6 +306,16 @@ int wait()
 		}
 		sleep(cpu.cur_proc);
 	}
+	return 0;
+}
+
+int proc_read(struct inode *ip, char *dst, int len)
+{
+	return 0;
+}
+
+int proc_write(struct inode *ip, char *dst, int len)
+{
 	return 0;
 }
 

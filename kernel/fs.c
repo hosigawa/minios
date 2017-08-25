@@ -132,7 +132,7 @@ void irelese(struct inode *ip)
 		ip->de.type = 0;
 		ip->flags = 0;
 		itrunc(ip);
-		iupdate(ip);
+		write_inode(ip);
 	}
 }
 
@@ -160,7 +160,7 @@ void itrunc(struct inode *ip)
 	}
 
 	ip->de.size = 0;
-	iupdate(ip);
+	write_inode(ip);
 }
 
 int readi(struct inode *ip, char *dst, int offset, int num)
@@ -194,7 +194,7 @@ int writei(struct inode *ip, char *src, int offset, int num)
 	}
 	if(offset > ip->de.size) {
 		ip->de.size = offset;
-		iupdate(ip);
+		write_inode(ip);
 	}
 	return wt;
 }
@@ -220,7 +220,7 @@ uint bmap(struct inode *ip, int n)
 	return seq;
 }
 
-void load_inode(struct inode *ip)
+void read_inode(struct inode *ip)
 {
 	if(!(ip->flags & I_VALID)) {
 		struct block_buf *buf = bread(ip->dev, IBLOCK(ip->inum));
@@ -273,7 +273,7 @@ struct inode *namex(char *path, char *name, bool bparent)
 		ip = idup(cpu.cur_proc->cwd);
 
 	while((path = path_decode(path, name)) != 0) {
-		load_inode(ip);
+		read_inode(ip);
 		if(ip->de.type != T_DIR){
 			err_info("ip isn't dir\n");
 			irelese(ip);
@@ -371,7 +371,7 @@ struct inode *ialloc(int dev, int type)
 	panic("dinode max\n");
 }
 
-void iupdate(struct inode *ip)
+void write_inode(struct inode *ip)
 {
 	struct dinode *dp;
 	struct block_buf *buf;

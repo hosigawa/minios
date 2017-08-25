@@ -9,9 +9,7 @@
 #define stderr 2
 
 void printf(char *fmt, ...);
-void cputc(int fd, char c);
-void cprintfarg(int fd, char *fmt, uint *argp); 
-void cprintfint(int fd, int data, int base, bool sign);
+void stdout_putc(int c);
 
 #endif
 

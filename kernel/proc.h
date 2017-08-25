@@ -55,5 +55,9 @@ int exec(char *path, char **argv);
 void exit();
 int wait();
 
+
+int proc_read(struct inode *ip, char *dst, int len);
+int proc_write(struct inode *ip, char *dst, int len);
+
 #endif
 

@@ -12,12 +12,19 @@ int register_devrw(int dev, rw_func read, rw_func write)
 	return 0;
 }
 
+void init_dev()
+{
+	register_devrw(CONSOLE, console_read, console_write);
+	register_devrw(PROCINFO, proc_read, proc_write);
+}
+
 void init_file() 
 {
 	int i;
 	for(i = 0; i < NFILE; i++) {
 		file_table[i].ref = 0;
 	}
+	init_dev();
 }
 
 struct file *get_file(int fd)
@@ -32,7 +39,7 @@ struct file *get_file(int fd)
 int file_read(struct file *f, char *dst, int len)
 {
 	int ret;
-	load_inode(f->ip);
+	read_inode(f->ip);
 	if(f->ip->de.type == T_DEV) {
 		return devrw[f->ip->de.major].read(f->ip, dst, len);
 	}
@@ -45,7 +52,7 @@ int file_read(struct file *f, char *dst, int len)
 int file_write(struct file *f, char *src, int len)
 {
 	int ret;
-	load_inode(f->ip);
+	read_inode(f->ip);
 	if(f->ip->de.type == T_DEV) {
 		return devrw[f->ip->de.major].write(f->ip, src, len);
 	}
@@ -98,7 +105,7 @@ struct inode *file_create(char *path, int type, int major, int minor)
 	if(!dp) {
 		return NULL;
 	}
-	load_inode(dp);
+	read_inode(dp);
 	if(dp->de.type != T_DIR) {
 		irelese(dp);
 		return NULL;
@@ -107,7 +114,7 @@ struct inode *file_create(char *path, int type, int major, int minor)
 	ip = dir_lookup(dp, name, &off);
 	if(ip) {
 		irelese(dp);
-		load_inode(ip);
+		read_inode(ip);
 		if(type == T_FILE && ip->de.type == T_FILE)
 			return ip;
 		irelese(ip);
@@ -118,16 +125,16 @@ struct inode *file_create(char *path, int type, int major, int minor)
 	if(!ip)
 		panic("create file alloc inode error\n");
 
-	load_inode(ip);
+	read_inode(ip);
 	ip->de.major = major;
 	ip->de.minor = minor;
 	ip->de.size = 0;
 	ip->de.nlink = 1;
-	iupdate(ip);
+	write_inode(ip);
 
 	if(type == T_DIR){
 		dp->de.nlink++;
-		iupdate(dp);
+		write_inode(dp);
 		dir_link(ip, ".", ip->inum);
 		dir_link(ip, "..", dp->inum);
 	}
@@ -169,7 +176,7 @@ int file_open(char *path, int mode)
 		if(!ip) {
 			return -1;
 		}
-		load_inode(ip);
+		read_inode(ip);
 		if(ip->de.type == T_DIR && mode > 0) {
 			irelese(ip);
 			return -2;
@@ -220,7 +227,7 @@ int file_unlink(char *path)
 	dp = namep(path, name);
 	if(!dp)
 		return -1;
-	load_inode(dp);
+	read_inode(dp);
 	
 	if(strcmp(name, "..") == 0 || strcmp(name, ".") == 0) {
 		irelese(dp);
@@ -232,7 +239,7 @@ int file_unlink(char *path)
 		irelese(dp);
 		return -3;
 	}
-	load_inode(ip);
+	read_inode(ip);
 
 	if(ip->de.nlink < 1) {
 		irelese(dp);
@@ -251,12 +258,12 @@ int file_unlink(char *path)
 	writei(dp, (char *)&de, off, sizeof(de));
 	if(ip->de.type == T_DIR) {
 		dp->de.nlink--;
-		iupdate(dp);
+		write_inode(dp);
 	}
 	irelese(dp);
 
 	ip->de.nlink--;
-	iupdate(ip);
+	write_inode(ip);
 	irelese(ip);
 
 	return 0;

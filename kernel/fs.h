@@ -85,12 +85,12 @@ int readi(struct inode *ip, char *dst, int offset, int num);
 int writei(struct inode *ip, char *src, int offset, int num);
 uint bmap(struct inode *ip, int n);
 
-void load_inode(struct inode *ip);
+void read_inode(struct inode *ip);
+void write_inode(struct inode *ip);
 struct inode *dir_lookup(struct inode *ip, char *name, int *off);
 struct inode *namex(char *path, char *name, bool bparent);
 struct inode *namei(char *path);
 struct inode *namep(char *path, char *name);
-void iupdate(struct inode *ip);
 void dir_link(struct inode *dp, char *name, int inum);
 
 #endif

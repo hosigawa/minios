@@ -36,7 +36,7 @@ void trap(struct trap_frame *tf)
 			break;
 		default:
 			if(!cpu.cur_proc || (tf->cs & 3) == DPL_KERN)
-				panic("system trap occurd, trapno:%d; errno:%d\n", tf->trapno, tf->errno);
+				panic("system trap occurd, trapno:%d; errno:%d, eip%p\n", tf->trapno, tf->errno, tf->eip);
 			
 			printf("pid:%d abort, trapno:%d, errno:%d, eip:%p\n", cpu.cur_proc->pid, tf->trapno, tf->errno, tf->eip);
 			cpu.cur_proc->killed = 1;
