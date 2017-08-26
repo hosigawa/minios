@@ -13,7 +13,7 @@ static char *STATUS[] = {
 	"ZOMBIE  ",
 };
 
-int procinfo_read(struct inode *ip, char *dst, int len)
+int procinfo_read(struct inode *ip, char *dst, int off, int len)
 {
 	extern struct proc proc_table[];
 	struct proc *p;
@@ -30,26 +30,26 @@ int procinfo_read(struct inode *ip, char *dst, int len)
 	return wd;
 }
 
-int procinfo_write(struct inode *ip, char *dst, int len)
+int procinfo_write(struct inode *ip, char *dst, int off, int len)
 {
 	return 0;
 }
 
-int sysinfo_read(struct inode *ip, char *dst, int len)
+int sysinfo_read(struct inode *ip, char *dst, int off, int len)
 {
 	int wd = 0;
 	wd += sprintf(dst + wd, "Memory Total %d kB\n", PHYSICAL_END / 1024);
 	wd += sprintf(dst + wd, "Memory Free  %d kB\n", size_of_free_memory() / 1024);
 
-	int off, i;
+	int offset, i;
 	struct block_buf *buf;
 	struct dinode *dp;
 	int inodes = 0;
 	extern struct super_block sb;
-	for(off = 0; off < sb.ninodes; off += IPER) {
-		buf = bread(1, IBLOCK(off));
+	for(offset = 0; offset < sb.ninodes; offset += IPER) {
+		buf = bread(1, IBLOCK(offset));
 		for(i = 0; i < IPER; i++) {
-			if(off == 0 && i == 0)
+			if(offset == 0 && i == 0)
 				continue;
 			dp = (struct dinode *)buf->data + i;
 			if(dp->type == 0) {
@@ -63,7 +63,7 @@ int sysinfo_read(struct inode *ip, char *dst, int len)
 	return wd;
 }
 
-int sysinfo_write(struct inode *ip, char *dst, int len)
+int sysinfo_write(struct inode *ip, char *dst, int off, int len)
 {
 	return 0;
 }

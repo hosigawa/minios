@@ -41,10 +41,11 @@ int file_read(struct file *f, char *dst, int len)
 {
 	int ret;
 	read_inode(f->ip);
-	if(f->ip->de.type == T_DEV) {
-		return devrw[f->ip->de.major].read(f->ip, dst, len);
+	if(f->ip->de.type == T_DEV && devrw[f->ip->de.major].read) {
+		ret = devrw[f->ip->de.major].read(f->ip, dst, f->off, len);
 	}
-	ret = readi(f->ip, dst, f->off, len);
+	else
+		ret = readi(f->ip, dst, f->off, len);
 	f->off += ret;
 
 	return ret;
@@ -54,11 +55,11 @@ int file_write(struct file *f, char *src, int len)
 {
 	int ret;
 	read_inode(f->ip);
-	if(f->ip->de.type == T_DEV) {
-		return devrw[f->ip->de.major].write(f->ip, src, len);
+	if(f->ip->de.type == T_DEV && devrw[f->ip->de.major].write) {
+		ret = devrw[f->ip->de.major].write(f->ip, src, f->off, len);
 	}
-	
-	ret = writei(f->ip, src, f->off, len);
+	else
+		ret = writei(f->ip, src, f->off, len);
 	f->off += ret;
 
 	return ret;

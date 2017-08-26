@@ -39,7 +39,7 @@ void console_putc(int c)
 		uart_putc(c);
 }
 
-int console_read(struct inode *ip, char *dst, int len)
+int console_read(struct inode *ip, char *dst, int off, int len)
 {
 	int tar = len;
 	if(input.r == input.w)
@@ -57,7 +57,7 @@ int console_read(struct inode *ip, char *dst, int len)
 	return tar - len;
 }
 
-int console_write(struct inode *ip, char *src, int len)
+int console_write(struct inode *ip, char *src, int off, int len)
 {
 	int i;
 	for(i = 0; i < len; i++) {

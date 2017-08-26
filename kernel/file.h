@@ -26,9 +26,11 @@ struct file {
 	int off;
 };
 
-typedef int (*rw_func)(struct inode *, char *, int);
+typedef int (*open_func)(char *, int);
+typedef int (*rw_func)(struct inode *, char *, int, int);
 
 struct devrw {
+	open_func open;
 	rw_func read;
 	rw_func write; 
 };
