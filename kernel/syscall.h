@@ -5,7 +5,7 @@
 #define T_SYSCALL 64
 #define SYS_ps 127
 #define SYS_fork 1
-#define SYS_exec 2
+#define SYS_execv 2
 #define SYS_exit 3
 #define SYS_wait 4
 #define SYS_open 5

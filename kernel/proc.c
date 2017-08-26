@@ -167,13 +167,26 @@ void wakeup(void *chan)
 	}
 }
 
-int exec(char *path, char **argv)
+int execv(char *path, char *argv[], char *envp[])
 {
 	struct inode *ip = namei(path);
 	if(!ip) {
+		if(*path != '/') {
+			char full_path[64];
+			int envc = 0;
+			while(envp[envc]) {
+				memset(full_path, 0, 64);
+				sprintf(full_path, "%s/%s", envp[envc], path);
+				ip = namei(full_path);
+				if(ip)
+					goto found;
+				envc++;
+			}
+		}
 		return -1;
 	}
 
+found:
 	read_inode(ip);
 	if(ip->de.type == T_DIR) {
 		irelese(ip);
@@ -234,7 +247,7 @@ int exec(char *path, char **argv)
 	cpu.cur_proc->tf->eip = elf.entry;
 	memset(cpu.cur_proc->name, 0, PROC_NM_SZ);
 
-	int i = 0;
+	int i;
 	int str_len = 0, tot_len = 0;
 	for(i = 0; i < argc; i++) {
 		str_len = strlen(argv[i]);

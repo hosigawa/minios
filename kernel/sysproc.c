@@ -4,7 +4,7 @@ extern struct CPU cpu;
 
 int (*syscalls[])(void) = {
 	[SYS_fork] = sys_fork,
-	[SYS_exec] = sys_exec,
+	[SYS_execv] = sys_execv,
 	[SYS_exit] = sys_exit,
 	[SYS_wait] = sys_wait,
 	[SYS_open] = sys_open,
@@ -55,11 +55,12 @@ int sys_fork()
 	return fork();
 }
 
-int sys_exec()
+int sys_execv()
 {
 	char *path = (char *)get_arg_uint(0);
 	char **argv = (char **)get_arg_uint(1);
-	return exec(path, argv);
+	char **envp = (char **)get_arg_uint(2);
+	return execv(path, argv, envp);
 }
 
 int sys_exit()

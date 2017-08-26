@@ -35,6 +35,7 @@ COM_LIBS = $(COM_DIR)libc.o
 
 APPS =\
 	README\
+	sh_profile\
 	_init\
 	_sh\
 	_ps\

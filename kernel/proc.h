@@ -51,7 +51,7 @@ void yield();
 void user_init();
 void sleep(void *chan);
 void wakeup(void *chan);
-int exec(char *path, char **argv);
+int execv(char *path, char *argv[], char *envp[]);
 void exit();
 int wait();
 

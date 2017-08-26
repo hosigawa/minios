@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	read(fd, memblock, stat.size);
-	printf("%s\n", memblock);
+	printf("%s", memblock);
 	free(memblock);
 	close(fd);
 	return 0;

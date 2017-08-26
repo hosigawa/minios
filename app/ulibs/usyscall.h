@@ -32,7 +32,7 @@ struct file_stat {
 #define O_CREATE  0x200
 
 int fork();
-int exec(char *path, char **argv);
+int execv(char *path, char **argv, char **envp);
 int exit() __attribute__((noreturn));
 int wait();
 int open(char *path, int mode);

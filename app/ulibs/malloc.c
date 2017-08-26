@@ -19,6 +19,8 @@ static void check_head()
 		ret = sbrk(-(tmp->size + HEAD_SZ));
 	}
 	else {
+		if(PG_ROUNDDOWN(head->size) <= 0)
+			return;
 		ret = sbrk(-(int)PG_ROUNDDOWN(head->size));
 		head->size -= (int)PG_ROUNDDOWN(head->size);
 	}
@@ -30,6 +32,8 @@ static void check_head()
 
 void *malloc(int sz)
 {
+	if(sz < 0)
+		return NULL;
 	sz += HEAD_SZ;
 	struct malloc_header *p = head;
 	while(p) {

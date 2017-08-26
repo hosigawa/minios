@@ -2,10 +2,11 @@
 
 .globl start
 start:
+	pushl $envp
 	pushl $argv
 	pushl $init
 	pushl $0
-	movl $SYS_exec, %eax
+	movl $SYS_execv, %eax
 	int $T_SYSCALL
 
 exit:
@@ -14,8 +15,14 @@ exit:
 
 init:
 	.string "/bin/init\0"
+env:
+	.string "/bin\0"
 
 argv:
 	.long init
+	.long 0
+
+envp:
+	.long env
 	.long 0
 

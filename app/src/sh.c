@@ -1,12 +1,12 @@
 #include "stdio.h"
+#include "unistd.h"
 
 char cwd[14];
-char *env = "/bin/";
 
 int getcmd(char *buf, int len)
 {
 	int ret;
-	printf("[root@%s]$", cwd);
+	printf("[root@localhost %s]$", cwd);
 	memset(buf, 0, len);
 	ret = read(stdin, buf, len);
 	if(ret <= 0)
@@ -42,20 +42,16 @@ int get_token(char **argv, char *buf)
 int run_cmd(char **argv)
 {
 	int ret = 0;
-	char real[64] = {0};
-	if(exec(argv[0], argv) == -2) {
-		printf("-sh: %s: is a directory\n", argv[0]);
-		exit();
-	}
-	if(argv[0][0] != '/'){
-		memmove(real, env, strlen(env));
-		memmove(real+strlen(env), argv[0], strlen(argv[0])+1);
-		ret = exec(real, argv);
-	}
-	if(ret == -1)
+	ret = exec(argv[0], argv);
+	if(ret == -1) {
 		printf("-sh: %s: command not found\n", argv[0]);
-	else if(ret == -3)
+	}
+	else if(ret == -2) {
+		printf("-sh: %s: is a directory\n", argv[0]);
+	}
+	else if(ret == -3) {
 		printf("-sh: %s: cannot execute binary file\n", argv[0]);
+	}
 	exit();
 }
 

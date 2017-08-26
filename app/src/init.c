@@ -15,11 +15,12 @@ int main(int argc, char **argv)
 	}
 
 	char *sh_argv[] = {"/bin/sh", 0};
+	char *sh_env[] = {"/bin", 0};
 	int pid, wtpid;
 	while(1) {
 		pid = fork();
 		if(pid == 0) {
-			exec(sh_argv[0], sh_argv);
+			execv(sh_argv[0], sh_argv, sh_env);
 			printf("exec sh failre\n");
 			return 0;
 		}

@@ -8,7 +8,7 @@
 		ret;
 
 SYS_CALL(fork)
-SYS_CALL(exec)
+SYS_CALL(execv)
 SYS_CALL(exit)
 SYS_CALL(wait)
 SYS_CALL(open)
