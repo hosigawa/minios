@@ -14,13 +14,13 @@ void init_timer()
 
 void timer_proc()
 {
-	tick++;
-	if(tick == 5) {
+	wakeup(timer_proc);
+
+	if(tick++ == 5) {
 		tick = 0;
 		if(cpu.cur_proc && cpu.cur_proc->stat == RUNNING) {
 			yield();
 		}
-		tick = 0;
 	}
 }
 

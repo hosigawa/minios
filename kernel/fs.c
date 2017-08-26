@@ -96,8 +96,8 @@ void init_fs(int dev)
 	extern bool disk1;
 	if(disk1) {
 		readsb(dev, &sb);
-		sys_info("load disk 1; size:%d, nblocks:%d, ninodes:%d, nlog:%d, logstart:%d, inodestart:%d, bmapstart:%d\n",
-				sb.size, sb.nblocks, sb.ninodes, sb.nlog, sb.logstart, sb.inodestart, sb.bmapstart);
+		//sys_info("load disk 1; size:%d, nblocks:%d, ninodes:%d, nlog:%d, logstart:%d, inodestart:%d, bmapstart:%d\n",
+		//		sb.size, sb.nblocks, sb.ninodes, sb.nlog, sb.logstart, sb.inodestart, sb.bmapstart);
 	}
 }
 
@@ -352,19 +352,23 @@ char *path_decode(char *path, char *name)
 
 struct inode *ialloc(int dev, int type)
 {
-	int i;
+	int off, i;
 	struct block_buf *buf;
 	struct dinode *dp;
 
-	for(i = 1; i < sb.ninodes; i++) {
-		buf = bread(dev, IBLOCK(i));
-		dp = (struct dinode *)buf->data + i % IPER;
-		if(dp->type == 0) {
-			memset(dp, 0, sizeof(*dp));
-			dp->type = type;
-			bwrite(buf);
-			brelse(buf);
-			return iget(dev, i);
+	for(off = 0; off < sb.ninodes; off += IPER) {
+		buf = bread(dev, IBLOCK(off));
+		for(i = 0; i < IPER; i++) {
+			if(off == 0 && i == 0)
+				continue;
+			dp = (struct dinode *)buf->data + i;
+			if(dp->type == 0) {
+				memset(dp, 0, sizeof(*dp));
+				dp->type = type;
+				bwrite(buf);
+				brelse(buf);
+				return iget(dev, off + i);
+			}
 		}
 		brelse(buf);
 	}

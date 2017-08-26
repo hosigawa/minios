@@ -13,10 +13,12 @@ int procinfo_read(struct inode *ip, char *dst, int len)
 	for(; i < MAX_PROC; i++) {
 		p = proc_table + i;
 		if(p->stat != UNUSED) {
-			wd += sprintf(dst + wd, "%d %s %d %d %d\n", p->pid, p->name, p->vend - USER_LINK, p->stat, p->parent ? p->parent->pid : 0);
+			wd += sprintf(dst + wd, "%d %d %d %d %s\n", p->pid, p->parent ? p->parent->pid : 0, p->vend - USER_LINK, p->stat, p->name);
 		}
+		if(wd > 3072)
+			break;
 	}
-	return 0;
+	return wd;
 }
 
 int procinfo_write(struct inode *ip, char *dst, int len)
@@ -27,8 +29,29 @@ int procinfo_write(struct inode *ip, char *dst, int len)
 int sysinfo_read(struct inode *ip, char *dst, int len)
 {
 	int wd = 0;
-	wd += sprintf(dst + wd, "%d\n", size_of_free_memory() / 1024);
-	return 0;
+	wd += sprintf(dst + wd, "Memory Total %d kB\n", PHYSICAL_END / 1024);
+	wd += sprintf(dst + wd, "Memory Free  %d kB\n", size_of_free_memory() / 1024);
+
+	int off, i;
+	struct block_buf *buf;
+	struct dinode *dp;
+	int inodes = 0;
+	extern struct super_block sb;
+	for(off = 0; off < sb.ninodes; off += IPER) {
+		buf = bread(1, IBLOCK(off));
+		for(i = 0; i < IPER; i++) {
+			if(off == 0 && i == 0)
+				continue;
+			dp = (struct dinode *)buf->data + i;
+			if(dp->type == 0) {
+				inodes++;
+			}
+		}
+		brelse(buf);
+	}
+	wd += sprintf(dst + wd, "Inode Total %d\n", sb.ninodes);
+	wd += sprintf(dst + wd, "Inode Free  %d\n", inodes);
+	return wd;
 }
 
 int sysinfo_write(struct inode *ip, char *dst, int len)

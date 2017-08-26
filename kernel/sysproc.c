@@ -19,6 +19,7 @@ int (*syscalls[])(void) = {
 	[SYS_chdir] = sys_chdir,
 	[SYS_unlink] = sys_unlink,
 	[SYS_sbrk] = sys_sbrk,
+	[SYS_sleep] = sys_sleep,
 };
 
 int get_arg_int(int n)
@@ -214,5 +215,16 @@ int sys_sbrk()
 	cpu.cur_proc->vend = ret;
 	swtch_uvm(cpu.cur_proc);
 	return addr;
+}
+
+int sys_sleep()
+{
+	int slpms = get_arg_uint(0);
+	int tick = slpms / 10;
+	while(tick) {
+		sleep(timer_proc);
+		tick--;
+	}
+	return 0;
 }
 

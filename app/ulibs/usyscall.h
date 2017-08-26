@@ -39,6 +39,7 @@ int chdir(char *path);
 int unlink(char *path);
 int sbrk(int sz);
 int pwd(char *wd);
+int sleep(int ms);
 
 #endif
 

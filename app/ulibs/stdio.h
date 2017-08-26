@@ -3,6 +3,7 @@
 
 #include "usyscall.h"
 #include "../libs/libc.h"
+#include "malloc.h"
 
 #define stdin 0
 #define stdout 1
