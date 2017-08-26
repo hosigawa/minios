@@ -4,6 +4,15 @@ void init_procfs()
 {
 }
 
+static char *STATUS[] = {
+	"UNUSED  ", 
+	"EMBRYO  ",
+	"READY   ",
+	"RUNNING ",
+	"SLEEPING",
+	"ZOMBIE  ",
+};
+
 int procinfo_read(struct inode *ip, char *dst, int len)
 {
 	extern struct proc proc_table[];
@@ -13,7 +22,7 @@ int procinfo_read(struct inode *ip, char *dst, int len)
 	for(; i < MAX_PROC; i++) {
 		p = proc_table + i;
 		if(p->stat != UNUSED) {
-			wd += sprintf(dst + wd, "%d %d %d %d %s\n", p->pid, p->parent ? p->parent->pid : 0, p->vend - USER_LINK, p->stat, p->name);
+			wd += sprintf(dst + wd, "%4d %4d %5d  %s  %s\n", p->pid, p->parent ? p->parent->pid : 0, (p->vend - USER_LINK) / 1024, STATUS[p->stat], p->name);
 		}
 		if(wd > 3072)
 			break;

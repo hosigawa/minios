@@ -14,8 +14,9 @@ int strncmp(const char *dst, const char *src, int len);
 int strlen(char *src);
 int sprintf(char *dst, char *fmt, ...);
 typedef void (*cputc)(char *dst, int data);
+bool isdigit(char c);
 char *vprintf(char *fmt, uint *argp, char *dst, cputc putc);
-char *vprintfint(int data, int base, bool sign, char *dst, cputc putc);
+char *vprintfint(int data, int base, bool sign, int width, char *dst, cputc putc);
 
 #endif
 

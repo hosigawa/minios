@@ -1,15 +1,6 @@
 #include "stdio.h"
 #include "malloc.h"
 
-char *STATUS[] = {
-	"UNUSED  ", 
-	"EMBRYO  ",
-	"READY   ",
-	"RUNNING ",
-	"SLEEPING",
-	"ZOMBIE  ",
-};
-
 int main()
 {
 	char proc_info[4096];
@@ -20,7 +11,7 @@ int main()
 		return -1;
 	}
 	read(fd, proc_info, 4096);
-	printf("PID PPID VSZ STAT CMD\n");
+	printf(" PID PPID   VSZ    STAT       CMD\n");
 	printf(proc_info);
 	close(fd);
 	return 0;

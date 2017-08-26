@@ -97,4 +97,5 @@ mkobjdir:
 clean:
 	rm -f minios.img
 	rm -rf $(OBJDIR)
+	rm -rf $(COM_DIR)
 

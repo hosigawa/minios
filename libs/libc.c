@@ -46,17 +46,29 @@ int strlen(char *src)
 	return len;
 }
 
+static int skip_atoi(char *fmt, int *i)
+{
+	int sum = 0;
+	while(isdigit(fmt[*i])) {
+		sum = sum * 10 + fmt[(*i)++] - '0';
+	}
+	return sum;
+}
+
 char *vprintf(char *fmt, uint *argp, char *dst, cputc putc)
 {
 	int c;
 	char *s;
 	int i = 0;
+	int width;
 	for(;(c = fmt[i]&0xff) != 0; i++) {
 		if(c != '%'){
 			putc(dst++, c);
 			continue;
 		}
-		c = fmt[++i]&0xff;
+		i++;
+		width = skip_atoi(fmt, &i);
+		c = fmt[i]&0xff;
 		if(c == 0)
 			break;
 		switch(c) {
@@ -69,11 +81,11 @@ char *vprintf(char *fmt, uint *argp, char *dst, cputc putc)
 				}
 			break;
 			case 'd':
-				dst = vprintfint(*argp++, 10, true, dst, putc);
+				dst = vprintfint(*argp++, 10, true, width, dst, putc);
 			break;
 			case 'x':
 			case 'p':
-				dst = vprintfint(*argp++, 16, false, dst, putc);
+				dst = vprintfint(*argp++, 16, false, width, dst, putc);
 			break;
 			case '%':
 				putc(dst++, '%');
@@ -87,10 +99,10 @@ char *vprintf(char *fmt, uint *argp, char *dst, cputc putc)
 	return dst;
 }
 
-char *vprintfint(int data, int base, bool sign, char *dst, cputc putc) 
+char *vprintfint(int data, int base, bool sign, int width, char *dst, cputc putc) 
 {
 	static char digitals[] = "0123456789ABCDEF";
-	char buf[32] = {0};
+	char buf[64] = {0};
 
 	uint abs_data = 0;
 	if(sign && (sign = data < 0))
@@ -101,14 +113,23 @@ char *vprintfint(int data, int base, bool sign, char *dst, cputc putc)
 	int i = 0;
 	do {
 		buf[i++] = digitals[abs_data % base];
+		width--;
 	}while((abs_data /= base) != 0);
 
 	if(base == 16) {
 		buf[i++] = 'x';
 		buf[i++] = '0';
+		width -= 2;
 	}
-	if(sign)
+	if(sign) {
 		buf[i++] = '-';
+		width--;
+	}
+
+	while(width > 0) {
+		buf[i++] = ' ';
+		width--;
+	}
 
 	while(--i >= 0)
 		putc(dst++, buf[i]);
@@ -125,5 +146,12 @@ int sprintf(char *dst, char *fmt, ...)
 	uint *argp = (uint*)(&fmt + 1);
 	char *nd = vprintf(fmt, argp, dst, sprintf_putc);
 	return nd - dst;
+}
+
+bool isdigit(char c)
+{
+	if(c >= '0' && c <= '9')
+		return true;
+	return false;
 }
 
