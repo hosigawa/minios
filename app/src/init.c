@@ -10,23 +10,9 @@ int main(int argc, char **argv)
 	dup(fd);
 	dup(fd);
 
-	int ret = 0;
-	struct dirent de;
-	char name[64];
-	if((fd = open("/proc", 0)) > 0) {
-		while((ret = read(fd, (char *)&de, sizeof(de))) == sizeof(de)) {
-			if(de.inum == 0)
-				continue;
-			memset(name, 0, 64);
-			memmove(name, "/proc/", 6);
-			memmove(name + 6, de.name, strlen(de.name));
-			unlink(name);
-		}
-		unlink("/proc");
-		close(fd);
+	if((fd = open("/proc", 0)) < 0) {
+		mknod("/proc", 2, 1);
 	}
-	mkdir("/proc");
-	mknod("/proc/1", 2, 1);
 
 	char *sh_argv[] = {"/bin/sh", 0};
 	int pid, wtpid;
@@ -37,9 +23,6 @@ int main(int argc, char **argv)
 			printf("exec sh failre\n");
 			return 0;
 		}
-		memset(name, 0, 64);
-		sprintf(name, "/proc/%d", pid);
-		mknod(name, 2, pid);
 		while((wtpid = wait()) > 0) {
 			if(wtpid == pid)
 				break;

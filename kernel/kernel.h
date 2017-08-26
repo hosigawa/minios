@@ -21,6 +21,7 @@
 #include "fs.h"
 #include "file.h"
 #include "elf.h"
+#include "procfs.h"
 
 #define LOG cprintf
 #define sys_info cprintf

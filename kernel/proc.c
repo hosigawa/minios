@@ -182,7 +182,7 @@ int exec(char *path, char **argv)
 	struct elfhdr elf;
 	readi(ip, (char *)&elf, 0, sizeof(struct elfhdr));
 	if(elf.magic != ELF_MAGIC) {
-		err_info("elf magic error: %p\n", elf.magic);
+		//err_info("elf magic error: %p\n", elf.magic);
 		irelese(ip);
 		return -3;
 	}
@@ -306,16 +306,6 @@ int wait()
 		}
 		sleep(cpu.cur_proc);
 	}
-	return 0;
-}
-
-int proc_read(struct inode *ip, char *dst, int len)
-{
-	return 0;
-}
-
-int proc_write(struct inode *ip, char *dst, int len)
-{
 	return 0;
 }
 

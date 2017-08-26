@@ -41,6 +41,7 @@ int get_token(char **argv, char *buf)
 
 int run_cmd(char **argv)
 {
+	int ret = 0;
 	char real[64] = {0};
 	if(exec(argv[0], argv) == -2) {
 		printf("-sh: %s: is a directory\n", argv[0]);
@@ -49,9 +50,12 @@ int run_cmd(char **argv)
 	if(argv[0][0] != '/'){
 		memmove(real, env, strlen(env));
 		memmove(real+strlen(env), argv[0], strlen(argv[0])+1);
-		exec(real, argv);
+		ret = exec(real, argv);
 	}
-	printf("-sh: %s: command not found\n", argv[0]);
+	if(ret == -1)
+		printf("-sh: %s: command not found\n", argv[0]);
+	else if(ret == -3)
+		printf("-sh: %s: cannot execute binary file\n", argv[0]);
 	exit();
 }
 

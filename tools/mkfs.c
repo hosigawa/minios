@@ -134,6 +134,7 @@ main(int argc, char *argv[])
   home = create_dir("home", rootino);
   dev = create_dir("dev", rootino);
 
+  uint target = 0;
   for(i = 2; i < argc; i++){
     assert(index(argv[i], '/') == 0);
 
@@ -146,15 +147,20 @@ main(int argc, char *argv[])
     // The binaries are named _rm, _cat, etc. to keep the
     // build operating system from trying to execute them
     // in place of system binaries like rm and cat.
-    if(argv[i][0] == '_')
+    if(argv[i][0] == '_') {
       ++argv[i];
+	  target = bin;
+	}
+    else {
+	  target = home;
+	}
 
     inum = _ialloc(T_FILE);
 
     bzero(&de, sizeof(de));
     de.inum = xshort(inum);
     strncpy(de.name, argv[i], DIR_NM_SZ);
-    iappend(bin, &de, sizeof(de));
+    iappend(target, &de, sizeof(de));
 
     while((cc = read(fd, buf, sizeof(buf))) > 0)
       iappend(inum, buf, cc);

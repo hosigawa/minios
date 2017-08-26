@@ -34,6 +34,7 @@ COM_DIR = ../libs/.obj/
 COM_LIBS = $(COM_DIR)libc.o
 
 APPS =\
+	README\
 	_init\
 	_sh\
 	_ps\
@@ -41,6 +42,7 @@ APPS =\
 	_mkdir\
 	_rm\
 	_malloc_test\
+	_cat\
 
 .PHONY: all mkobjdir mkfs
 

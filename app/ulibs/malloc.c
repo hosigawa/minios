@@ -42,7 +42,7 @@ void *malloc(int sz)
 		p = (struct malloc_header *)sbrk((int)PG_ROUNDUP(sz));
 		if((int)p < 0) {
 			printf("malloc sbrk error\n");
-			exit();
+			return NULL;
 		}
 		if(head && head->used == 0) {
 			head->size += PG_ROUNDUP(sz);
