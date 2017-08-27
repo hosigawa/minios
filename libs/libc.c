@@ -46,7 +46,7 @@ int strlen(char *src)
 	return len;
 }
 
-void vprintf(char *fmt, uint *argp, char *dst, cputc putc)
+char *vprintf(char *fmt, uint *argp, char *dst, cputc putc)
 {
 	int c;
 	char *s;
@@ -84,6 +84,7 @@ void vprintf(char *fmt, uint *argp, char *dst, cputc putc)
 			break;
 		}
 	}
+	return dst;
 }
 
 char *vprintfint(int data, int base, bool sign, char *dst, cputc putc) 
@@ -122,7 +123,7 @@ static void sprintf_putc(char *dst, int data)
 int sprintf(char *dst, char *fmt, ...)
 {
 	uint *argp = (uint*)(&fmt + 1);
-	vprintf(fmt, argp, dst, sprintf_putc);
-	return 0;
+	char *nd = vprintf(fmt, argp, dst, sprintf_putc);
+	return nd - dst;
 }
 

@@ -15,7 +15,8 @@ int register_devrw(int dev, rw_func read, rw_func write)
 void init_dev()
 {
 	register_devrw(CONSOLE, console_read, console_write);
-	register_devrw(PROCINFO, proc_read, proc_write);
+	register_devrw(PROCINFO, procinfo_read, procinfo_write);
+	register_devrw(SYSINFO, sysinfo_read, sysinfo_write);
 }
 
 void init_file() 

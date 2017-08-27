@@ -32,7 +32,7 @@ static void check_head()
 
 void *malloc(int sz)
 {
-	if(sz < 0)
+	if(sz <= 0)
 		return NULL;
 	sz += HEAD_SZ;
 	struct malloc_header *p = head;

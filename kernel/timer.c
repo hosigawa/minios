@@ -2,7 +2,7 @@
 
 extern struct CPU cpu;
 
-uint tick = 0;
+static uint tick = 0;
 
 void init_timer()
 {
@@ -15,9 +15,8 @@ void init_timer()
 void timer_proc()
 {
 	tick++;
-	if(tick == 0xefffffff)
+	if(tick == 5) {
 		tick = 0;
-	if(!(tick % 1)) {
 		if(cpu.cur_proc && cpu.cur_proc->stat == RUNNING) {
 			yield();
 		}

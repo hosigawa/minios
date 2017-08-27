@@ -3,14 +3,6 @@
 
 #include "type.h"
 
-struct proc_info {
-	int pid;
-	char name[64];
-	uint vsz;
-	int stat;
-	int ppid;
-};
-
 #define DIR_NM_SZ 14
 struct dirent {
 	short inum;
@@ -42,7 +34,6 @@ int mknod(char *path, int major, int minor);
 int read(int fd, char *dst, int len);
 int write(int fd, char *src, int len);
 int fstat(int fd, struct file_stat *st);
-int ps(struct proc_info *pi, int len);
 int mkdir(char *path);
 int chdir(char *path);
 int unlink(char *path);

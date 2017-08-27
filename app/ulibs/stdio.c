@@ -11,3 +11,19 @@ void printf(char *fmt, ...)
 	vprintf(fmt, argp, NULL, stdout_putc);
 }
 
+int fgets(int fd, char *dst, int len)
+{
+	int ret;
+	int target = len;
+	char c;
+	while((ret = read(fd, &c, 1)) != 0 && len-- > 0) {
+		*dst = c;
+		if(c == '\n'){
+			*dst = 0;
+			break;
+		}
+		dst++;
+	}
+	return target - len;
+}
+

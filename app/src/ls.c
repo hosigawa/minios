@@ -1,6 +1,7 @@
 #include "stdio.h"
 
 bool bdetails = false;
+bool bhide = true;
 
 void print_file(char *path, struct file_stat *st)
 {
@@ -41,6 +42,8 @@ void ls(char *path)
 		while((ret = read(fd, (char *)&de, sizeof(de))) == sizeof(de)) {
 			if(de.inum == 0)
 				continue;
+			if(bhide && de.name[0] == '.')
+				continue;
 			if(bdetails) {
 				fmt_name(name, path, de.name);
 				sfd = open(name, 0);
@@ -75,6 +78,8 @@ int get_opt(char *arg)
 		}
 		if(*arg == 'l')
 			bdetails = true;
+		else if(*arg == 'a')
+			bhide = false;
 		else {
 			printf("ls: %s: unknow option\n", arg);
 			return -1;

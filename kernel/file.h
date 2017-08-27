@@ -8,6 +8,7 @@
 
 #define CONSOLE 1
 #define PROCINFO 2
+#define SYSINFO 3
 
 #define FD_NONE 0
 #define FD_PIPE 1

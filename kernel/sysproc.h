@@ -3,14 +3,6 @@
 
 #include "syscall.h"
 
-struct proc_info {
-	int pid;
-	char name[64];
-	uint vsz;
-	int stat;
-	int ppid;
-};
-
 struct file_stat {
 	short type;           // File type
   	short nlink;          // Number of links to inode in file system
@@ -39,7 +31,6 @@ int sys_mkdir();
 int sys_chdir();
 int sys_unlink();
 int sys_sbrk();
-int sys_ps();
 
 #endif
 

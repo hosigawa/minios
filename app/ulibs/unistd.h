@@ -3,7 +3,7 @@
 
 #include "libc.h"
 
-int exec(char *path, char **argv);
+int exec(char *path, char **argv, char **envp);
 
 #endif
 

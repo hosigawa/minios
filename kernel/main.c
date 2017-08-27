@@ -22,9 +22,10 @@ int main()
 	init_pic();
 	init_uart();
 	init_timer();
-	init_console();
 	init_file();
 	init_ide();
+	init_console();
+	init_procfs();
 	user_init();
 
 	sys_info("\nMINIOS ver.%s start...\n\n", MINIOS_VERSION);

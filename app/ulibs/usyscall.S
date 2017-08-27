@@ -23,5 +23,4 @@ SYS_CALL(mkdir)
 SYS_CALL(chdir)
 SYS_CALL(unlink)
 SYS_CALL(sbrk)
-SYS_CALL(ps)
 

@@ -14,8 +14,8 @@ static bool first = true;
 void forkret()
 {
 	if(first) {
-		init_fs(1);
 		first = false;
+		init_fs(1);
 	}
 	else {
 		popsti();
@@ -171,22 +171,9 @@ int execv(char *path, char *argv[], char *envp[])
 {
 	struct inode *ip = namei(path);
 	if(!ip) {
-		if(*path != '/') {
-			char full_path[64];
-			int envc = 0;
-			while(envp[envc]) {
-				memset(full_path, 0, 64);
-				sprintf(full_path, "%s/%s", envp[envc], path);
-				ip = namei(full_path);
-				if(ip)
-					goto found;
-				envc++;
-			}
-		}
 		return -1;
 	}
 
-found:
 	read_inode(ip);
 	if(ip->de.type == T_DIR) {
 		irelese(ip);

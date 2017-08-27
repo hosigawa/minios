@@ -9,6 +9,7 @@
 #define stderr 2
 
 void printf(char *fmt, ...);
+int fgets(int fd, char *dst, int len);
 
 #endif
 

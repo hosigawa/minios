@@ -2,6 +2,9 @@
 #include "unistd.h"
 
 char cwd[14];
+char profile[4096];
+char env[1024];
+char *envp[10];
 
 int getcmd(char *buf, int len)
 {
@@ -13,6 +16,42 @@ int getcmd(char *buf, int len)
 		return -1;
 	buf[ret - 1] = 0;
 	return 0;
+}
+
+void get_envp()
+{
+	int i;
+	for(i = 0; i < 10; i++) {
+		envp[i] = 0;
+	}
+	memset(env, 0, 1024);
+	int fd = open("/home/.profile", 0);
+	if(fd < 0)
+		return;
+	struct file_stat stat;
+	fstat(fd, &stat);
+	while(fgets(fd, env, 1024)){
+		if(env[0] == 'P' && env[1] == 'A' && env[2] == 'T' && env[3] == 'H') {
+			char *p = env;
+			int seq = 0;
+			while(*p) {
+				if(*p == '=') {
+					envp[seq] = ++p;
+					continue;
+				}
+				if(*p == ':'){
+					*p = 0;
+					seq++;
+					envp[seq] = ++p;
+					continue;
+				}
+				p++;
+			}
+			break;
+		}
+		memset(env, 0, 1024);
+	}
+	close(fd);
 }
 
 int get_token(char **argv, char *buf)
@@ -42,7 +81,7 @@ int get_token(char **argv, char *buf)
 int run_cmd(char **argv)
 {
 	int ret = 0;
-	ret = exec(argv[0], argv);
+	ret = exec(argv[0], argv, envp);
 	if(ret == -1) {
 		printf("-sh: %s: command not found\n", argv[0]);
 	}
@@ -65,6 +104,8 @@ int main(int argc, char **argv)
 		printf("pwd ret is %d\n", ret);
 		return -1;
 	}
+
+	get_envp();
 
 	char buf[100];
 	char *sargv[10];
