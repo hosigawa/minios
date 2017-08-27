@@ -4,7 +4,11 @@
 int main(int argc, char *argv[]) 
 {
 	struct file_stat stat;
-	int fd = open(argv[1], 0);
+	int fd;
+	if(argc < 2)
+		fd = open("/dev/console", 0);
+	else 
+		fd = open(argv[1], 0);
 	if(fd < 0) {
 		printf("cat: %s: No such file or directory\n", argv[1]);
 		return -1;

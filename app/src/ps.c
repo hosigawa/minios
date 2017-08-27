@@ -12,6 +12,7 @@ char *STATUS[] = {
 
 int main()
 {
+	printf("ps\n");
 	return 0;
 }
 
