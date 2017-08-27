@@ -32,7 +32,6 @@ int main(int argc, char *argv[])
 	}
 
 	char *memblock = malloc(stat.size);
-	printf("size:%d\n", stat.size);
 	if(!memblock) {
 		printf("cat: %s: memory not enough\n");
 		close(fd);
