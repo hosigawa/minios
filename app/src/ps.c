@@ -11,7 +11,8 @@ int main()
 		return -1;
 	}
 	read(fd, proc_info, 4096);
-	printf(" PID PPID   VSZ    STAT       CMD\n");
+	printf(" PID  PPID    VSZ  STAT     TIME  CMD\n");
+	printf("-------------------------------------\n");
 	printf(proc_info);
 	close(fd);
 	return 0;

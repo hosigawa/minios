@@ -53,6 +53,7 @@ struct proc *alloc_proc()
 	sp -= sizeof(struct context);
 	p->context = (struct context *)sp;
 	p->context->eip = (uint)forkret;
+	p->ticks = 0;
 	return p;
 }
 

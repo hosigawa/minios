@@ -5,7 +5,7 @@ bool bhide = true;
 
 void print_file(char *path, struct file_stat *st)
 {
-	printf("%s  %d  %d  %s\n", (st->type == T_DIR) ? "D" : (st->type == T_DEV) ? "C" : "-", st->nlink, st->size, path);
+	printf("%s  %3d  %6d  %s\n", (st->type == T_DIR) ? "d   " : (st->type == T_DEV) ? "C   " : "-   ", st->nlink, st->size, path);
 }
 
 void fmt_name(char *name, char *path, char *de)
@@ -34,8 +34,10 @@ void ls(char *path)
 	}
 	struct dirent de;
 	int ret;
-	if(bdetails)
-		printf("type  link  size  name\n");
+	if(bdetails){
+		printf("TYPE LINK    SIZE  NAME\n");
+		printf("-----------------------\n");
+	}
 	if(stat.type == T_DIR) {
 		int sfd;
 		char name[64];

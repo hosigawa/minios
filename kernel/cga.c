@@ -40,5 +40,6 @@ void cga_putc(int c)
 	outb(CGA_DATA_PORT, pos >> 8);
 	outb(CGA_CTRL_PORT, 15);
 	outb(CGA_DATA_PORT, pos & 0xff);
+	cga_data[pos] = ' ' | 0x0700;
 }
 

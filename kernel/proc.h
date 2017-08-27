@@ -40,6 +40,7 @@ struct proc {
 	struct inode *cwd;
 	struct proc *parent;
 	void *sleep_chan;
+	uint ticks;
 };
 
 int fork();

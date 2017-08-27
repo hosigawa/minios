@@ -84,9 +84,12 @@ void wait_kbc_ready()
 
 int kbd_getc()
 {
+	int st = inb(KEY_STA);
+	if((st & KBS_DIB) == 0)
+    	return -1;
 	int data = inb(KEY_DATA);
 	if(data & 0x80)
-		return 0;
+		return -1;
 	data = charcode[0][data];
 	return data;
 }

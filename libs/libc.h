@@ -3,6 +3,8 @@
 
 #include "../kernel/type.h"
 
+#define PAD0 0x1
+
 #define abs(x) ((x) > 0 ? (x) : -(x))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
@@ -16,7 +18,7 @@ int sprintf(char *dst, char *fmt, ...);
 typedef void (*cputc)(char *dst, int data);
 bool isdigit(char c);
 char *vprintf(char *fmt, uint *argp, char *dst, cputc putc);
-char *vprintfint(int data, int base, bool sign, int width, char *dst, cputc putc);
+char *vprintfint(int data, int base, bool sign, int width, int flags, char *dst, cputc putc);
 
 #endif
 

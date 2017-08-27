@@ -16,6 +16,12 @@ void timer_proc()
 {
 	wakeup(timer_proc);
 
+	if(cpu.cur_proc && cpu.cur_proc->stat == RUNNING) {
+		cpu.cur_proc->ticks++;
+		if(cpu.cur_proc->ticks == 0xefffffff)
+			cpu.cur_proc->ticks = 0;
+	}
+
 	if(tick++ == 5) {
 		tick = 0;
 		if(cpu.cur_proc && cpu.cur_proc->stat == RUNNING) {

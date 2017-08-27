@@ -60,13 +60,17 @@ char *vprintf(char *fmt, uint *argp, char *dst, cputc putc)
 	int c;
 	char *s;
 	int i = 0;
-	int width;
+	int width = 0;
+	int flags = 0;
 	for(;(c = fmt[i]&0xff) != 0; i++) {
 		if(c != '%'){
 			putc(dst++, c);
 			continue;
 		}
-		i++;
+		if((fmt[++i]&0xff) == '0') {
+			flags |= PAD0;
+			i++;
+		}
 		width = skip_atoi(fmt, &i);
 		c = fmt[i]&0xff;
 		if(c == 0)
@@ -81,11 +85,11 @@ char *vprintf(char *fmt, uint *argp, char *dst, cputc putc)
 				}
 			break;
 			case 'd':
-				dst = vprintfint(*argp++, 10, true, width, dst, putc);
+				dst = vprintfint(*argp++, 10, true, width, flags, dst, putc);
 			break;
 			case 'x':
 			case 'p':
-				dst = vprintfint(*argp++, 16, false, width, dst, putc);
+				dst = vprintfint(*argp++, 16, false, width, flags, dst, putc);
 			break;
 			case '%':
 				putc(dst++, '%');
@@ -99,7 +103,7 @@ char *vprintf(char *fmt, uint *argp, char *dst, cputc putc)
 	return dst;
 }
 
-char *vprintfint(int data, int base, bool sign, int width, char *dst, cputc putc) 
+char *vprintfint(int data, int base, bool sign, int width, int flags, char *dst, cputc putc) 
 {
 	static char digitals[] = "0123456789ABCDEF";
 	char buf[64] = {0};
@@ -116,19 +120,22 @@ char *vprintfint(int data, int base, bool sign, int width, char *dst, cputc putc
 		width--;
 	}while((abs_data /= base) != 0);
 
-	if(base == 16) {
-		buf[i++] = 'x';
-		buf[i++] = '0';
-		width -= 2;
-	}
 	if(sign) {
 		buf[i++] = '-';
 		width--;
 	}
 
 	while(width > 0) {
-		buf[i++] = ' ';
+		if(flags & PAD0)
+			buf[i++] = '0';
+		else
+			buf[i++] = ' ';
 		width--;
+	}
+
+	if(base == 16) {
+		buf[i++] = 'x';
+		buf[i++] = '0';
 	}
 
 	while(--i >= 0)

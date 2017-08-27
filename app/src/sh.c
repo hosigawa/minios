@@ -31,7 +31,7 @@ void get_envp()
 	struct file_stat stat;
 	fstat(fd, &stat);
 	while(fgets(fd, env, 1024)){
-		if(env[0] == 'P' && env[1] == 'A' && env[2] == 'T' && env[3] == 'H') {
+		if(!strncmp(env, "PATH", 4)) {
 			char *p = env;
 			int seq = 0;
 			while(*p) {

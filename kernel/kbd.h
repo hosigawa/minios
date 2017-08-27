@@ -4,6 +4,7 @@
 #define KEY_STA 0x64
 #define KEY_CMD 0x64
 #define KEY_DATA 0x60
+#define KBS_DIB 0x01 
 #define KEYBOARD_READY 0x2
 
 #define NO 0
