@@ -4,6 +4,8 @@
 #include "libc.h"
 
 int exec(char *path, char **argv, char **envp);
+void srand(int seek);
+int rand();
 
 #endif
 

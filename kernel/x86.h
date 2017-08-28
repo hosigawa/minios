@@ -6,10 +6,10 @@
 struct proc;
 struct context;
 struct CPU {
-	struct proc *cur_proc;
 	int ncli;
 	bool intble;
 	struct context *context;
+	struct proc * volatile cur_proc;
 };
 
 static inline unsigned char inb(unsigned short port) 

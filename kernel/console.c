@@ -117,7 +117,8 @@ void console_proc(int (*getc)(void))
 				break;
 			case C('C'):
 			case C('D'):
-				cpu.cur_proc->killed = 1;
+				if(cpu.cur_proc)
+					cpu.cur_proc->killed = 1;
 				wakeup(&input.r);
 				break;
 			default:

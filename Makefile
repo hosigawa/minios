@@ -69,6 +69,7 @@ $(OBJDIR)bootblock: kernel/boot/bootasm.S kernel/boot/bootmain.c
 
 $(OBJDIR)kernelblock: $(OBJS) $(ASM_OBJS) $(OBJDIR)initcode $(COM_LIBS) kernel/kernel.ld
 	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o $@ $(OBJS) $(ASM_OBJS) $(COM_LIBS) -b binary $(OBJDIR)initcode
+	$(OBJDUMP) -S $@ > $@.asm
 
 kernel/vectors.S: tools/vectors.pl
 	perl tools/vectors.pl > kernel/vectors.S
@@ -78,6 +79,7 @@ $(OBJDIR)%.o: %.S
 	
 $(OBJDIR)%.o: %.c
 	$(CC) $(CFLAGS) -O -nostdinc -I $(SRCDIR) -c -o $@ $<
+	$(OBJDUMP) -S $@ > $@.asm
 
 $(OBJDIR)initcode: kernel/boot/initcode.S
 	$(CC) $(CFLAGS) -nostdinc -I$(SRCDIR) -c $< -o $(OBJDIR)initcode.o
@@ -89,6 +91,7 @@ $(OBJDIR)app/mkfs: tools/mkfs.c kernel/fs.h
 
 $(COM_DIR)%.o: libs/%.c
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
+	$(OBJDUMP) -S $@ > $@.asm
 
 mkobjdir:
 	@test -d $(COM_DIR) || mkdir $(COM_DIR)

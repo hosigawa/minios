@@ -2,10 +2,20 @@
 #include "../kernel/x86.h"
 #include "../kernel/type.h"
 
-void *memmove(void *dst, void *src, int len) 
+char *strcpy(char *dst, char *src)
 {
 	char *d = dst;
-	char *s = src;;
+	char *s = src;
+	while(*s)
+		*d++ = *s++;
+	*d = 0;
+	return dst;
+}
+
+void *memcpy(void *dst, void *src, int len) 
+{
+	char *d = dst;
+	char *s = src;
 	while(len-- > 0)
 		*d++ = *s++;
 	return dst;

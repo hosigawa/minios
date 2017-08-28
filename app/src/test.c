@@ -1,13 +1,16 @@
 #include "stdio.h"
+#include "unistd.h"
 
 int main(int argc, char *argv[])
 {
-	int seq = 0;
-	while(seq < 5)
-	{
-		printf("tick %d\n", seq);
-		sleep(1000);
-		seq++;
+	srand(0);
+	int ran = rand() % 100;
+	printf("ran:%d\n", ran);
+	if(ran % 2 == 0){
+		printf("You are female\n");
+	}
+	else {
+		printf("You are male\n");
 	}
 	return 0;
 }

@@ -2,7 +2,8 @@
 
 extern struct CPU cpu;
 
-static uint tick = 0;
+uint user_ticks = 0;
+uint ticks = 0;
 
 void init_timer()
 {
@@ -15,15 +16,15 @@ void init_timer()
 void timer_proc()
 {
 	wakeup(timer_proc);
+	if(cpu.cur_proc ) {
+		if((cpu.cur_proc->tf->cs & 3) == DPL_USER)
+			user_ticks++;
 
-	if(cpu.cur_proc && cpu.cur_proc->stat == RUNNING) {
-		cpu.cur_proc->ticks++;
-		if(cpu.cur_proc->ticks == 0xefffffff)
-			cpu.cur_proc->ticks = 0;
+		if(cpu.cur_proc->stat == RUNNING)
+			cpu.cur_proc->ticks++;
 	}
 
-	if(tick++ == 5) {
-		tick = 0;
+	if(!(ticks++ % 5)) {
 		if(cpu.cur_proc && cpu.cur_proc->stat == RUNNING) {
 			yield();
 		}
