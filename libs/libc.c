@@ -86,6 +86,9 @@ char *vprintf(char *fmt, uint *argp, char *dst, cputc putc)
 		if(c == 0)
 			break;
 		switch(c) {
+			case 'c':
+				putc(dst++, (char)*argp++);
+			break;
 			case 's':
 				if((s = (char *)*argp++) == 0){
 					s= "(null)";

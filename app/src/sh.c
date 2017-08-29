@@ -1,10 +1,16 @@
 #include "stdio.h"
 #include "unistd.h"
 
+struct alias_token {
+	char alias[32];
+	char token[64];
+};
+
 char cwd[14];
 char profile[4096];
 char env[1024];
 char *envp[10];
+struct alias_token alias[16];
 
 int getcmd(char *buf, int len)
 {
@@ -28,8 +34,6 @@ void get_envp()
 	int fd = open("/home/.profile", 0);
 	if(fd < 0)
 		return;
-	struct file_stat stat;
-	fstat(fd, &stat);
 	while(fgets(fd, env, 1024)){
 		if(!strncmp(env, "PATH", 4)) {
 			char *p = env;
@@ -54,6 +58,40 @@ void get_envp()
 	close(fd);
 }
 
+void get_alias()
+{
+	int i;
+	for(i = 0; i < 16; i++) {
+		memset(alias + i, 0, sizeof(alias));
+	}
+	int fd = open("/home/.profile", 0);
+	if(fd < 0)
+		return;
+	char buf[128];
+	memset(buf, 0, 128);
+	char *p;
+	i = 0;
+	int j = 0;
+	while(fgets(fd, buf, 128)){
+		if(!strncmp(buf, "alias", 5)) {
+			p = buf + 6;
+			j = 0;
+			while(*p && *p != '=') {
+				alias[i].alias[j++] = *p++;
+			}
+			j = 0;
+			p+=2;
+			while(*p && *p != '\"') {
+				alias[i].token[j++] = *p++;
+			}
+			if(i++ == 15)
+				break;
+		}
+		memset(buf, 0, 128);
+	}
+	close(fd);
+}
+
 int get_token(char **argv, char *buf)
 {
 	int i;
@@ -63,17 +101,44 @@ int get_token(char **argv, char *buf)
 	}
 	int seq = 0;
 	bool btk = false;
-	while(*buf) {
-		if(*buf == ' ' || *buf == '\t') {
-			*buf = 0;
+	char *p = buf;
+	while(*p) {
+		if(*p == ' ' || *p == '\t') {
+			*p = 0;
 			btk = false;
 		}
 		else if(!btk) {
-			argv[seq] = buf;
-			seq++;
+			if(seq == 1)
+				break;
+			argv[seq++] = p;
 			btk = true;
 		}
-		buf++;
+		p++;
+	}
+	btk = false;
+	char real_buf[100];
+	memset(real_buf, 0, 100);
+	for(i = 0; i < 16; i++) {
+		if(!strcmp(alias[i].alias, argv[0])) {
+			sprintf(real_buf, "%s %s", alias[i].token, p);
+			memset(buf, 0, 100);
+			strcpy(buf, real_buf);
+			p = buf;
+			seq = 0;
+			break;
+		}
+	}
+
+	while(*p) {
+		if(*p == ' ' || *p == '\t') {
+			*p = 0;
+			btk = false;
+		}
+		else if(!btk) {
+			argv[seq++] = p;
+			btk = true;
+		}
+		p++;
 	}
 	return 0;
 }
@@ -106,6 +171,7 @@ int main(int argc, char **argv)
 	}
 
 	get_envp();
+	get_alias();
 
 	char buf[100];
 	char *sargv[10];
