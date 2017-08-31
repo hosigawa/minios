@@ -20,6 +20,7 @@
 #define SYS_unlink 15
 #define SYS_sbrk 16
 #define SYS_sleep 17
+#define SYS_times 18
 
 #endif
 

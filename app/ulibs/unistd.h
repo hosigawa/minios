@@ -6,6 +6,7 @@
 int exec(char *path, char **argv, char **envp);
 void srand(int seek);
 int rand();
+int localtime(uint *time);
 
 #endif
 

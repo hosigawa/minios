@@ -34,7 +34,7 @@ int main()
 		printf("ps: open /dev/sys error\n");
 		return -1;
 	}
-	int mt,mf,it,i_f,ut,kt;
+	int mt,mf,it,i_f,ut,kt,tt;
 	char *p = sys_info;
 	read(fd, sys_info, 4096);
 	mt = next_int(&p);
@@ -43,21 +43,27 @@ int main()
 	i_f = next_int(&p);
 	ut = next_int(&p);
 	kt = next_int(&p);
+	tt = next_int(&p);
 
 	printf("Memory Total : %d kB\n", mt / 1024);
 	printf("Memory Free  : %d kB\n", mf / 1024);
 	printf("Inode Total  : %d\n", it);
 	printf("Inode Free   : %d\n", i_f);
-	printf("User Time    : %02d:%02d:%02d(%d)\n", 
-							ut / 100 / 3600 % 24,
-							ut / 100 / 60 % 60,
-							ut / 100 % 60,
+	printf("User Time    : %d:%02d:%02d(%d)\n", 
+							ut / 1000 / 3600 % 24,
+							ut / 1000 / 60 % 60,
+							ut / 1000 % 60,
 							ut);
-	printf("Total Time   : %02d:%02d:%02d(%d)\n", 
-							kt / 100 / 3600 % 24,
-							kt / 100 / 60 % 60,
-							kt / 100 % 60,
+	printf("Kern Time    : %d:%02d:%02d(%d)\n", 
+							kt / 1000 / 3600 % 24,
+							kt / 1000 / 60 % 60,
+							kt / 1000 % 60,
 							kt);
+	printf("Total Time   : %d:%02d:%02d(%d)\n", 
+							tt / 1000 / 3600 % 24,
+							tt / 1000 / 60 % 60,
+							tt / 1000 % 60,
+							tt);
 	close(fd);
 	return 0;
 }

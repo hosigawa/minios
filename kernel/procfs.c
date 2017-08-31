@@ -55,13 +55,14 @@ int sysinfo_read(struct inode *ip, char *dst, int off, int len)
 		brelse(buf);
 	}
 
-	extern uint user_ticks, ticks;
-	wd += sprintf(dst, "%d %d %d %d %d %d\n", 
+	extern uint user_ticks, kern_ticks, ticks;
+	wd += sprintf(dst, "%d %d %d %d %d %d %d\n", 
 						PHYSICAL_END, 
 						size_of_free_memory(),
 						sb.ninodes,
 						inodes,
 						user_ticks,
+						kern_ticks,
 						ticks
 				);
 	return wd;

@@ -9,10 +9,23 @@
 #define TIMER_RATEGEN   0x04    // mode 2, rate generator
 #define TIMER_16BIT     0x30    // r/w counter 16 bits, LSB first
 
-#define TIME_HZ 100
+#define CMOS_CTRL 0x70
+#define CMOS_DATA 0x71
+#define CMOS_SEC 0x0
+#define CMOS_MIN 0x2
+#define CMOS_HOU 0x4
+#define CMOS_DAY 0x7
+#define CMOS_MON 0x8
+#define CMOS_YEA 0x9
+#define BCD_TO_NUM(val) (((val)&0x0f)+((val)>>4)*10)
+
+#define TIME_HZ 1000
 
 void init_timer();
-void timer_proc();
+
+struct trap_frame;
+void timer_proc(struct trap_frame *tf);
+int init_localtime();
 
 #endif
 

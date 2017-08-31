@@ -2,7 +2,9 @@
 
 extern struct CPU cpu;
 
+uint unixstamp = 0;
 uint user_ticks = 0;
+uint kern_ticks = 0;
 uint ticks = 0;
 
 void init_timer()
@@ -13,21 +15,82 @@ void init_timer()
 	enable_pic(IRQ_TIMER);
 }
 
-void timer_proc()
+void timer_proc(struct trap_frame *tf)
 {
+	if(!unixstamp)
+		init_localtime();
+
 	wakeup(timer_proc);
 	if(cpu.cur_proc ) {
-		if((cpu.cur_proc->tf->cs & 3) == DPL_USER)
+		if((tf->cs & 3) == DPL_USER)
 			user_ticks++;
+		else
+			kern_ticks++;
 
 		if(cpu.cur_proc->stat == RUNNING)
 			cpu.cur_proc->ticks++;
 	}
 
-	if(!(ticks++ % 5)) {
+	if(!(ticks++ % 20)) {
 		if(cpu.cur_proc && cpu.cur_proc->stat == RUNNING) {
 			yield();
 		}
 	}
+}
+
+int init_localtime()
+{
+	int year, mon, day, h, m, s;
+	outb(CMOS_CTRL, CMOS_SEC);
+	s = BCD_TO_NUM(inb(CMOS_DATA));
+	
+	outb(CMOS_CTRL, CMOS_MIN);
+	m = BCD_TO_NUM(inb(CMOS_DATA));
+	
+	outb(CMOS_CTRL, CMOS_HOU);
+	h = BCD_TO_NUM(inb(CMOS_DATA));
+
+	outb(CMOS_CTRL, CMOS_DAY);
+	day = BCD_TO_NUM(inb(CMOS_DATA));
+
+	outb(CMOS_CTRL, CMOS_MON);
+	mon = BCD_TO_NUM(inb(CMOS_DATA));
+
+	outb(CMOS_CTRL, CMOS_YEA);
+	year = 2000 + BCD_TO_NUM(inb(CMOS_DATA));
+
+	int ys = 0;
+	ys += ((year - 1970) / 4 ) * (365 * 3 + 366);
+	int y_mod = (year - 1970) % 4;
+	switch(y_mod) {
+		case 1:
+			ys += 365;
+			break;
+		case 2:
+			ys += 365 * 2;
+		break;
+		case 3:
+			ys += 365 * 2 + 366;
+		break;
+	}
+
+	static int mon1[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	static int mon2[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	int ms = 0;
+	int i;
+	if(year % 400 == 0 || ((year % 4 == 0) && (year % 100 != 0))) {
+		for(i = 0; i < mon - 1; i++)
+			ms += mon2[i];
+	}
+	else {
+		for(i = 0; i < mon - 1; i++)
+			ms += mon1[i];
+	}
+
+	int ds = 0;
+	ds += day - 1;
+
+	unixstamp = ys * 3600 * 24 + ms * 3600 * 24 + ds * 3600 * 24 + h * 3600 + m * 60 + s;
+	return unixstamp;
 }
 

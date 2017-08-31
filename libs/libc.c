@@ -100,6 +100,9 @@ char *vprintf(char *fmt, uint *argp, char *dst, cputc putc)
 			case 'd':
 				dst = vprintfint(*argp++, 10, true, width, flags, dst, putc);
 			break;
+			case 'u':
+				dst = vprintfint(*argp++, 10, false, width, flags, dst, putc);
+			break;
 			case 'x':
 			case 'p':
 				dst = vprintfint(*argp++, 16, false, width, flags, dst, putc);

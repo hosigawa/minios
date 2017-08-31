@@ -60,9 +60,9 @@ int main()
 		vsz = next_int(&p);
 		st = next_int(&p);
 		ticks = next_int(&p);
-		min = (ticks / 100) / 60;
-		sec = (ticks / 100) % 60;
-		ms = (ticks % 100) / 10;
+		min = (ticks / 1000) / 60;
+		sec = (ticks / 1000) % 60;
+		ms = (ticks % 1000) / 100;
 		memset(nm, 0, 64);
 		next_str(nm, &p);
 		printf("%4d  %4d  %5d  %s  %4d:%02d.%d  %s\n", pid, ppid, vsz, STATUS[st], min, sec, ms, nm);

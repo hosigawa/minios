@@ -40,6 +40,7 @@ int unlink(char *path);
 int sbrk(int sz);
 int pwd(char *wd);
 int sleep(int ms);
+int times(uint *time);
 
 #endif
 

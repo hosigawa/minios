@@ -58,6 +58,7 @@ void srand(int seek)
 	next_int(&p);
 	next_int(&p);
 	next_int(&p);
+	next_int(&p);
 	_rand_seek = next_int(&p);
 	close(fd);
 }
@@ -71,5 +72,11 @@ int rand()
 	if(t < 0)
 		t += 0x7fffffff;
 	return (_rand_seek = t);
+}
+
+int localtime(uint *time)
+{
+	times(time);
+	return 0;
 }
 

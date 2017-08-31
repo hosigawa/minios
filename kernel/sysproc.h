@@ -32,6 +32,7 @@ int sys_chdir();
 int sys_unlink();
 int sys_sbrk();
 int sys_sleep();
+int sys_times();
 
 #endif
 

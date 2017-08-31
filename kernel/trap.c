@@ -17,13 +17,18 @@ void init_idt()
 void trap(struct trap_frame *tf) 
 {
 	if(tf->trapno == T_SYSCALL) {
+		int i = 0;
+		while(i < 10){
+			printf("");
+			i++;
+		}
 		sys_call();
 		return;
 	}
 
 	switch(tf->trapno) {
 		case GET_IRQ(IRQ_TIMER):
-			timer_proc();
+			timer_proc(tf);
 			break;
 		case GET_IRQ(IRQ_IDE):
 			ide_proc();
