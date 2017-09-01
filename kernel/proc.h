@@ -2,6 +2,7 @@
 #define __PROC_H__
 
 #include "file.h"
+#include "signal.h"
 
 #define MAX_PROC 64
 #define PROC_NM_SZ 64
@@ -25,7 +26,6 @@ struct context {
 };
 
 struct trap_frame;
-typedef void (*sig_handler)(int);
 
 struct proc {
 	int pid;
@@ -42,7 +42,7 @@ struct proc {
 	struct proc *parent;
 	void *sleep_chan;
 	uint signal;
-	sig_handler sig_handlers[32];
+	struct sig_struct sig_handlers[32];
 	uint count;
 	uint ticks;
 };

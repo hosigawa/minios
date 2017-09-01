@@ -23,6 +23,9 @@ struct file_stat {
 #define O_RDWR    0x002
 #define O_CREATE  0x200
 
+typedef void (*sig_handler)(int);
+typedef void (*sig_restore)(void);
+
 int fork();
 int execv(char *path, char **argv, char **envp);
 int exit() __attribute__((noreturn));
@@ -40,7 +43,8 @@ int unlink(char *path);
 int sbrk(int sz);
 int pwd(char *wd);
 int sleep(int ms);
-int times(uint *time);
+int stime(uint *time);
+int ssignal(int signal, sig_handler handler, sig_restore restore);
 
 #endif
 

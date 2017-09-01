@@ -20,7 +20,8 @@ int (*syscalls[])(void) = {
 	[SYS_unlink] = sys_unlink,
 	[SYS_sbrk] = sys_sbrk,
 	[SYS_sleep] = sys_sleep,
-	[SYS_times] = sys_times,
+	[SYS_stime] = sys_stime,
+	[SYS_ssignal] = sys_ssignal,
 };
 
 int get_arg_int(int n)
@@ -229,11 +230,24 @@ int sys_sleep()
 	return 0;
 }
 
-int sys_times()
+int sys_stime()
 {
 	uint *time = (uint *)get_arg_uint(0);
 	extern uint unixstamp, ticks;
 	*time = unixstamp + ticks / TIME_HZ;
 	return 0;
+}
+
+int sys_ssignal()
+{
+	uint signal = get_arg_uint(0);
+	sig_handler handler = (sig_handler)get_arg_uint(1);
+	sig_restore restore = (sig_restore)get_arg_uint(2);
+	
+	sig_handler old = cpu.cur_proc->sig_handlers[signal - 1].handler;
+	cpu.cur_proc->sig_handlers[signal - 1].handler = handler;
+	cpu.cur_proc->sig_handlers[signal - 1].restore = restore;
+
+	return (int)old;
 }
 

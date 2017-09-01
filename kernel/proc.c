@@ -56,7 +56,8 @@ struct proc *alloc_proc()
 	p->ticks = 0;
 	p->signal = 0;
 	for(i = 0; i < 32; i++) {
-		p->sig_handlers[i] = NULL;
+		p->sig_handlers[i].handler = NULL;
+		p->sig_handlers[i].restore = NULL;
 	}
 	return p;
 }

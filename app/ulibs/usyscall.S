@@ -24,5 +24,16 @@ SYS_CALL(chdir)
 SYS_CALL(unlink)
 SYS_CALL(sbrk)
 SYS_CALL(sleep)
-SYS_CALL(times)
+SYS_CALL(stime)
+SYS_CALL(ssignal)
+
+.globl __sig_restore
+__sig_restore:
+	addl $4, %esp
+	popl %edx
+	popl %ecx
+	popl %ebx
+	popl %eax
+	popfl
+	ret
 
