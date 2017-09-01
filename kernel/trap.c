@@ -23,6 +23,7 @@ void trap(struct trap_frame *tf)
 			i++;
 		}
 		sys_call();
+		do_signal(tf);
 		return;
 	}
 
@@ -43,12 +44,8 @@ void trap(struct trap_frame *tf)
 			if(!cpu.cur_proc || (tf->cs & 3) == DPL_KERN)
 				panic("system trap occurd, trapno:%d; errno:%d, eip%p\n", tf->trapno, tf->errno, tf->eip);
 			
-			printf("pid:%d abort, trapno:%d, errno:%d, eip:%p\n", cpu.cur_proc->pid, tf->trapno, tf->errno, tf->eip);
-			cpu.cur_proc->killed = 1;
+			kill(cpu.cur_proc, SIG_KILL);
 			break;
 	}
-
-	if(cpu.cur_proc && cpu.cur_proc->killed == 1 && (tf->cs & 3) == DPL_USER)
-		exit();
 }
 

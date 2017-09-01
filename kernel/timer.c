@@ -20,6 +20,8 @@ void timer_proc(struct trap_frame *tf)
 	if(!unixstamp)
 		init_localtime();
 
+	ticks++;
+
 	wakeup(timer_proc);
 	if(cpu.cur_proc ) {
 		if((tf->cs & 3) == DPL_USER)
@@ -27,14 +29,14 @@ void timer_proc(struct trap_frame *tf)
 		else
 			kern_ticks++;
 
-		if(cpu.cur_proc->stat == RUNNING)
+		if(cpu.cur_proc->stat == RUNNING) {
 			cpu.cur_proc->ticks++;
-	}
-
-	if(!(ticks++ % 20)) {
-		if(cpu.cur_proc && cpu.cur_proc->stat == RUNNING) {
-			yield();
+			if(cpu.cur_proc->count > 0)
+				cpu.cur_proc->count--;
+			else if((tf->cs & 3) == DPL_USER)
+				yield();
 		}
+		do_signal(tf);
 	}
 }
 

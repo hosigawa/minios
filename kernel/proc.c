@@ -54,6 +54,10 @@ struct proc *alloc_proc()
 	p->context = (struct context *)sp;
 	p->context->eip = (uint)forkret;
 	p->ticks = 0;
+	p->signal = 0;
+	for(i = 0; i < 32; i++) {
+		p->sig_handlers[i] = NULL;
+	}
 	return p;
 }
 
@@ -68,6 +72,7 @@ void scheduler()
 			p = proc_table + i;
 			if(p->stat == READY) {
 				p->stat = RUNNING;
+				p->count = 20;
 				cpu.cur_proc = p;
 				swtch_uvm(p);
 				swtch(&cpu.context, p->context);

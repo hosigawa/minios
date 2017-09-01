@@ -22,6 +22,7 @@
 #include "file.h"
 #include "elf.h"
 #include "procfs.h"
+#include "signal.h"
 
 #define LOG cprintf
 #define sys_info cprintf

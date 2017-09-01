@@ -25,6 +25,7 @@ struct context {
 };
 
 struct trap_frame;
+typedef void (*sig_handler)(int);
 
 struct proc {
 	int pid;
@@ -40,6 +41,9 @@ struct proc {
 	struct inode *cwd;
 	struct proc *parent;
 	void *sleep_chan;
+	uint signal;
+	sig_handler sig_handlers[32];
+	uint count;
 	uint ticks;
 };
 
