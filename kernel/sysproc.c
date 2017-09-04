@@ -152,6 +152,9 @@ int sys_fstat()
 	fs->type = f->ip->de.type;
 	fs->nlink = f->ip->de.nlink;
 	fs->size = f->ip->de.size;
+	fs->ctime = f->ip->de.ctime;
+	fs->mtime = f->ip->de.mtime;
+	fs->atime = f->ip->de.atime;
 	return 0;
 }
 

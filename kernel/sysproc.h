@@ -7,6 +7,9 @@ struct file_stat {
 	short type;           // File type
   	short nlink;          // Number of links to inode in file system
   	uint size;            // Size of file (bytes)
+	uint ctime;
+	uint mtime;
+	uint atime;
 };
 
 int get_arg_int(int n);

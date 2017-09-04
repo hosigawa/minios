@@ -4,6 +4,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <sys/time.h>
 
 #define stat xv6_stat  // avoid clash with host struct stat
 #include "fs.h"
@@ -259,6 +260,8 @@ rsect(uint sec, void *buf)
 uint
 _ialloc(ushort type)
 {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
   uint inum = freeinode++;
   struct dinode din;
 
@@ -266,6 +269,9 @@ _ialloc(ushort type)
   din.type = xshort(type);
   din.nlink = xshort(1);
   din.size = xint(0);
+  din.ctime = tv.tv_sec;
+  din.mtime = tv.tv_sec;
+  din.atime = tv.tv_sec;
   winode(inum, &din);
   return inum;
 }

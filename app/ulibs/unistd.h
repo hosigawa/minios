@@ -10,7 +10,8 @@
 int exec(char *path, char **argv, char **envp);
 void srand(int seek);
 int rand();
-int localtime(struct time_v *tm);
+int localtime(uint time, struct time_v *tm);
+int gettimeofday(struct time_v *tm);
 
 #endif
 

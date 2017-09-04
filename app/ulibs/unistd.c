@@ -73,12 +73,19 @@ int rand()
 	return (_rand_seek = t);
 }
 
-int localtime(struct time_v *tm)
+int localtime(uint time, struct time_v *tm)
+{
+	time += TIME_ZONE * 3600;
+	unixstamp2time(time, tm);
+	return 0;
+}
+
+int gettimeofday(struct time_v *tm)
 {
 	uint time = 0;
 	stime(&time);
 	time += TIME_ZONE * 3600;
-	get_unixstamp_time(time, tm);
+	unixstamp2time(time, tm);
 	return 0;
 }
 

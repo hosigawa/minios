@@ -29,7 +29,7 @@ static unixstamp_t init_localtime()
 	outb(CMOS_CTRL, CMOS_YEA);
 	tm.year = 2000 + BCD_TO_NUM(inb(CMOS_DATA));
 
-	return get_time_unixstamp(&tm);
+	return time2unixstamp(&tm);
 }
 
 void init_timer()

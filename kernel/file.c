@@ -60,7 +60,7 @@ int file_write(struct file *f, char *src, int len)
 	}
 	else {
 		ret = writei(f->ip, src, f->off, len);
-		
+		f->ip->de.mtime = get_systime();
 		write_inode(f->ip);
 	}
 	f->off += ret;
@@ -136,6 +136,9 @@ struct inode *file_create(char *path, int type, int major, int minor)
 	ip->de.minor = minor;
 	ip->de.size = 0;
 	ip->de.nlink = 1;
+	ip->de.ctime = get_systime();
+	ip->de.mtime = get_systime();
+	ip->de.atime = get_systime();
 	write_inode(ip);
 
 	if(type == T_DIR){
@@ -199,6 +202,8 @@ int file_open(char *path, int mode)
 		file_close(f);
 		return -3;
 	}
+	f->ip->de.atime = get_systime();
+	write_inode(f->ip);
 	return fd;
 }
 

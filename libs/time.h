@@ -16,8 +16,8 @@ struct time_v {
 	int s;
 };
 
-unixstamp_t get_time_unixstamp(struct time_v *tm);
-int get_unixstamp_time(unixstamp_t us, struct time_v *tm);
+unixstamp_t time2unixstamp(struct time_v *tm);
+int unixstamp2time(unixstamp_t us, struct time_v *tm);
 
 #endif
 

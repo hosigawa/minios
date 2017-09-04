@@ -1,11 +1,30 @@
 #include "stdio.h"
+#include "unistd.h"
+
+static char *MONS[] = {
+	"Jan", 
+	"Feb",
+	"Mar",
+	"Apr",
+	"May",
+	"Jun",
+	"Jul",
+	"Aug",
+	"Sep",
+	"Oct",
+	"Nov",
+	"Dec",
+};
 
 bool bdetails = false;
 bool bhide = true;
 
 void print_file(char *path, struct file_stat *st)
 {
-	printf("%s  %3d  %6d  %s\n", (st->type == T_DIR) ? "d   " : (st->type == T_DEV) ? "C   " : "-   ", st->nlink, st->size, path);
+	struct time_v tm;
+	localtime(st->mtime, &tm);
+	printf("%s  %3d  %6d  %s %2d %02d:%02d  %s\n", (st->type == T_DIR) ? "d   " : (st->type == T_DEV) ? "C   " : "-   ", st->nlink, 
+												st->size, MONS[tm.mon - 1], tm.day, tm.h, tm.m, path);
 }
 
 void fmt_name(char *name, char *path, char *de)
@@ -35,8 +54,8 @@ void ls(char *path)
 	struct dirent de;
 	int ret;
 	if(bdetails){
-		printf("TYPE LINK    SIZE  NAME\n");
-		printf("-----------------------\n");
+		printf("TYPE LINK    SIZE  DATE   TIME   NAME\n");
+		printf("-------------------------------------\n");
 	}
 	if(stat.type == T_DIR) {
 		int sfd;

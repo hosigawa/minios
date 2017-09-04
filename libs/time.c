@@ -3,7 +3,7 @@
 static int mon1[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 static int mon2[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
-unixstamp_t get_time_unixstamp(struct time_v *tm)
+unixstamp_t time2unixstamp(struct time_v *tm)
 {
 	int ys = 0;
 	ys += ((tm->year - 1970) / 4 ) * (365 * 3 + 366);
@@ -37,7 +37,7 @@ unixstamp_t get_time_unixstamp(struct time_v *tm)
 	return ys * DAY + ms * DAY + ds * DAY + tm->h * HOUR + tm->m * MIN + tm->s;
 }
 
-int get_unixstamp_time(unixstamp_t us, struct time_v *tm)
+int unixstamp2time(unixstamp_t us, struct time_v *tm)
 {
 	int days = us / DAY;
 	int ys = days / (365 * 3 + 366);
