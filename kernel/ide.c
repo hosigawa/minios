@@ -45,7 +45,7 @@ void ide_proc()
 		insl(0x1f0, buf->data, 128);
 	buf->flags |= B_VALID;
 	buf->flags &= ~B_DIRTY;
-	wakeup(buf);
+	wakeup_on(buf);
 	ide_io();
 }
 
@@ -66,7 +66,7 @@ void ide_rw(struct block_buf *buf)
 		ide_io();
 
 	while((buf->flags & (B_DIRTY | B_VALID)) != B_VALID)
-		sleep(buf);
+		sleep_on(buf);
 }
 
 void ide_io()

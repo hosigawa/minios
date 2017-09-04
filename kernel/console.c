@@ -43,7 +43,7 @@ int console_read(struct inode *ip, char *dst, int off, int len)
 {
 	int tar = len;
 	if(input.r == input.w)
-		sleep(&input.r);
+		sleep_on(&input.r);
 	for(; input.r < input.w; input.r++) {
 		int c = input.buf[input.r];
 		*dst++ = c;
@@ -119,7 +119,7 @@ void console_proc(int (*getc)(void))
 			case C('D'):
 				if(cpu.cur_proc)
 					cpu.cur_proc->killed = 1;
-				wakeup(&input.r);
+				wakeup_on(&input.r);
 				break;
 			default:
 				data = (data == '\r' ? '\n' : data);
@@ -129,7 +129,7 @@ void console_proc(int (*getc)(void))
 				}
 				console_putc(data);
 				if(data == '\n'){
-					wakeup(&input.r);
+					wakeup_on(&input.r);
 				}
 				break;
 		}

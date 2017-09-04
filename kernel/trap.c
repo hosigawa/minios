@@ -17,35 +17,35 @@ void init_idt()
 void trap(struct trap_frame *tf) 
 {
 	if(tf->trapno == T_SYSCALL) {
-		int i = 0;
-		while(i < 10){
-			printf("");
-			i++;
-		}
+		if((tf->cs & 3) != DPL_USER)
+			panic("system call must from userspace\n");
 		sys_call();
-		do_signal(tf);
-		return;
+	} 
+	else {
+		switch(tf->trapno) {
+			case GET_IRQ(IRQ_TIMER):
+				timer_proc(tf);
+				break;
+			case GET_IRQ(IRQ_IDE):
+				ide_proc();
+				break;
+			case GET_IRQ(IRQ_KBD):
+				kbd_proc();
+				break;
+			case GET_IRQ(IRQ_COM1):
+				uart_proc();
+				break;
+			default:
+				if(!cpu.cur_proc || (tf->cs & 3) == DPL_KERN)
+					panic("system interrupted, trapno:%d; errno:%d, eip%p\n", tf->trapno, tf->errno, tf->eip);
+				printf("pid:%d interrupted, trapno:%d, errno:%d, eip:%p\n", cpu.cur_proc->pid, tf->trapno, tf->errno, tf->eip);
+				
+				if(tf->trapno == 14)
+					kill(cpu.cur_proc->pid, SIG_SEGV);
+				kill(cpu.cur_proc->pid, SIG_QUIT);
+				break;
+		}
 	}
-
-	switch(tf->trapno) {
-		case GET_IRQ(IRQ_TIMER):
-			timer_proc(tf);
-			break;
-		case GET_IRQ(IRQ_IDE):
-			ide_proc();
-			break;
-		case GET_IRQ(IRQ_KBD):
-			kbd_proc();
-			break;
-		case GET_IRQ(IRQ_COM1):
-			uart_proc();
-			break;
-		default:
-			if(!cpu.cur_proc || (tf->cs & 3) == DPL_KERN)
-				panic("system trap occurd, trapno:%d; errno:%d, eip%p\n", tf->trapno, tf->errno, tf->eip);
-			
-			kill(cpu.cur_proc, SIG_KILL);
-			break;
-	}
+	do_signal(tf);
 }
 

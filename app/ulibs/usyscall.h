@@ -2,29 +2,9 @@
 #define __USYSCALL_H__
 
 #include "type.h"
-
-#define DIR_NM_SZ 14
-struct dirent {
-	short inum;
-	char name[DIR_NM_SZ];
-};
-
-#define T_DIR 1
-#define T_FILE 2
-#define T_DEV 3
-struct file_stat {
-	short type;           // File type
-  	short nlink;          // Number of links to inode in file system
-  	uint size;            // Size of file (bytes)
-};
-
-#define O_RDONLY  0x000
-#define O_WRONLY  0x001
-#define O_RDWR    0x002
-#define O_CREATE  0x200
-
-typedef void (*sig_handler)(int);
-typedef void (*sig_restore)(void);
+#include "sysproc.h"
+#include "signal.h"
+#include "file.h"
 
 int fork();
 int execv(char *path, char **argv, char **envp);
@@ -44,7 +24,9 @@ int sbrk(int sz);
 int pwd(char *wd);
 int sleep(int ms);
 int stime(uint *time);
-int ssignal(int signal, sig_handler handler, sig_restore restore);
+int signal(int signal, sig_handler handler);
+int sigret();
+int kill(int sig, int pid);
 
 #endif
 

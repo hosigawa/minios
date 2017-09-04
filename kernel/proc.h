@@ -3,6 +3,7 @@
 
 #include "file.h"
 #include "signal.h"
+#include "type.h"
 
 #define MAX_PROC 64
 #define PROC_NM_SZ 64
@@ -28,6 +29,7 @@ struct context {
 struct trap_frame;
 
 struct proc {
+	struct list_t list_head;
 	int pid;
 	char name[PROC_NM_SZ];
 	int killed;
@@ -41,7 +43,7 @@ struct proc {
 	struct inode *cwd;
 	struct proc *parent;
 	void *sleep_chan;
-	uint signal;
+	int signal;
 	struct sig_struct sig_handlers[32];
 	uint count;
 	uint ticks;
@@ -54,11 +56,14 @@ void scheduler() __attribute__((noreturn));
 void sched();
 void yield();
 void user_init();
-void sleep(void *chan);
-void wakeup(void *chan);
+void sleep_on(void *chan);
+void wakeup_on(void *chan);
+void sleep();
+void wakeup(struct proc *p);
 int execv(char *path, char *argv[], char *envp[]);
 void exit();
 int wait();
+struct proc *get_proc(int pid);
 
 #endif
 

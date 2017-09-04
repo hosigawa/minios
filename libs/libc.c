@@ -178,3 +178,12 @@ bool isdigit(char c)
 	return false;
 }
 
+int atoi(char *a)
+{
+	int num = 0;
+	while(*a && isdigit(*a)) {
+		num = num * 10 + *a++ - '0';
+	}
+	return num;
+}
+

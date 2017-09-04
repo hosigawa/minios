@@ -21,7 +21,9 @@
 #define SYS_sbrk 16
 #define SYS_sleep 17
 #define SYS_stime 18
-#define SYS_ssignal 19
+#define SYS_signal 19
+#define SYS_sigret 20
+#define SYS_kill 21
 
 #endif
 

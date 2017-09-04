@@ -124,6 +124,13 @@ static inline uint read_eip(void)
   return eip;
 }
 
+static inline int bsf(int data)
+{
+  int off;
+  asm volatile("bsfl %1, %0" : "=r" (off) : "r"(data));
+  return off;
+}
+
 void init_cpu();
 void pushcli();
 void popsti();

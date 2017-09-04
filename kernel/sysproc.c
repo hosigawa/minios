@@ -21,7 +21,9 @@ int (*syscalls[])(void) = {
 	[SYS_sbrk] = sys_sbrk,
 	[SYS_sleep] = sys_sleep,
 	[SYS_stime] = sys_stime,
-	[SYS_ssignal] = sys_ssignal,
+	[SYS_signal] = sys_signal,
+	[SYS_sigret] = sys_sigret,
+	[SYS_kill] = sys_kill,
 };
 
 int get_arg_int(int n)
@@ -49,7 +51,10 @@ void sys_call()
 		err_info("unknow syscall %d\n", seq);
 		cpu.cur_proc->tf->eax = -1;
 	}
-	cpu.cur_proc->tf->eax = syscalls[seq]();
+	if(seq == SYS_sigret)
+		syscalls[seq]();
+	else
+		cpu.cur_proc->tf->eax = syscalls[seq]();
 }
 
 int sys_fork() 
@@ -224,7 +229,9 @@ int sys_sleep()
 	int slpms = get_arg_uint(0);
 	int tick = slpms;
 	while(tick) {
-		sleep(timer_proc);
+		sleep();
+		if(cpu.cur_proc->signal)
+			return 0;
 		tick--;
 	}
 	return 0;
@@ -233,21 +240,42 @@ int sys_sleep()
 int sys_stime()
 {
 	uint *time = (uint *)get_arg_uint(0);
-	extern uint unixstamp, ticks;
-	*time = unixstamp + ticks / TIME_HZ;
+	extern uint boot_time, ticks;
+	*time = boot_time + ticks / TIME_HZ;
 	return 0;
 }
 
-int sys_ssignal()
+int sys_signal()
 {
 	uint signal = get_arg_uint(0);
 	sig_handler handler = (sig_handler)get_arg_uint(1);
-	sig_restore restore = (sig_restore)get_arg_uint(2);
+
+	if(signal == SIG_KILL || signal == SIG_STOP)
+		return -1;
 	
 	sig_handler old = cpu.cur_proc->sig_handlers[signal - 1].handler;
 	cpu.cur_proc->sig_handlers[signal - 1].handler = handler;
-	cpu.cur_proc->sig_handlers[signal - 1].restore = restore;
 
 	return (int)old;
+}
+
+int sys_sigret()
+{
+	struct trap_frame *tf = cpu.cur_proc->tf;
+	uint *old_esp = (uint *)tf->esp;
+	tf->edx = *(old_esp);
+	tf->ecx = *(old_esp + 1);
+	tf->eax = *(old_esp + 2);
+	tf->eflags = *(old_esp + 3);
+	tf->eip = *(old_esp + 4);
+	tf->esp += 28;
+	return 0;
+}
+
+int sys_kill()
+{
+	int pid = get_arg_int(0);
+	uint signal = get_arg_uint(1);
+	return kill(pid, signal);
 }
 

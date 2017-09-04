@@ -4,39 +4,48 @@ extern struct CPU cpu;
 
 void do_signal(struct trap_frame *tf)
 {	
-	if(!cpu.cur_proc || cpu.cur_proc->signal == 0 || (tf->cs & 3) != DPL_USER)
+	static char retcode[8] = {0x58, 0xb8, 0x14, 0x00, 0x00, 0x00, 0xcd, 0x40};
+	if(!cpu.cur_proc || !cpu.cur_proc->signal || (tf->cs & 3) != DPL_USER)
 		return;
-	sig_handler handler = cpu.cur_proc->sig_handlers[cpu.cur_proc->signal - 1].handler;
-	sig_restore restore = cpu.cur_proc->sig_handlers[cpu.cur_proc->signal - 1].restore;
+	int signal = bsf(cpu.cur_proc->signal) + 1;
+	cpu.cur_proc->signal &= ~SIGNAL(signal);
+
+	sig_handler handler = cpu.cur_proc->sig_handlers[signal - 1].handler;
 	if(handler) {
-		uint old_eip = tf->eip;
+		if((int)handler == SIG_IGN)
+			return;
+
 		uint *old_esp = (uint *)tf->esp;
+		memcpy(old_esp - 2, retcode, 8);
+		*(old_esp - 3) = tf->eip;
+		*(old_esp - 4) = tf->eflags;
+		*(old_esp - 5) = tf->eax;
+		*(old_esp - 6) = tf->ecx;
+		*(old_esp - 7) = tf->edx;
+		*(old_esp - 8) = signal;
+		*(old_esp - 9) = (uint)(old_esp - 2);
+		tf->esp -= 36;
 		tf->eip = (uint)handler;
-		*(old_esp - 1) = old_eip;
-		*(old_esp - 2) = tf->eflags;
-		*(old_esp - 3) = tf->eax;
-		*(old_esp - 4) = tf->ebx;
-		*(old_esp - 5) = tf->ecx;
-		*(old_esp - 6) = tf->edx;
-		*(old_esp - 7) = cpu.cur_proc->signal;
-		*(old_esp - 8) = (uint)restore;
-		tf->esp -= 32;
-		cpu.cur_proc->signal = 0;
 		return;
 	}
-	printf("pid:%d abort, trapno:%d, errno:%d, eip:%p\n", cpu.cur_proc->pid, tf->trapno, tf->errno, tf->eip);
-	switch(cpu.cur_proc->signal) {
-		case SIG_KILL:
+	switch(signal) {
+		case SIG_CHLD:
+			break;
+		default:
 			exit();
 			break;
 	}
-	cpu.cur_proc->signal = 0;
 }
 
-void kill(struct proc *p, int signal)
+int kill(int pid, int signal)
 {
+	struct proc *p = get_proc(pid);
 	if(!p)
-		return;
-	p->signal = signal;
+		return -1;
+	p->signal |= SIGNAL(signal);
+	if(p->stat == SLEEPING) {
+		wakeup(p);
+	}
+	return 0;
 }
 

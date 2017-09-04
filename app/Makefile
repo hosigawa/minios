@@ -48,6 +48,7 @@ APPS =\
 	_top\
 	_cp\
 	_mv\
+	_kill\
 
 .PHONY: all mkobjdir mkfs
 
@@ -68,7 +69,7 @@ $(OBJDIR)%.o: %.S
 
 _%: $(OBJDIR)src/%.o $(LIB_C_OBJS) $(LIB_ASM_OBJS) $(COM_LIBS)
 	$(LD) $(LDFLAGS) -N -e _start -Ttext 0x1000 -o $@ $^
-	$(OBJDUMP) -S $@ > $@.asm
+	$(OBJDUMP) -S $@ > $(OBJDIR)/$@.asm
 
 $(COM_DIR)%.o: ../libs/%.c
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<

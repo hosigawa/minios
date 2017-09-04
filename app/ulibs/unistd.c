@@ -79,9 +79,3 @@ int localtime(uint *time)
 	return 0;
 }
 
-extern void __sig_restore(void);
-sig_handler signal(int signal, sig_handler handler)
-{
-	return (sig_handler)ssignal(signal, handler, __sig_restore);
-}
-

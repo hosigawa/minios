@@ -57,7 +57,6 @@ struct proc *alloc_proc()
 	p->signal = 0;
 	for(i = 0; i < 32; i++) {
 		p->sig_handlers[i].handler = NULL;
-		p->sig_handlers[i].restore = NULL;
 	}
 	return p;
 }
@@ -153,7 +152,7 @@ void yield()
 	popsti();
 }
 
-void sleep(void *chan)
+void sleep_on(void *chan)
 {
 	pushcli();
 	cpu.cur_proc->sleep_chan = chan;
@@ -164,7 +163,7 @@ void sleep(void *chan)
 	popsti();
 }
 
-void wakeup(void *chan)
+void wakeup_on(void *chan)
 {
 	int i = 0;
 	for(; i < MAX_PROC; i++) {
@@ -172,6 +171,22 @@ void wakeup(void *chan)
 		if(p->stat == SLEEPING && p->sleep_chan == chan)
 			p->stat = READY;
 	}
+}
+
+void sleep()
+{
+	pushcli();
+	cpu.cur_proc->stat = SLEEPING;
+	sched();
+	popsti();
+}
+
+void wakeup(struct proc *p)
+{
+	if(p->stat != SLEEPING || p->sleep_chan) {
+		return;
+	}
+	p->stat = READY;
 }
 
 int execv(char *path, char *argv[], char *envp[])
@@ -281,11 +296,11 @@ void exit()
 		if(p->parent == cpu.cur_proc)
 			p->parent = init_proc;
 			if(p->stat == ZOMBIE)
-				wakeup(init_proc);
+				kill(1, SIG_CHLD);
 	}
 	
 	cpu.cur_proc->stat = ZOMBIE;
-	wakeup(cpu.cur_proc->parent);
+	kill(cpu.cur_proc->parent->pid, SIG_CHLD);
 	
 	sched();
 	panic("exit zombie\n");
@@ -311,8 +326,20 @@ int wait()
 				return pid;
 			}
 		}
-		sleep(cpu.cur_proc);
+		sleep();
+		if(cpu.cur_proc->signal & ~SIGNAL(SIG_CHLD))
+			return 0;
 	}
 	return 0;
+}
+
+struct proc *get_proc(int pid)
+{
+	int i;
+	for(i = 0; i < MAX_PROC; i++) {
+		if(proc_table[i].pid == pid)
+			return proc_table + i;
+	}
+	return NULL;
 }
 

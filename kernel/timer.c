@@ -2,7 +2,7 @@
 
 extern struct CPU cpu;
 
-uint unixstamp = 0;
+uint boot_time = 0;
 uint user_ticks = 0;
 uint kern_ticks = 0;
 uint ticks = 0;
@@ -17,12 +17,12 @@ void init_timer()
 
 void timer_proc(struct trap_frame *tf)
 {
-	if(!unixstamp)
+	if(!boot_time)
 		init_localtime();
 
 	ticks++;
 
-	wakeup(timer_proc);
+	wakeup_on(timer_proc);
 	if(cpu.cur_proc ) {
 		if((tf->cs & 3) == DPL_USER)
 			user_ticks++;
@@ -36,7 +36,6 @@ void timer_proc(struct trap_frame *tf)
 			else if((tf->cs & 3) == DPL_USER)
 				yield();
 		}
-		do_signal(tf);
 	}
 }
 
@@ -92,7 +91,7 @@ int init_localtime()
 	int ds = 0;
 	ds += day - 1;
 
-	unixstamp = ys * 3600 * 24 + ms * 3600 * 24 + ds * 3600 * 24 + h * 3600 + m * 60 + s;
-	return unixstamp;
+	boot_time = ys * 3600 * 24 + ms * 3600 * 24 + ds * 3600 * 24 + h * 3600 + m * 60 + s;
+	return boot_time;
 }
 

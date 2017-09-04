@@ -22,6 +22,7 @@ typedef void (*cputc)(char *dst, int data);
 bool isdigit(char c);
 char *vprintf(char *fmt, uint *argp, char *dst, cputc putc);
 char *vprintfint(int data, int base, bool sign, int width, int flags, char *dst, cputc putc);
+int atoi(char *a);
 
 #endif
 

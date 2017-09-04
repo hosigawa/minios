@@ -33,7 +33,9 @@ int sys_unlink();
 int sys_sbrk();
 int sys_sleep();
 int sys_stime();
-int sys_ssignal();
+int sys_signal();
+int sys_sigret();
+int sys_kill();
 
 #endif
 
