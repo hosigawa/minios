@@ -4,7 +4,6 @@
 static char *STATUS[] = {
 	"U ", 
 	"E ",
-	"R-",
 	"R+",
 	"S ",
 	"Z ",
@@ -44,12 +43,13 @@ int main()
 		return -1;
 	}
 	read(fd, proc_info, 4096);
-	printf(" PID  PPID     VSZ  STAT     TIME  CMD\n");
-	printf("-------------------------------------\n");
+	printf(" PID  PPID     VSZ PRI  STAT     TIME  CMD\n");
+	printf("------------------------------------------\n");
 	char *p = proc_info;
 	int pid;
 	int ppid;
 	uint vsz;
+	int pri;
 	int st;
 	uint ticks;
 	uint min, sec, ms;
@@ -65,7 +65,8 @@ int main()
 		ms = (ticks % 1000) / 100;
 		memset(nm, 0, 64);
 		next_str(nm, &p);
-		printf("%4d  %4d  %5d  %s  %4d:%02d.%d  %s\n", pid, ppid, vsz, STATUS[st], min, sec, ms, nm);
+		pri = next_int(&p);
+		printf("%4d  %4d  %5d  %2d  %s  %4d:%02d.%d  %s\n", pid, ppid, vsz, pri, STATUS[st], min, sec, ms, nm);
 	}
 	close(fd);
 	return 0;

@@ -38,7 +38,7 @@ void trap(struct trap_frame *tf)
 			default:
 				if(!cpu.cur_proc || (tf->cs & 3) == DPL_KERN)
 					panic("system interrupted, trapno:%d; errno:%d, eip%p\n", tf->trapno, tf->errno, tf->eip);
-				printf("pid:%d interrupted, trapno:%d, errno:%d, eip:%p\n", cpu.cur_proc->pid, tf->trapno, tf->errno, tf->eip);
+				printf("userspace interrupted, trapno:%d, errno:%d, eip:%p\n", cpu.cur_proc->pid, tf->trapno, tf->errno, tf->eip);
 				
 				if(tf->trapno == 14)
 					kill(cpu.cur_proc->pid, SIG_SEGV);

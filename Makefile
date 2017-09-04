@@ -20,7 +20,7 @@ OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(SRCS:.c=.o)))
 ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o)))
 
 COM_DIR = libs/.obj/
-COM_LIBS = $(COM_DIR)libc.o
+COM_LIBS = $(COM_DIR)libc.o $(COM_DIR)time.o
 
 .PHONY: all mkobjdir makeproject q qemu r m fs
 

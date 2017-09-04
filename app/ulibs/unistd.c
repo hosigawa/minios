@@ -73,9 +73,12 @@ int rand()
 	return (_rand_seek = t);
 }
 
-int localtime(uint *time)
+int localtime(struct time_v *tm)
 {
-	stime(time);
+	uint time = 0;
+	stime(&time);
+	time += TIME_ZONE * 3600;
+	get_unixstamp_time(time, tm);
 	return 0;
 }
 

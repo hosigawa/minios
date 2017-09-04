@@ -58,29 +58,40 @@ struct proc *alloc_proc()
 	for(i = 0; i < 32; i++) {
 		p->sig_handlers[i].handler = NULL;
 	}
+	p->priority = 2;
 	return p;
 }
 
 void scheduler()
 {
-	struct proc *p;
+	struct proc *p = NULL, *next = NULL;
 	int i;
+	int count;
 	while(1) {
 		sti();
-		//pushcli();
+		count = 0;
 		for(i = 0; i < MAX_PROC; i++) {
 			p = proc_table + i;
-			if(p->stat == READY) {
-				p->stat = RUNNING;
-				p->count = 20;
-				cpu.cur_proc = p;
-				swtch_uvm(p);
-				swtch(&cpu.context, p->context);
-				swtch_kvm();
-				cpu.cur_proc = NULL;
+			if(p->stat == RUNNING && p->count > count) {
+				count = p->count;
+				next = p;
 			}
 		}
-		//popsti();
+		if(count == 0) {
+			for(i = 0; i < MAX_PROC; i++) {
+				p = proc_table + i;
+				if(p->stat == RUNNING) {
+					p->count = p->priority * 10;
+				}
+			}
+			continue;
+		}
+
+		cpu.cur_proc = next;
+		swtch_uvm(next);
+		swtch(&cpu.context, next->context);
+		swtch_kvm();
+		cpu.cur_proc = NULL;
 	}
 }
 
@@ -107,7 +118,7 @@ void user_init()
 
 	p->cwd = namei("/");
 	p->parent = NULL;
-	p->stat = READY;
+	p->stat = RUNNING;
 }
 
 int fork() 
@@ -130,7 +141,8 @@ int fork()
 	p->parent = cpu.cur_proc;
 	p->vend = cpu.cur_proc->vend;
 	p->cwd = idup(cpu.cur_proc->cwd);
-	p->stat = READY;
+	p->stat = RUNNING;
+	p->priority = cpu.cur_proc->priority;
 
 	return p->pid;
 }
@@ -147,7 +159,6 @@ void sched()
 void yield()
 {
 	pushcli();
-	cpu.cur_proc->stat = READY;
 	sched();
 	popsti();
 }
@@ -169,7 +180,7 @@ void wakeup_on(void *chan)
 	for(; i < MAX_PROC; i++) {
 		struct proc *p = proc_table + i;
 		if(p->stat == SLEEPING && p->sleep_chan == chan)
-			p->stat = READY;
+			p->stat = RUNNING;
 	}
 }
 
@@ -186,7 +197,7 @@ void wakeup(struct proc *p)
 	if(p->stat != SLEEPING || p->sleep_chan) {
 		return;
 	}
-	p->stat = READY;
+	p->stat = RUNNING;
 }
 
 int execv(char *path, char *argv[], char *envp[])

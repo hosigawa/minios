@@ -40,8 +40,11 @@ struct dinode {
   	short major;          // Major device number (T_DEV only)
   	short minor;          // Minor device number (T_DEV only)
   	short nlink;          // Number of links to inode in file system
+	uint atime;
+	uint ctime;
+	uint mtime;
   	uint size;            // Size of file (bytes)
-  	uint addrs[NDIRECT+1];   // Data block addresses
+  	uint addrs[NDIRECT+14];   // Data block addresses
 };
 
 struct dirent {

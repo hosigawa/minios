@@ -240,8 +240,7 @@ int sys_sleep()
 int sys_stime()
 {
 	uint *time = (uint *)get_arg_uint(0);
-	extern uint boot_time, ticks;
-	*time = boot_time + ticks / TIME_HZ;
+	*time = get_systime();
 	return 0;
 }
 

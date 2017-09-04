@@ -3,8 +3,14 @@
 extern struct CPU cpu;
 
 void do_signal(struct trap_frame *tf)
-{	
+{
+	/**
+	*	popl %eax
+	*	movl $0x14, %eax
+	*	int $0x40
+	*/
 	static char retcode[8] = {0x58, 0xb8, 0x14, 0x00, 0x00, 0x00, 0xcd, 0x40};
+
 	if(!cpu.cur_proc || !cpu.cur_proc->signal || (tf->cs & 3) != DPL_USER)
 		return;
 	int signal = bsf(cpu.cur_proc->signal) + 1;
@@ -32,6 +38,7 @@ void do_signal(struct trap_frame *tf)
 		case SIG_CHLD:
 			break;
 		default:
+			printf("pid:%d receive signal:%d\n", cpu.cur_proc->pid, signal);
 			exit();
 			break;
 	}
@@ -42,10 +49,11 @@ int kill(int pid, int signal)
 	struct proc *p = get_proc(pid);
 	if(!p)
 		return -1;
-	p->signal |= SIGNAL(signal);
-	if(p->stat == SLEEPING) {
-		wakeup(p);
+	if(signal < 1 || signal > 32) {
+		return -1;
 	}
+	p->signal |= SIGNAL(signal);
+	wakeup(p);
 	return 0;
 }
 

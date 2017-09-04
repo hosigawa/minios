@@ -5,10 +5,12 @@
 #include "usyscall.h"
 #include "../kernel/signal.h"
 
+#define TIME_ZONE 8
+
 int exec(char *path, char **argv, char **envp);
 void srand(int seek);
 int rand();
-int localtime(uint *time);
+int localtime(struct time_v *tm);
 
 #endif
 

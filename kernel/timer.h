@@ -25,7 +25,7 @@ void init_timer();
 
 struct trap_frame;
 void timer_proc(struct trap_frame *tf);
-int init_localtime();
+uint get_systime();
 
 #endif
 

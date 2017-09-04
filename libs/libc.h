@@ -2,6 +2,7 @@
 #define __LIBC_H__
 
 #include "../kernel/type.h"
+#include "time.h"
 
 #define PAD0 0x1
 

@@ -58,9 +58,13 @@ int file_write(struct file *f, char *src, int len)
 	if(f->ip->de.type == T_DEV && devrw[f->ip->de.major].write) {
 		ret = devrw[f->ip->de.major].write(f->ip, src, f->off, len);
 	}
-	else
+	else {
 		ret = writei(f->ip, src, f->off, len);
+		
+		write_inode(f->ip);
+	}
 	f->off += ret;
+
 
 	return ret;
 }

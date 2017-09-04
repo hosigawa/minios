@@ -12,7 +12,6 @@
 enum PROC_STATUS {
 	UNUSED = 0,
 	EMBRYO,
-	READY,
 	RUNNING,
 	SLEEPING,
 	ZOMBIE,
@@ -45,6 +44,7 @@ struct proc {
 	void *sleep_chan;
 	int signal;
 	struct sig_struct sig_handlers[32];
+	int priority;
 	uint count;
 	uint ticks;
 };

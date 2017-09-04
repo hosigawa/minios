@@ -7,6 +7,31 @@ uint user_ticks = 0;
 uint kern_ticks = 0;
 uint ticks = 0;
 
+static unixstamp_t init_localtime()
+{
+	struct time_v tm;
+
+	outb(CMOS_CTRL, CMOS_SEC);
+	tm.s = BCD_TO_NUM(inb(CMOS_DATA));
+	
+	outb(CMOS_CTRL, CMOS_MIN);
+	tm.m = BCD_TO_NUM(inb(CMOS_DATA));
+	
+	outb(CMOS_CTRL, CMOS_HOU);
+	tm.h = BCD_TO_NUM(inb(CMOS_DATA));
+
+	outb(CMOS_CTRL, CMOS_DAY);
+	tm.day = BCD_TO_NUM(inb(CMOS_DATA));
+
+	outb(CMOS_CTRL, CMOS_MON);
+	tm.mon = BCD_TO_NUM(inb(CMOS_DATA));
+
+	outb(CMOS_CTRL, CMOS_YEA);
+	tm.year = 2000 + BCD_TO_NUM(inb(CMOS_DATA));
+
+	return get_time_unixstamp(&tm);
+}
+
 void init_timer()
 {
 	outb(TIMER_MODE, TIMER_SEL0 | TIMER_RATEGEN | TIMER_16BIT);
@@ -18,7 +43,7 @@ void init_timer()
 void timer_proc(struct trap_frame *tf)
 {
 	if(!boot_time)
-		init_localtime();
+		boot_time = init_localtime();
 
 	ticks++;
 
@@ -39,59 +64,8 @@ void timer_proc(struct trap_frame *tf)
 	}
 }
 
-int init_localtime()
+uint get_systime()
 {
-	int year, mon, day, h, m, s;
-	outb(CMOS_CTRL, CMOS_SEC);
-	s = BCD_TO_NUM(inb(CMOS_DATA));
-	
-	outb(CMOS_CTRL, CMOS_MIN);
-	m = BCD_TO_NUM(inb(CMOS_DATA));
-	
-	outb(CMOS_CTRL, CMOS_HOU);
-	h = BCD_TO_NUM(inb(CMOS_DATA));
-
-	outb(CMOS_CTRL, CMOS_DAY);
-	day = BCD_TO_NUM(inb(CMOS_DATA));
-
-	outb(CMOS_CTRL, CMOS_MON);
-	mon = BCD_TO_NUM(inb(CMOS_DATA));
-
-	outb(CMOS_CTRL, CMOS_YEA);
-	year = 2000 + BCD_TO_NUM(inb(CMOS_DATA));
-
-	int ys = 0;
-	ys += ((year - 1970) / 4 ) * (365 * 3 + 366);
-	int y_mod = (year - 1970) % 4;
-	switch(y_mod) {
-		case 1:
-			ys += 365;
-			break;
-		case 2:
-			ys += 365 * 2;
-		break;
-		case 3:
-			ys += 365 * 2 + 366;
-		break;
-	}
-
-	static int mon1[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-	static int mon2[12] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-	int ms = 0;
-	int i;
-	if(year % 400 == 0 || ((year % 4 == 0) && (year % 100 != 0))) {
-		for(i = 0; i < mon - 1; i++)
-			ms += mon2[i];
-	}
-	else {
-		for(i = 0; i < mon - 1; i++)
-			ms += mon1[i];
-	}
-
-	int ds = 0;
-	ds += day - 1;
-
-	boot_time = ys * 3600 * 24 + ms * 3600 * 24 + ds * 3600 * 24 + h * 3600 + m * 60 + s;
-	return boot_time;
+	return boot_time + ticks / TIME_HZ;
 }
 

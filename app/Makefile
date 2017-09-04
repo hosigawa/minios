@@ -31,7 +31,7 @@ LIB_C_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(LIB_C_SRCS:.c=.o)))
 LIB_ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(LIB_ASM_SRCS:.S=.o)))
 
 COM_DIR = ../libs/.obj/
-COM_LIBS = $(COM_DIR)libc.o
+COM_LIBS = $(COM_DIR)libc.o $(COM_DIR)time.o
 
 APPS =\
 	_malloc_test\
@@ -49,6 +49,7 @@ APPS =\
 	_cp\
 	_mv\
 	_kill\
+	_date\
 
 .PHONY: all mkobjdir mkfs
 
