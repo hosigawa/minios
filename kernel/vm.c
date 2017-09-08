@@ -79,15 +79,16 @@ void map_page(pde_t *pdir, void *va, uint la, uint size, int perm)
 	}
 }
 
-int unmap(pde_t *pdir, void *va)
+uint unmap(pde_t *pdir, void *va)
 {
+	uint addr;
 	pte_t *pte = get_pte(pdir, va, false);
 	if(pte && *pte & PTE_P) {
-		vfree(*pte & ~0xfff);
+		addr = *pte & ~0xfff;
 		*pte = 0;
-		return 0;
+		return addr;
 	}
-	return -1;
+	return 0;
 }
 
 pte_t *get_pte(pde_t *pdir, void *va, bool bcreate)
@@ -135,7 +136,7 @@ int init_uvm(pde_t *pdir, char *start, int size)
 		panic("init_uvm: kalloc error\n");
 	memset(pg, 0, PG_SIZE);
 	map_page(pdir, 0, V2P(pg), PG_SIZE, PTE_W|PTE_U);
-	memmove(pg, start, size);
+	memcpy(pg, start, size);
 	return 0;
 }
 
@@ -199,11 +200,14 @@ int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz)
 	}
 	else {
 		for(i = new_addr; i < old_addr; i += PG_SIZE) {
-			if(unmap(pgdir, i) < 0) {
+			if((mem = unmap(pgdir, i)) == 0) {
 				if(i < (char *)USER_LINK)
 					continue;
 				else
 					break;
+			}
+			else {
+				vfree(mem);
 			}
 		}
 	}
@@ -300,7 +304,7 @@ void copy_to_user(uint dst, int off, char *src, int len)
 void kmap_atomic(char *va, uint mem)
 {
 	pde_t *pgdir = cpu.cur_proc ? cpu.cur_proc->pgdir : k_dir;
-	map_page(pgdir, va, vdup(mem), PG_SIZE, PTE_W);
+	map_page(pgdir, va, mem, PG_SIZE, PTE_W);
 	lcr3(V2P(pgdir));
 }
 

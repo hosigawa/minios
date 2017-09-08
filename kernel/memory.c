@@ -50,7 +50,6 @@ uint valloc()
 	for(i = PHYSICAL_END - PG_SIZE; i > k_alloc; i -= PG_SIZE) {
 		if(!mem_map[i >> 12]) {
 			mem_map[i >> 12] = 1;
-			mem_zero(i);
 			return i;
 		}
 	}
@@ -62,7 +61,7 @@ uint vdup(uint p)
 	if(p % PG_SIZE || p < k_alloc)
     	panic("vdup error: %p\n", p);
 	if(mem_map[p >> 12] < 1)
-		panic("vdup\n");
+		panic("vdup :%p\n", p);
 	mem_map[p >> 12]++;
 	return p;
 }
@@ -73,6 +72,9 @@ void vfree(uint p)
     	panic("vfree error: %p\n", p);
 	if(!mem_map[p >> 12])
     	panic("vfree free page: %p\n", p);
+	if(mem_map[p >> 12] == 1){
+		mem_zero(p);
+	}
 	mem_map[p >> 12]--;
 }
 

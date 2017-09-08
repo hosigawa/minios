@@ -96,7 +96,7 @@ void unkmap_atomic(char *va);
 struct proc;
 void swtch_uvm(struct proc *p);
 void map_page(pde_t *pdir, void *va, uint la, uint size, int perm);
-int unmap(pde_t *pdir, void *va);
+uint unmap(pde_t *pdir, void *va);
 pte_t *get_pte(pde_t *pdir, void *va, bool bcreate);
 
 struct inode;
