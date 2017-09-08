@@ -17,8 +17,8 @@ SRCDIR = ./src/\
 
 INCDIR = -I./src\
 		-I./ulibs\
-		-I../kernel\
-		-I../libs\
+		 -I../kernel/include\
+		 -I../libs\
 
 SRCS = $(wildcard $(addsuffix *.c, $(SRCDIR)))
 
@@ -34,7 +34,7 @@ COM_DIR = ../libs/.obj/
 COM_LIBS = $(COM_DIR)libc.o $(COM_DIR)time.o
 
 APPS =\
-	_malloc_test\
+	_malloctest\
 	_test\
 	README\
 	.profile\
@@ -69,15 +69,15 @@ $(OBJDIR)%.o: %.S
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
 
 _%: $(OBJDIR)src/%.o $(LIB_C_OBJS) $(LIB_ASM_OBJS) $(COM_LIBS)
-	$(LD) $(LDFLAGS) -N -e _start -Ttext 0x1000 -o $@ $^
+	$(LD) $(LDFLAGS) -N -e _start -Ttext 0x10000 -o $@ $^
 	$(OBJDUMP) -S $@ > $(OBJDIR)/$@.asm
 
 $(COM_DIR)%.o: ../libs/%.c
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
 	$(OBJDUMP) -S $@ > $@.asm
 
-$(OBJDIR)mkfs: ../tools/mkfs.c ../kernel/fs.h
-	gcc -Werror -Wall -I ../kernel -o $@ $<
+$(OBJDIR)mkfs: ../tools/mkfs.c ../kernel/include/fs.h
+	gcc -Werror -Wall -I ../kernel/include -o $@ $<
 
 mkobjdir:
 	@test -d $(COM_DIR) || mkdir $(COM_DIR)

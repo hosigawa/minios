@@ -90,6 +90,13 @@ static inline void lcr3(uint val)
   asm volatile("movl %0,%%cr3" : : "r" (val));
 }
 
+static inline uint read_cr2()
+{
+	uint addr;
+	asm volatile("movl %%cr2, %0" : "=r"(addr));
+	return addr;
+}
+
 static inline void cli()
 {
 	asm volatile("cli");

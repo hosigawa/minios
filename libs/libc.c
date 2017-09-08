@@ -1,6 +1,6 @@
 #include "libc.h"
-#include "../kernel/x86.h"
-#include "../kernel/type.h"
+#include "../kernel/include/x86.h"
+#include "../kernel/include/type.h"
 
 char *strcpy(char *dst, char *src)
 {

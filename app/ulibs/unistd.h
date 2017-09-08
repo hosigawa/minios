@@ -3,7 +3,7 @@
 
 #include "libc.h"
 #include "usyscall.h"
-#include "../kernel/signal.h"
+#include "signal.h"
 
 #define TIME_ZONE 8
 

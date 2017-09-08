@@ -1,7 +1,7 @@
 #ifndef __LIBC_H__
 #define __LIBC_H__
 
-#include "../kernel/type.h"
+#include "type.h"
 #include "time.h"
 
 #define PAD0 0x1

@@ -58,19 +58,20 @@
 #define SEG_TSS 5
 
 #define V2P(a) (((uint) (a)) - KERN_BASE)
-#define P2V(a) (((void *) (a)) + KERN_BASE)
+#define P2V(a) (((void *)(a)) + KERN_BASE)
 
 #define V2P_NC(x) ((x) - KERN_BASE)
 #define P2V_NC(x) ((x) + KERN_BASE)
 
 #define CR0_WP 0x00010000
-#define CR0_PG 0X80000000
+#define CR0_PG 0x80000000
 
 #define CR4_PSE 0x00000010
 
 #define IO_END 0x100000
-#define KERN_BASE 0x80000000
-#define KERN_LINK 0x80100000
+#define KERN_BASE 0xC0000000
+#define KERN_LINK 0xC0100000
+#define LOW_MEM 0x38000000
 #define DEV_SPACE 0xFE000000
 
 #define PG_ROUNDUP(sz)  (((sz)+PG_SIZE-1) & ~(PG_SIZE-1))

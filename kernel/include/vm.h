@@ -3,6 +3,9 @@
 
 #include "mmu.h"
 
+#define USER0 (char *)0x1000
+#define USER1 (char *)0x2000
+
 // Segment Descriptor
 struct gdt_desc {
   uint lim_15_0 : 16;  // Low bits of segment limit
@@ -85,16 +88,22 @@ int init_uvm(pde_t *pdir, char *start, int size);
 pde_t *cp_uvm(pde_t *pgdir, int mem_size);
 void free_uvm(pde_t *pgdir);
 int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz);
+void copy_user_page(uint dst, uint src);
+void copy_to_user(uint dst, int off, char *src, int len);
+void kmap_atomic(char *va, uint mem);
+void unkmap_atomic(char *va);
 
 struct proc;
 void swtch_uvm(struct proc *p);
 void map_page(pde_t *pdir, void *va, uint la, uint size, int perm);
+int unmap(pde_t *pdir, void *va);
 pte_t *get_pte(pde_t *pdir, void *va, bool bcreate);
 
 struct inode;
 int load_uvm(pde_t *pdir, struct inode *ip, char *va, int off, int len);
 void clear_pte(pde_t *pdir, void *va);
 int copy_out(pde_t *pdir, char *dst, char *src, int len);
+void do_page_fault();
 
 #endif
 

@@ -34,7 +34,7 @@ struct proc *alloc_proc()
 	}
 	if(!p)
 		return NULL;
-	p->kstack = (uint)mem_alloc();
+	p->kstack = (uint)kalloc();
 	if(!p->kstack) {
 		p->stat = UNUSED;
 		return NULL;
@@ -80,8 +80,8 @@ void scheduler()
 		if(count == 0) {
 			for(i = 0; i < MAX_PROC; i++) {
 				p = proc_table + i;
-				if(p->stat == RUNNING) {
-					p->count = p->priority * 10;
+				if(p->stat == RUNNING || p->stat == SLEEPING) {
+					p->count = p->count / 2 + p->priority * 10;
 				}
 			}
 			continue;
@@ -327,7 +327,7 @@ int wait()
 			p = proc_table + i;
 			if(p->stat == ZOMBIE && p->parent == cpu.cur_proc) {
 				pid = p->pid;
-				mem_free((char *)p->kstack);
+				kfree((char *)p->kstack);
 				p->kstack = NULL;
 				free_uvm(p->pgdir);
 				p->pid = 0;

@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
 {
 	printf("malloc size free:%d, totol:%d\n", memory_size(false), memory_size(true));
 	char *p1, *p2, *p3, *p4, *p5;
-	p1 = (char *)malloc(40803723);
+	p1 = (char *)malloc(40801237);
 	printf("malloc size free:%d, totol:%d\n", memory_size(false), memory_size(true));
 	p2 = (char *)malloc(4080);
 	printf("malloc size free:%d, totol:%d\n", memory_size(false), memory_size(true));

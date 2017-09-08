@@ -1,49 +1,100 @@
 #include "kernel.h"
 
-static struct mem_header *free_list = NULL;
+__attribute__((__aligned__(PG_SIZE)))
+static char mem_map[PHYSICAL_END >> 12] = {0};
+static uint k_alloc = 0;
+static uint v_alloc = 0;
 extern char end[];
+extern char stack[];
 
-void mem_init(char *vstart, char *vend)
+void mem_init()
 {
-	char *s = (char *)PG_ROUNDUP((uint)vstart);
-	char *e = (char *)PG_ROUNDUP((uint)vend);
-	for(; s < e; s += PG_SIZE) {
-		mem_free(s);
+	if(PHYSICAL_END % PG_SIZE)
+		panic("physical mem not align\n");
+	uint i;
+	k_alloc = V2P(PG_ROUNDUP((int)end));
+	for(i = 0; i < k_alloc; i += PG_SIZE) {
+		mem_map[i >> 12] = 100;
 	}
+	for(i = k_alloc; i < (uint)PHYSICAL_END; i += PG_SIZE) {
+		mem_map[i >> 12] = 0;
+	}
+	v_alloc = min(PHYSICAL_END, LOW_MEM);
 	//printf("mem_init: free page is %d\n", size_of_free_page());
 }
 
-char *mem_alloc() 
+void *kalloc() 
 {
-	struct mem_header *header = free_list;
-	if(free_list) {
-		free_list = free_list->next;
-		memset(header, 0, PG_SIZE);
+	uint i;
+	for(i = k_alloc; i < v_alloc; i += PG_SIZE) {
+		if(!mem_map[i >> 12]) {
+			mem_map[i >> 12]++;
+			return P2V(i);
+		}
 	}
-	return (char *)header;
+	return NULL;
 }
 
-void mem_free(void *p)
+void kfree(void *p)
 {
-	if((uint)p % PG_SIZE || (char *)p < end || V2P(p) >= PHYSICAL_END)
-    	panic("mem_free error: %p\n", p);
-	struct mem_header *header = (struct mem_header *)p;
-	header->next = free_list;
-	free_list = header;
+	if((uint)p % PG_SIZE || p < P2V(k_alloc) || p >= P2V(v_alloc))
+    	panic("kfree error: %p\n", p);
+	if(!mem_map[V2P(p) >> 12])
+    	panic("kfree free page: %p\n", p);
+	mem_map[V2P(p) >> 12] = 0;
+}
+
+uint valloc()
+{
+	uint i;
+	for(i = PHYSICAL_END - PG_SIZE; i > k_alloc; i -= PG_SIZE) {
+		if(!mem_map[i >> 12]) {
+			mem_map[i >> 12] = 1;
+			mem_zero(i);
+			return i;
+		}
+	}
+	return NULL;
+}
+
+uint vdup(uint p)
+{
+	if(p % PG_SIZE || p < k_alloc)
+    	panic("vdup error: %p\n", p);
+	if(mem_map[p >> 12] < 1)
+		panic("vdup\n");
+	mem_map[p >> 12]++;
+	return p;
+}
+
+void vfree(uint p)
+{
+	if(p % PG_SIZE || p < k_alloc)
+    	panic("vfree error: %p\n", p);
+	if(!mem_map[p >> 12])
+    	panic("vfree free page: %p\n", p);
+	mem_map[p >> 12]--;
 }
 
 int size_of_free_page()
 {
+	uint i;
 	int size = 0;
-	struct mem_header *header = free_list;
-	while(header) {
-		header = header->next;
-		size++;
+	for(i = k_alloc; i < PHYSICAL_END; i += PG_SIZE) {
+		if(!mem_map[i >> 12])
+			size++;
 	}
 	return size;
 }
 
 int size_of_free_memory() {
 	return size_of_free_page() * PG_SIZE;
+}
+
+void mem_zero(uint p)
+{
+	kmap_atomic(USER0, p);
+	memset(USER0, 0, PG_SIZE);
+	unkmap_atomic(USER0);
 }
 

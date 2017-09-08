@@ -3,7 +3,7 @@
 #include "mmu.h"
 #include "stdio.h"
 
-static struct malloc_header *head = NULL;
+static struct malloc_header * head = NULL;
 
 static void check_head()
 {

@@ -13,6 +13,10 @@ OBJDIR = .obj/
 SRCDIR =\
 		./kernel/\
 
+INCDIR =\
+		-I ./libs/\
+		-I ./kernel/include/\
+
 SRCS = $(wildcard $(addsuffix *.c, $(SRCDIR)))
 ASM_SRCS = $(wildcard $(addsuffix *.S, $(SRCDIR)))
 
@@ -58,11 +62,11 @@ qemu-gdb: makeproject
 minios.img:	$(OBJDIR)bootblock $(OBJDIR)kernelblock
 	dd if=/dev/zero of=$@ count=10000
 	dd if=$(OBJDIR)bootblock of=$@ conv=notrunc
-	dd if=$(OBJDIR)kernelblock of=minios.img seek=1 conv=notrunc
+	dd if=$(OBJDIR)kernelblock of=$@ seek=1 conv=notrunc
 
 $(OBJDIR)bootblock: kernel/boot/bootasm.S kernel/boot/bootmain.c
-	$(CC) $(CFLAGS) -O -nostdinc -I $(SRCDIR) -c kernel/boot/bootmain.c -o $(OBJDIR)bootmain.o
-	$(CC) $(CFLAGS) -nostdinc -I $(SRCDIR) -c kernel/boot/bootasm.S -o $(OBJDIR)bootasm.o
+	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c kernel/boot/bootmain.c -o $(OBJDIR)bootmain.o
+	$(CC) $(CFLAGS) -nostdinc $(INCDIR) -c kernel/boot/bootasm.S -o $(OBJDIR)bootasm.o
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7c00 -o $(OBJDIR)bootblock.o $(OBJDIR)bootasm.o $(OBJDIR)bootmain.o
 	$(OBJCOPY) -S -O binary -j .text $(OBJDIR)bootblock.o $@
 	perl ./tools/sign.pl $@
@@ -75,19 +79,19 @@ kernel/vectors.S: tools/vectors.pl
 	perl tools/vectors.pl > kernel/vectors.S
 
 $(OBJDIR)%.o: %.S
-	$(CC) $(CFLAGS) -O -nostdinc -I $(SRCDIR) -c -o $@ $<
+	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
 	
 $(OBJDIR)%.o: %.c
-	$(CC) $(CFLAGS) -O -nostdinc -I $(SRCDIR) -c -o $@ $<
+	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
 	$(OBJDUMP) -S $@ > $@.asm
 
 $(OBJDIR)initcode: kernel/boot/initcode.S
-	$(CC) $(CFLAGS) -nostdinc -I$(SRCDIR) -c $< -o $(OBJDIR)initcode.o
+	$(CC) $(CFLAGS) -nostdinc $(INCDIR) -c $< -o $(OBJDIR)initcode.o
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $(OBJDIR)initcode.out $(OBJDIR)initcode.o
 	$(OBJCOPY) -S -O binary $(OBJDIR)initcode.out $@
 
-$(OBJDIR)app/mkfs: tools/mkfs.c kernel/fs.h
-	gcc -Werror -Wall -I $(SRCDIR) -o $@ $<
+$(OBJDIR)app/mkfs: tools/mkfs.c kernel/include/fs.h
+	gcc -Werror -Wall $(INCDIR) -o $@ $<
 
 $(COM_DIR)%.o: libs/%.c
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<

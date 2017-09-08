@@ -11,8 +11,9 @@ void do_signal(struct trap_frame *tf)
 	*/
 	static char retcode[8] = {0x58, 0xb8, 0x14, 0x00, 0x00, 0x00, 0xcd, 0x40};
 
-	if(!cpu.cur_proc || !cpu.cur_proc->signal || (tf->cs & 3) != DPL_USER)
+	if(!cpu.cur_proc || !cpu.cur_proc->signal || (tf->cs & 3) != DPL_USER){
 		return;
+	}
 	int signal = bsf(cpu.cur_proc->signal) + 1;
 	cpu.cur_proc->signal &= ~SIGNAL(signal);
 

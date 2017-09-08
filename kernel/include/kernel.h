@@ -5,7 +5,7 @@
 #include "x86.h"
 #include "param.h"
 #include "console.h"
-#include "../libs/libc.h"
+#include "libc.h"
 #include "memory.h"
 #include "vm.h"
 #include "trap.h"

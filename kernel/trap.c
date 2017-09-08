@@ -14,11 +14,26 @@ void init_idt()
 	lidt(idt, sizeof(idt));
 }
 
+void do_trap(struct trap_frame *tf)
+{
+	if(!cpu.cur_proc)
+		panic("system interrupted, trapno:%d; errno:%d, eip%p\n", tf->trapno, tf->errno, tf->eip);
+
+	if(tf->trapno == 14) {
+		printf("pid:%d lost page %p, eip:%p\n", cpu.cur_proc->pid, read_cr2(), tf->eip);
+		kill(cpu.cur_proc->pid, SIG_KILL);
+	}
+
+	printf("userspace interrupted, pid:%d, trapno:%d, errno:%d, eip:%p\n", cpu.cur_proc->pid, tf->trapno, tf->errno, tf->eip);
+				
+	kill(cpu.cur_proc->pid, SIG_KILL);
+}
+
 void trap(struct trap_frame *tf) 
 {
 	if(tf->trapno == T_SYSCALL) {
 		if((tf->cs & 3) != DPL_USER)
-			panic("system call must from userspace\n");
+			panic("system call must came from userspace\n");
 		sys_call();
 	} 
 	else {
@@ -36,13 +51,7 @@ void trap(struct trap_frame *tf)
 				uart_proc();
 				break;
 			default:
-				if(!cpu.cur_proc || (tf->cs & 3) == DPL_KERN)
-					panic("system interrupted, trapno:%d; errno:%d, eip%p\n", tf->trapno, tf->errno, tf->eip);
-				printf("userspace interrupted, trapno:%d, errno:%d, eip:%p\n", cpu.cur_proc->pid, tf->trapno, tf->errno, tf->eip);
-				
-				if(tf->trapno == 14)
-					kill(cpu.cur_proc->pid, SIG_SEGV);
-				kill(cpu.cur_proc->pid, SIG_QUIT);
+				do_trap(tf);
 				break;
 		}
 	}
