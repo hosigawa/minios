@@ -305,13 +305,13 @@ void kmap_atomic(char *va, uint mem)
 {
 	pde_t *pgdir = cpu.cur_proc ? cpu.cur_proc->pgdir : k_dir;
 	map_page(pgdir, va, mem, PG_SIZE, PTE_W);
-	lcr3(V2P(pgdir));
+	invlpg(va);
 }
 
 void unkmap_atomic(char *va)
 {
 	pde_t *pgdir = cpu.cur_proc ? cpu.cur_proc->pgdir : k_dir;
 	unmap(pgdir, va);
-	lcr3(V2P(pgdir));
+	invlpg(va);
 }
 

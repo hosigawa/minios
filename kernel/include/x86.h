@@ -138,6 +138,11 @@ static inline int bsf(int data)
   return off;
 }
 
+static inline void invlpg(void *addr)
+{
+    asm volatile("invlpg (%0)" ::"r" (addr) : "memory");
+}
+
 void init_cpu();
 void pushcli();
 void popsti();
