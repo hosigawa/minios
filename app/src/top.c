@@ -1,6 +1,10 @@
 #include "stdio.h"
 #include "malloc.h"
 
+#define GET_VER_H(v) (((v)>>16)&0xff)
+#define GET_VER_M(v) (((v)>>8)&0xff)
+#define GET_VER_L(v) ((v)&0xff)
+
 int next_int(char **p)
 {
 	int sum = 0;
@@ -34,9 +38,11 @@ int main()
 		printf("ps: open /dev/sys error\n");
 		return -1;
 	}
+	uint ver;
 	int mt,mf,it,i_f,ut,kt,tt;
 	char *p = sys_info;
 	read(fd, sys_info, 4096);
+	ver = (uint)next_int(&p);
 	mt = next_int(&p);
 	mf = next_int(&p);
 	it = next_int(&p);
@@ -45,6 +51,7 @@ int main()
 	kt = next_int(&p);
 	tt = next_int(&p);
 
+	printf("Version      : %d.%d.%d\n", GET_VER_H(ver), GET_VER_M(ver), GET_VER_L(ver));
 	printf("Memory Total : %d kB\n", mt / 1024);
 	printf("Memory Free  : %d kB\n", mf / 1024);
 	printf("Inode Total  : %d\n", it);

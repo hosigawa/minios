@@ -56,8 +56,10 @@ int sysinfo_read(struct inode *ip, char *dst, int off, int len)
 		brelse(buf);
 	}
 
+	extern uint _version;
 	extern uint user_ticks, kern_ticks, ticks;
-	wd += sprintf(dst, "%d %d %d %d %d %d %d\n", 
+	wd += sprintf(dst, "%d %d %d %d %d %d %d %d\n", 
+						_version,
 						PHYSICAL_END, 
 						size_of_free_memory(),
 						sb.ninodes,

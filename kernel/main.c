@@ -1,9 +1,10 @@
 #include "kernel.h"
 
-#define MINIOS_VERSION  "0.0.1"
+uint _version = 0;
 
 int main() 
 {
+	_version = MAKE_VER(0,1,0);
 	init_uart();
 	mem_init();
 	init_kvm();
@@ -18,7 +19,7 @@ int main()
 	init_procfs();
 	user_init();
 
-	sys_info("\nMINIOS ver.%s start...\n\n", MINIOS_VERSION);
+	sys_info("\nMINIOS ver.%d.%d.%d start...\n\n", GET_VER_H(_version), GET_VER_M(_version), GET_VER_L(_version));
 
 	scheduler();
 }

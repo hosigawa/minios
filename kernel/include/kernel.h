@@ -29,5 +29,10 @@
 #define err_info cprintf
 #define printf cprintf
 
+#define MAKE_VER(h,m,l) (((h)<<16) + ((m)<<8) + (l))
+#define GET_VER_H(v) (((v)>>16)&0xff)
+#define GET_VER_M(v) (((v)>>8)&0xff)
+#define GET_VER_L(v) ((v)&0xff)
+
 #endif
 
