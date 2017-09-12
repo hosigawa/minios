@@ -2,22 +2,7 @@
 
 extern struct CPU cpu;
 
-struct devrw devrw[MAX_DEV];
 struct file file_table[NFILE];
-
-int register_devrw(int dev, rw_func read, rw_func write)
-{
-	devrw[dev].read = read;
-	devrw[dev].write = write;
-	return 0;
-}
-
-void init_dev()
-{
-	register_devrw(CONSOLE, console_read, console_write);
-	register_devrw(PROCINFO, procinfo_read, procinfo_write);
-	register_devrw(SYSINFO, sysinfo_read, sysinfo_write);
-}
 
 void init_file() 
 {
@@ -25,7 +10,6 @@ void init_file()
 	for(i = 0; i < NFILE; i++) {
 		file_table[i].ref = 0;
 	}
-	init_dev();
 }
 
 struct file *get_file(int fd)
@@ -35,38 +19,6 @@ struct file *get_file(int fd)
 		return NULL;
 	}
 	return f;
-}
-
-int file_read(struct file *f, char *dst, int len)
-{
-	int ret;
-	read_inode(f->ip);
-	if(f->ip->de.type == T_DEV && devrw[f->ip->de.major].read) {
-		ret = devrw[f->ip->de.major].read(f->ip, dst, f->off, len);
-	}
-	else
-		ret = readi(f->ip, dst, f->off, len);
-	f->off += ret;
-
-	return ret;
-}
-
-int file_write(struct file *f, char *src, int len)
-{
-	int ret;
-	read_inode(f->ip);
-	if(f->ip->de.type == T_DEV && devrw[f->ip->de.major].write) {
-		ret = devrw[f->ip->de.major].write(f->ip, src, f->off, len);
-	}
-	else {
-		ret = writei(f->ip, src, f->off, len);
-		f->ip->de.mtime = get_systime();
-		write_inode(f->ip);
-	}
-	f->off += ret;
-
-
-	return ret;
 }
 
 struct file *file_dup(struct file *f)
@@ -102,64 +54,12 @@ int fd_alloc(struct file *f)
 	return -1;
 }
 
-struct inode *file_create(char *path, int type, int major, int minor)
-{
-	struct inode *dp, *ip;
-	char name[DIR_NM_SZ];
-	int off;
-	dp = namep(path, name);
-	if(!dp) {
-		return NULL;
-	}
-	read_inode(dp);
-	if(dp->de.type != T_DIR) {
-		irelese(dp);
-		return NULL;
-	}
-
-	ip = dir_lookup(dp, name, &off);
-	if(ip) {
-		irelese(dp);
-		read_inode(ip);
-		if(type == T_FILE && ip->de.type == T_FILE)
-			return ip;
-		irelese(ip);
-		return NULL;
-	}
-
-	ip = ialloc(dp->dev, type);
-	if(!ip)
-		panic("create file alloc inode error\n");
-
-	read_inode(ip);
-	ip->de.major = major;
-	ip->de.minor = minor;
-	ip->de.size = 0;
-	ip->de.nlink = 1;
-	ip->de.ctime = get_systime();
-	ip->de.mtime = get_systime();
-	ip->de.atime = get_systime();
-	write_inode(ip);
-
-	if(type == T_DIR){
-		dp->de.nlink++;
-		write_inode(dp);
-		dir_link(ip, ".", ip->inum);
-		dir_link(ip, "..", dp->inum);
-	}
-
-	dir_link(dp, name, ip->inum);
-	irelese(dp);
-
-	return ip;
-}
-
 int file_mknod(char *path, int major, int minor) 
 {
 	struct inode *ip = file_create(path, T_DEV, major, minor);
 	if(!ip)
 		return -1;
-	irelese(ip);
+	iput(ip);
 	return 0;
 }
 
@@ -168,7 +68,17 @@ int file_mkdir(char *path, int major, int minor)
 	struct inode *ip = file_create(path, T_DIR, major, minor);
 	if(!ip)
 		return -1;
-	irelese(ip);
+	iput(ip);
+	return 0;
+}
+
+int file_close(struct file *f)
+{
+	if(--f->ref == 0) {
+		if(f->type == FD_INODE)
+			iput(f->ip);
+		f->type = FD_NONE;
+	}
 	return 0;
 }
 
@@ -185,14 +95,14 @@ int file_open(char *path, int mode)
 		if(!ip) {
 			return -1;
 		}
-		read_inode(ip);
 		if(ip->de.type == T_DIR && mode > 0) {
-			irelese(ip);
+			iput(ip);
 			return -2;
 		}
 	}
 
 	f = file_alloc();
+	f->f_op = ip->sb->f_op;
 	f->type = FD_INODE;
 	f->ip = ip;
 	f->off = 0;
@@ -203,80 +113,44 @@ int file_open(char *path, int mode)
 		return -3;
 	}
 	f->ip->de.atime = get_systime();
-	write_inode(f->ip);
+	ip->sb->s_op->write_inode(f->ip);
 	return fd;
 }
 
-int file_close(struct file *f)
+struct inode *file_create(char *path, int type, int major, int minor)
 {
-	if(--f->ref == 0) {
-		if(f->type == FD_INODE)
-			irelese(f->ip);
-		f->type = FD_NONE;
+	struct inode *dp, *ip;
+	char name[DIR_NM_SZ];
+	dp = namep(path, name);
+	if(!dp) {
+		return NULL;
 	}
-	return 0;
-}
+	if(dp->de.type != T_DIR) {
+		iput(dp);
+		return NULL;
+	}
 
-bool dir_empty(struct inode *dp)
-{
-	int off;
-	struct dirent de;
-	for(off = 2 * sizeof(de); off < dp->de.size; off += sizeof(de)) {
-		if(readi(dp, (char *)&de, off, sizeof(de)) != sizeof(de))
-			panic("dir_empty\n");
-		if(de.inum != 0)
-			return false;
-	}
-	return true;
+	ip = dp->i_op->create(dp, name, type, major, minor);
+	iput(dp);
+
+	return ip;
 }
 
 int file_unlink(char *path)
 {
-	struct inode *dp, *ip;
+	struct inode *dp;
 	char name[DIR_NM_SZ];
-	int off;
 	dp = namep(path, name);
 	if(!dp)
 		return -1;
-	read_inode(dp);
 	
 	if(strcmp(name, "..") == 0 || strcmp(name, ".") == 0) {
-		irelese(dp);
+		iput(dp);
 		return -2;
 	}
 
-	ip = dir_lookup(dp, name, &off);
-	if(!ip) {
-		irelese(dp);
-		return -3;
-	}
-	read_inode(ip);
-
-	if(ip->de.nlink < 1) {
-		irelese(dp);
-		irelese(ip);
-		return -4;
-	}
-
-	if(ip->de.type == T_DIR && !dir_empty(ip)){
-		irelese(dp);
-		irelese(ip);
-		return -5;
-	}
-
-	struct dirent de;
-	memset(&de, 0, sizeof(de));
-	writei(dp, (char *)&de, off, sizeof(de));
-	if(ip->de.type == T_DIR) {
-		dp->de.nlink--;
-		write_inode(dp);
-	}
-	irelese(dp);
-
-	ip->de.nlink--;
-	write_inode(ip);
-	irelese(ip);
-
-	return 0;
+	int ret = dp->i_op->unlink(dp, name);
+	iput(dp);
+	return ret;
 }
 

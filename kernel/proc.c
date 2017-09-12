@@ -10,12 +10,12 @@ void swtch(struct context **old, struct context *new);
 
 void trapret();
 
-static bool first = true;
 void forkret()
 {
+	static bool first = true;
 	if(first) {
 		first = false;
-		init_fs(1);
+		mount_root();
 	}
 	else {
 		popsti();
@@ -116,7 +116,6 @@ void user_init()
   	p->tf->esp = PG_SIZE;
   	p->tf->eip = 0;
 
-	p->cwd = namei("/");
 	p->parent = NULL;
 	p->stat = RUNNING;
 }
@@ -207,16 +206,16 @@ int execv(char *path, char *argv[], char *envp[])
 		return -1;
 	}
 
-	read_inode(ip);
+	ip->sb->s_op->read_inode(ip);
 	if(ip->de.type == T_DIR) {
-		irelese(ip);
+		iput(ip);
 		return -2;
 	}
 	struct elfhdr elf;
-	readi(ip, (char *)&elf, 0, sizeof(struct elfhdr));
+	ip->i_op->readi(ip, (char *)&elf, 0, sizeof(struct elfhdr));
 	if(elf.magic != ELF_MAGIC) {
 		//err_info("elf magic error: %p\n", elf.magic);
-		irelese(ip);
+		iput(ip);
 		return -3;
 	}
 
@@ -229,14 +228,14 @@ int execv(char *path, char *argv[], char *envp[])
 	uint off = elf.phoff;
 	int num = 0;
 	while(num++ < elf.phnum) {
-		readi(ip, (char *)&ph, off, sizeof(struct proghdr));
+		ip->i_op->readi(ip, (char *)&ph, off, sizeof(struct proghdr));
 		off += sizeof(struct proghdr);
 		if(ph.type != ELF_PROG_LOAD)
 			continue;
 		size = resize_uvm(pdir, size, ph.va + ph.memsz);
 		load_uvm(pdir, ip, (char *)ph.va, ph.offset, ph.filesz);
 	}
-	irelese(ip);
+	iput(ip);
 	size = PG_ROUNDUP(size);
 	size = resize_uvm(pdir, size, size + USTACKSIZE + PG_SIZE);
 	clear_pte(pdir, (char *)(size - (USTACKSIZE + PG_SIZE)));
@@ -297,7 +296,7 @@ void exit()
 			cpu.cur_proc->ofile[i] = NULL;
 		}
 	}
-	irelese(cpu.cur_proc->cwd);
+	iput(cpu.cur_proc->cwd);
 	cpu.cur_proc->cwd = NULL;
 
 	pushcli();

@@ -85,6 +85,7 @@ int sys_open()
 {
 	char *path = (char *)get_arg_uint(0);
 	int mode = get_arg_int(1);
+	
 	return file_open(path, mode);
 }
 
@@ -126,7 +127,7 @@ int sys_read()
 	struct file *f = get_file(fd);
 	if(!f)
 		return -1;
-	return file_read(f, dst, len);
+	return f->f_op->read(f, dst, len);
 }
 
 int sys_write()
@@ -138,7 +139,7 @@ int sys_write()
 	struct file *f = get_file(fd);
 	if(!f)
 		return -1;
-	return file_write(f, src, len);
+	return f->f_op->write(f, src, len);
 }
 
 int sys_fstat()
@@ -148,7 +149,6 @@ int sys_fstat()
 	struct file *f = get_file(fd);
 	if(!f)
 		return -1;
-	read_inode(f->ip);
 	fs->type = f->ip->de.type;
 	fs->nlink = f->ip->de.nlink;
 	fs->size = f->ip->de.size;
@@ -161,14 +161,14 @@ int sys_fstat()
 int sys_pwd()
 {
 	char *wd = (char *)get_arg_uint(0);
-	int off;
+	/*int off;
 	struct inode *dp = dir_lookup(cpu.cur_proc->cwd, "..", &off);
 	read_inode(dp);
 	if(!dp)
 		return -1;
 	if(dp->inum == cpu.cur_proc->cwd->inum) {
 		memmove(wd, "/", 2);
-		irelese(dp);
+		iput(dp);
 		return 0;
 	}
 	struct dirent de;
@@ -176,13 +176,15 @@ int sys_pwd()
 	while(readi(dp, (char *)&de, off, sizeof(de)) == sizeof(de)) {
 		if(de.inum == cpu.cur_proc->cwd->inum && strcmp(de.name, ".") < 0 && strcmp(de.name, "..") < 0) {
 			memmove(wd, de.name, strlen(de.name)+1);
-			irelese(dp);
+			iput(dp);
 			return 0;
 		}
 		off += sizeof(de);
 	}
-	irelese(dp);
-	return -2;
+	iput(dp);
+	return -2;*/
+	strcpy(wd, "home");
+	return 0;
 }
 
 int sys_mkdir()
@@ -197,12 +199,11 @@ int sys_chdir()
 	struct inode *dp = namei(path);
 	if(!dp)
 		return -1;
-	read_inode(dp);
 	if(dp->de.type != T_DIR) {
-		irelese(dp);
+		iput(dp);
 		return -2;
 	}
-	irelese(cpu.cur_proc->cwd);
+	iput(cpu.cur_proc->cwd);
 	cpu.cur_proc->cwd = dp;
 	return 0;
 }

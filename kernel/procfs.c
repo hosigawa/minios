@@ -38,32 +38,12 @@ int procinfo_write(struct inode *ip, char *dst, int off, int len)
 int sysinfo_read(struct inode *ip, char *dst, int off, int len)
 {
 	int wd = 0;
-	int offset, i;
-	struct block_buf *buf;
-	struct dinode *dp;
-	int inodes = 0;
-	extern struct super_block sb;
-	for(offset = 0; offset < sb.ninodes; offset += IPER) {
-		buf = bread(1, IBLOCK(offset));
-		for(i = 0; i < IPER; i++) {
-			if(offset == 0 && i == 0)
-				continue;
-			dp = (struct dinode *)buf->data + i;
-			if(dp->type == 0) {
-				inodes++;
-			}
-		}
-		brelse(buf);
-	}
-
 	extern uint _version;
 	extern uint user_ticks, kern_ticks, ticks;
-	wd += sprintf(dst, "%d %d %d %d %d %d %d %d\n", 
+	wd += sprintf(dst, "%d %d %d %d %d %d\n", 
 						_version,
 						PHYSICAL_END, 
 						size_of_free_memory(),
-						sb.ninodes,
-						inodes,
 						user_ticks,
 						kern_ticks,
 						ticks

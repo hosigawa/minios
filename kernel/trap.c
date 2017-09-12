@@ -16,7 +16,7 @@ void init_idt()
 
 void do_trap(struct trap_frame *tf)
 {
-	if(!cpu.cur_proc)
+	if(!cpu.cur_proc || (tf->cs & 3) == DPL_KERN)
 		panic("system interrupted, trapno:%d; errno:%d, eip%p\n", tf->trapno, tf->errno, tf->eip);
 
 	if(tf->trapno == 14) {

@@ -119,7 +119,7 @@ main(int argc, char *argv[])
   wsect(1, buf);
 
   rootino = _ialloc(T_DIR);
-  assert(rootino == ROOTINO);
+  assert(rootino == ROOT_INO);
 
   bzero(&de, sizeof(de));
   de.inum = xshort(rootino);
@@ -224,7 +224,7 @@ winode(uint inum, struct dinode *ip)
   uint bn;
   struct dinode *dip;
 
-  bn = IBLOCK(inum);
+  bn = IBLOCK(inum, &sb);
   rsect(bn, buf);
   dip = ((struct dinode*)buf) + (inum % IPER);
   *dip = *ip;
@@ -238,7 +238,7 @@ rinode(uint inum, struct dinode *ip)
   uint bn;
   struct dinode *dip;
 
-  bn = IBLOCK(inum);
+  bn = IBLOCK(inum, &sb);
   rsect(bn, buf);
   dip = ((struct dinode*)buf) + (inum % IPER);
   *ip = *dip;

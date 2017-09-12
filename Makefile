@@ -13,6 +13,7 @@ OBJDIR = .obj/
 SRCDIR =\
 		./kernel/\
 		./kernel/fs/\
+		./kernel/fs/minios/\
 
 INCDIR =\
 		-I ./libs/\

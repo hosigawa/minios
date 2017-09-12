@@ -13,7 +13,7 @@ int main()
 	init_idt();
 	init_pic();
 	init_timer();
-	init_file();
+	init_fs();
 	init_ide();
 	init_console();
 	init_procfs();

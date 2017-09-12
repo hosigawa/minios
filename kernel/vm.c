@@ -232,9 +232,9 @@ int load_uvm(pde_t *pdir, struct inode *ip, char *va, int off, int len)
 		addr = *pte & ~0xfff;
 		kmap_atomic(USER0, addr);
 		if(len - i < PG_SIZE)
-			readi(ip, USER0, off + i, len - i);
+			ip->i_op->readi(ip, USER0, off + i, len - i);
 		else
-			readi(ip, USER0, off + i, PG_SIZE);
+			ip->i_op->readi(ip, USER0, off + i, PG_SIZE);
 		unkmap_atomic(USER0);
 	}
 	return 0;

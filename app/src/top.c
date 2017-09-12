@@ -39,14 +39,12 @@ int main()
 		return -1;
 	}
 	uint ver;
-	int mt,mf,it,i_f,ut,kt,tt;
+	int mt,mf,ut,kt,tt;
 	char *p = sys_info;
 	read(fd, sys_info, 4096);
 	ver = (uint)next_int(&p);
 	mt = next_int(&p);
 	mf = next_int(&p);
-	it = next_int(&p);
-	i_f = next_int(&p);
 	ut = next_int(&p);
 	kt = next_int(&p);
 	tt = next_int(&p);
@@ -54,8 +52,6 @@ int main()
 	printf("Version      : %d.%d.%d\n", GET_VER_H(ver), GET_VER_M(ver), GET_VER_L(ver));
 	printf("Memory Total : %d kB\n", mt / 1024);
 	printf("Memory Free  : %d kB\n", mf / 1024);
-	printf("Inode Total  : %d\n", it);
-	printf("Inode Free   : %d\n", i_f);
 	printf("User Time    : %d:%02d:%02d(%d)\n", 
 							ut / 1000 / 3600 % 24,
 							ut / 1000 / 60 % 60,
