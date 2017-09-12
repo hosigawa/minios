@@ -87,7 +87,7 @@ void swtch_kvm();
 int init_uvm(pde_t *pdir, char *start, int size);
 pde_t *cp_uvm(pde_t *pgdir, int mem_size);
 void free_uvm(pde_t *pgdir);
-int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz);
+uint resize_uvm(pde_t *pgdir, uint oldsz, uint newsz);
 void copy_user_page(uint dst, uint src);
 void copy_to_user(uint dst, int off, char *src, int len);
 void kmap_atomic(char *va, uint mem);

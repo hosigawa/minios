@@ -1,5 +1,7 @@
 #include "kernel.h"
 
+extern struct CPU cpu;
+
 void init_procfs()
 {
 }
@@ -14,14 +16,14 @@ int procinfo_read(struct inode *ip, char *dst, int off, int len)
 	for(; i < MAX_PROC; i++) {
 		p = proc_table + i;
 		if(p->stat != UNUSED) {
-			wd += sprintf(dst + wd, "%d %d %d %d %d %s %d\n", 
+			wd += sprintf(dst + wd, "%d %d %d %d %d %d %s\n", 
 									p->pid, 
 									p->parent ? p->parent->pid : 0,
 									p->vend - USER_LINK,
 									p->stat,
 									p->ticks,
-									p->name,
-									p->priority
+									p->priority,
+									p->name
 						);
 		}
 		if(wd > 3800)

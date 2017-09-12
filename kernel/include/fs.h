@@ -80,10 +80,10 @@ struct inode {
 
 struct super_block;
 struct super_block_operation {
-	void (*read_sb)(int dev, struct super_block *sb);
-	struct inode *(*ialloc)(int dev, int type);
-	void (*read_inode)(struct inode *ip);
-	void (*write_inode)(struct inode *ip);
+	void (*read_sb)(struct super_block *sb, int dev);
+	struct inode *(*ialloc)(struct super_block *sb, int type);
+	void (*read_inode)(struct super_block *sb, struct inode *ip);
+	void (*write_inode)(struct super_block *sb, struct inode *ip);
 };
 
 struct file_operation;

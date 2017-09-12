@@ -23,17 +23,17 @@ int next_int(char **p)
 
 char *next_str(char *dst, char **p)
 {
-	while(**p != ' ' && **p != '\n')
+	while(**p != '\n')
 		*dst++ = *((*p)++);
 	*dst = 0;
 
-	while(**p == ' ' || **p == '\n')
+	while(**p == '\n')
 		(*p)++;
 
 	return dst;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 	char proc_info[4096];
 	memset(proc_info, 0, 4096);
@@ -63,9 +63,9 @@ int main()
 		min = (ticks / 1000) / 60;
 		sec = (ticks / 1000) % 60;
 		ms = (ticks % 1000) / 100;
+		pri = next_int(&p);
 		memset(nm, 0, 64);
 		next_str(nm, &p);
-		pri = next_int(&p);
 		printf("%4d  %4d  %5d  %2d  %s  %4d:%02d.%d  %s\n", pid, ppid, vsz, pri, STATUS[st], min, sec, ms, nm);
 	}
 	close(fd);

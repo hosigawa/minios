@@ -26,7 +26,7 @@ struct inode *iget(int dev, int inum)
 	empty->sb = get_sb(dev);
 	if(empty->sb) {
 		empty->i_op = empty->sb->i_op;
-		empty->sb->s_op->read_inode(empty);
+		empty->sb->s_op->read_inode(empty->sb, empty);
 	}
 	
 	return empty;
@@ -40,7 +40,7 @@ void iput(struct inode *ip)
 		ip->de.type = 0;
 		ip->flags = 0;
 		ip->i_op->itrunc(ip);
-		ip->sb->s_op->write_inode(ip);
+		ip->sb->s_op->write_inode(ip->sb, ip);
 		ip->sb = NULL;
 	}
 }

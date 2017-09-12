@@ -115,7 +115,7 @@ main(int argc, char *argv[])
     wsect(i, zeroes);
 
   memset(buf, 0, sizeof(buf));
-  memmove(buf, &sb, sizeof(sb));
+  memmove(buf, &sb, 28);
   wsect(1, buf);
 
   rootino = _ialloc(T_DIR);

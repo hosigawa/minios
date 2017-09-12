@@ -58,7 +58,7 @@ struct proc *alloc_proc()
 	for(i = 0; i < 32; i++) {
 		p->sig_handlers[i].handler = NULL;
 	}
-	p->priority = 2;
+	p->priority = DEF_PRIORITY;
 	return p;
 }
 
@@ -206,7 +206,6 @@ int execv(char *path, char *argv[], char *envp[])
 		return -1;
 	}
 
-	ip->sb->s_op->read_inode(ip);
 	if(ip->de.type == T_DIR) {
 		iput(ip);
 		return -2;

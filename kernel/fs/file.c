@@ -101,8 +101,10 @@ int file_open(char *path, int mode)
 		}
 	}
 
+	struct super_block *sb = ip->sb;
+
 	f = file_alloc();
-	f->f_op = ip->sb->f_op;
+	f->f_op = sb->f_op;
 	f->type = FD_INODE;
 	f->ip = ip;
 	f->off = 0;
@@ -113,7 +115,7 @@ int file_open(char *path, int mode)
 		return -3;
 	}
 	f->ip->de.atime = get_systime();
-	ip->sb->s_op->write_inode(f->ip);
+	sb->s_op->write_inode(sb, f->ip);
 	return fd;
 }
 

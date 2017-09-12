@@ -1,7 +1,7 @@
 #include "kernel.h"
 
-void minios_read_inode(struct inode *ip);
-void minios_write_inode(struct inode *ip);
+void minios_read_inode(struct super_block *sb, struct inode *ip);
+void minios_write_inode(struct super_block *sb, struct inode *ip);
 int minios_readi(struct inode *ip, char *dst, int offset, int num);
 int minios_writei(struct inode *ip, char *src, int offset, int num);
 
@@ -37,7 +37,7 @@ int minios_file_read(struct file *f, char *dst, int len)
 	else {
 		ret = minios_readi(f->ip, dst, f->off, len);
 		f->ip->de.atime = get_systime();
-		minios_write_inode(f->ip);
+		minios_write_inode(f->ip->sb, f->ip);
 	}
 	f->off += ret;
 
@@ -53,7 +53,7 @@ int minios_file_write(struct file *f, char *src, int len)
 	else {
 		ret = minios_writei(f->ip, src, f->off, len);
 		f->ip->de.mtime = get_systime();
-		minios_write_inode(f->ip);
+		minios_write_inode(f->ip->sb, f->ip);
 	}
 	f->off += ret;
 

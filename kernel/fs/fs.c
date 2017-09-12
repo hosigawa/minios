@@ -69,11 +69,11 @@ void mount_root()
 		panic("super_blocks not enough\n");
 	sb->dev = ROOT_DEV;
 	sb->s_op = fs->s_op;
-	sb->s_op->read_sb(ROOT_DEV, sb);
+	sb->s_op->read_sb(sb, ROOT_DEV);
 	sb->root = namei("/");
 	sb->root->sb = sb;
 	sb->root->i_op = sb->i_op;
-	sb->s_op->read_inode(sb->root);
+	sb->s_op->read_inode(sb, sb->root);
 	cpu.cur_proc->cwd = idup(sb->root);
 	//sys_info("load disk 1; size:%d, nblocks:%d, ninodes:%d, nlog:%d, logstart:%d, inodestart:%d, bmapstart:%d\n",
 	//		sb.size, sb.nblocks, sb.ninodes, sb.nlog, sb.logstart, sb.inodestart, sb.bmapstart);

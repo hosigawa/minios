@@ -1,12 +1,12 @@
 #include "kernel.h"
 
-uint minios_bmap(struct inode *ip, int n);
-void minios_bfree(int dev, uint n);
-void minios_write_inode(struct inode *ip);
-void minios_read_inode(struct inode *ip);
+uint minios_bmap(struct super_block *sb, struct inode *ip, int n);
+void minios_bfree(struct super_block *sb, uint n);
+void minios_write_inode(struct super_block *sb, struct inode *ip);
+void minios_read_inode(struct super_block *sb, struct inode *ip);
 void minios_dir_link(struct inode *dp, char *name, int inum);
 struct inode *minios_dir_lookup(struct inode *ip, char *name, int *off);
-struct inode *minios_ialloc(int dev, int type);
+struct inode *minios_ialloc(struct super_block *sb, int type);
 
 int minios_readi(struct inode *ip, char *dst, int offset, int num)
 {
@@ -15,7 +15,7 @@ int minios_readi(struct inode *ip, char *dst, int offset, int num)
 	if(offset + num > ip->de.size)
 		num = ip->de.size - offset;
 	for(rd = 0, intr = 0; rd < num; rd += intr, offset += intr, dst += intr) {
-		buf = bread(ip->dev, minios_bmap(ip, offset/BLOCK_SIZE));
+		buf = bread(ip->dev, minios_bmap(ip->sb, ip, offset/BLOCK_SIZE));
 		intr = min(BLOCK_SIZE - offset % BLOCK_SIZE, num - rd);
 		memmove(dst, buf->data + offset % BLOCK_SIZE, intr);
 		brelse(buf);
@@ -30,7 +30,7 @@ int minios_writei(struct inode *ip, char *src, int offset, int num)
 	if(offset > ip->de.size)
 		return -1;
 	for(wt = 0, intr = 0; wt < num; wt += intr, offset += intr, src += intr) {
-		buf = bread(ip->dev, minios_bmap(ip, offset/BLOCK_SIZE));
+		buf = bread(ip->dev, minios_bmap(ip->sb, ip, offset/BLOCK_SIZE));
 		intr = min(BLOCK_SIZE - offset % BLOCK_SIZE, num - wt);
 		memmove(buf->data + offset % BLOCK_SIZE, src, intr);
 		bwrite(buf);
@@ -39,7 +39,7 @@ int minios_writei(struct inode *ip, char *src, int offset, int num)
 	}
 	if(offset > ip->de.size) {
 		ip->de.size = offset;
-		minios_write_inode(ip);
+		minios_write_inode(ip->sb, ip);
 	}
 	return wt;
 }
@@ -51,14 +51,14 @@ struct inode *minios_create(struct inode *dp, char *name, int type, int major, i
 
 	ip = minios_dir_lookup(dp, name, &off);
 	if(ip) {
-		minios_read_inode(ip);
+		minios_read_inode(ip->sb, ip);
 		if(type == T_FILE && ip->de.type == T_FILE)
 			return ip;
 		iput(ip);
 		return NULL;
 	}
 
-	ip = minios_ialloc(dp->dev, type);
+	ip = minios_ialloc(dp->sb, type);
 	if(!ip)
 		panic("create file alloc inode error\n");
 
@@ -69,11 +69,11 @@ struct inode *minios_create(struct inode *dp, char *name, int type, int major, i
 	ip->de.ctime = get_systime();
 	ip->de.mtime = get_systime();
 	ip->de.atime = get_systime();
-	minios_write_inode(ip);
+	minios_write_inode(ip->sb, ip);
 
 	if(type == T_DIR){
 		dp->de.nlink++;
-		minios_write_inode(dp);
+		minios_write_inode(dp->sb, dp);
 		minios_dir_link(ip, ".", ip->inum);
 		minios_dir_link(ip, "..", dp->inum);
 	}
@@ -141,11 +141,11 @@ int minios_unlink(struct inode *dp, char *name)
 	minios_writei(dp, (char *)&de, off, sizeof(de));
 	if(ip->de.type == T_DIR) {
 		dp->de.nlink--;
-		minios_write_inode(dp);
+		minios_write_inode(dp->sb, dp);
 	}
 
 	ip->de.nlink--;
-	minios_write_inode(ip);
+	minios_write_inode(ip->sb, ip);
 	iput(ip);
 
 	return 0;
@@ -177,7 +177,7 @@ void minios_itrunc(struct inode *ip)
 	int i;
 	for(i = 0; i < NDIRECT; i++) {
 		if(ip->de.addrs[i]) {
-			minios_bfree(ip->dev, ip->de.addrs[i]);
+			minios_bfree(ip->sb, ip->de.addrs[i]);
 			ip->de.addrs[i] = 0;
 		}
 	}
@@ -186,15 +186,15 @@ void minios_itrunc(struct inode *ip)
 		p = (uint *)buf->data;
 		for(i = 0; i < BLOCK_SIZE / sizeof(uint); i++) {
 			if(p[i])
-				minios_bfree(ip->dev, p[i]);
+				minios_bfree(ip->sb, p[i]);
 		}
 		brelse(buf);
-		minios_bfree(ip->dev, ip->de.addrs[NDIRECT]);
+		minios_bfree(ip->sb, ip->de.addrs[NDIRECT]);
 		ip->de.addrs[NDIRECT] = 0;
 	}
 
 	ip->de.size = 0;
-	minios_write_inode(ip);
+	minios_write_inode(ip->sb, ip);
 }
 
 struct inode_operation minios_inode_op = {

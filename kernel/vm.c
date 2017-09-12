@@ -179,7 +179,7 @@ void free_uvm(pde_t *pgdir)
 	kfree(pgdir);
 }
 
-int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz)
+uint resize_uvm(pde_t *pgdir, uint oldsz, uint newsz)
 {
 	if(oldsz < USER_LINK)
 		panic("resize_uvm: oldsz < USER_LINK\n");
@@ -211,14 +211,13 @@ int resize_uvm(pde_t *pgdir, uint oldsz, uint newsz)
 			}
 		}
 	}
-	return (int)new_addr;
+	return (uint)new_addr;
 }
 
 int load_uvm(pde_t *pdir, struct inode *ip, char *va, int off, int len)
 {
 	if((uint)va % PG_SIZE != 0) {
 		panic("va not page aligned\n");
-		return -1;
 	}
 	pte_t *pte;
 	uint addr;
