@@ -24,6 +24,7 @@ int (*syscalls[])(void) = {
 	[SYS_signal] = sys_signal,
 	[SYS_sigret] = sys_sigret,
 	[SYS_kill] = sys_kill,
+	[SYS_readdir] = sys_readdir,
 };
 
 int get_arg_int(int n)
@@ -149,12 +150,12 @@ int sys_fstat()
 	struct file *f = get_file(fd);
 	if(!f)
 		return -1;
-	fs->type = f->ip->de.type;
-	fs->nlink = f->ip->de.nlink;
-	fs->size = f->ip->de.size;
-	fs->ctime = f->ip->de.ctime;
-	fs->mtime = f->ip->de.mtime;
-	fs->atime = f->ip->de.atime;
+	fs->type = f->ip->type;
+	fs->nlink = f->ip->nlink;
+	fs->size = f->ip->size;
+	fs->ctime = f->ip->ctime;
+	fs->mtime = f->ip->mtime;
+	fs->atime = f->ip->atime;
 	return 0;
 }
 
@@ -199,7 +200,7 @@ int sys_chdir()
 	struct inode *dp = namei(path);
 	if(!dp)
 		return -1;
-	if(dp->de.type != T_DIR) {
+	if(dp->type != T_DIR) {
 		iput(dp);
 		return -2;
 	}
@@ -280,5 +281,18 @@ int sys_kill()
 	int pid = get_arg_int(0);
 	uint signal = get_arg_uint(1);
 	return kill(pid, signal);
+}
+
+int sys_readdir()
+{
+	int fd = get_arg_int(0);
+	struct dirent *de = (struct dirent *)get_arg_uint(1);
+
+	struct file *f = get_file(fd);
+	if(!f)
+		return -1;
+	if(f->ip->type != T_DIR)
+		return -1;
+	return f->ip->i_op->readdir(f->ip, de);
 }
 

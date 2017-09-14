@@ -1,12 +1,14 @@
 #include "kernel.h"
 
 extern struct CPU cpu;
+struct super_block *root_sb;
 
 struct super_block super_blocks[SUPER_BLOCK_NUM];
 struct file_system file_systems[FILE_SYSTEM_NUM];
 void init_file();
 void binit();
 void register_file_system_minios(struct file_system *fs);
+void register_file_system_proc(struct file_system *fs);
 
 struct super_block *get_sb(int dev)
 {
@@ -15,6 +17,8 @@ struct super_block *get_sb(int dev)
 		if(super_blocks[i].dev == dev)
 			return &super_blocks[i];
 	}
+	if(dev == 0)
+		panic("super_blocks not enough\n");
 	return NULL;
 }
 
@@ -43,6 +47,8 @@ void register_file_system()
 	struct file_system *fs;
 	fs = get_free_fs();
 	register_file_system_minios(fs);
+	fs = get_free_fs();
+	register_file_system_proc(fs);
 }
 
 void init_fs()
@@ -65,18 +71,40 @@ void mount_root()
 	if(!fs)
 		panic("can't find file_system minios\n");
 	struct super_block *sb = get_sb(0);
-	if(!sb)
-		panic("super_blocks not enough\n");
 	sb->dev = ROOT_DEV;
-	sb->s_op = fs->s_op;
-	sb->s_op->read_sb(sb, ROOT_DEV);
+	fs->s_op->read_sb(sb);
+	root_sb = sb;
 	sb->root = namei("/");
 	sb->root->sb = sb;
 	sb->root->i_op = sb->i_op;
 	sb->s_op->read_inode(sb, sb->root);
 	cpu.cur_proc->cwd = idup(sb->root);
+
 	//sys_info("load disk 1; size:%d, nblocks:%d, ninodes:%d, nlog:%d, logstart:%d, inodestart:%d, bmapstart:%d\n",
 	//		sb.size, sb.nblocks, sb.ninodes, sb.nlog, sb.logstart, sb.inodestart, sb.bmapstart);
+}
+
+void proc_create_file();
+int mount_fs(char *path, char *fs_name)
+{
+	static int dev = ROOT_DEV + 1;
+
+	struct inode *dp = namei(path);
+	if(!dp)
+		panic("%s not exists\n", path);
+	if(dp->type != T_DIR)
+		panic("%s is not direct\n", path);
+	struct file_system *fs = get_fs_type(fs_name);
+	if(!fs)
+		panic("can't find file_system %s\n", fs_name);
+	struct super_block *sb = get_sb(0);
+	sb->dev = dev++;
+	sb->root = idup(dp);
+	fs->s_op->read_sb(sb);
+	dp->sb = sb;
+	
+	iput(dp);
+	return 0;
 }
 
 char *path_decode(char *path, char *name)
@@ -107,13 +135,13 @@ struct inode *namex(char *path, char *name, bool bparent)
 	struct inode *ip, *next;
 	int off;
 	if(*path == '/')
-		ip = iget(ROOT_DEV, ROOT_INO);
+		ip = iget(root_sb, ROOT_INO);
 	else
 		ip = idup(cpu.cur_proc->cwd);
 
 	while((path = path_decode(path, name)) != 0) {
-		if(ip->de.type != T_DIR){
-			err_info("namex ip dev:%d inum:%d type:%d isn't dir\n", ip->dev, ip->inum, ip->de.type);
+		if(ip->type != T_DIR){
+			err_info("namex ip dev:%d inum:%d type:%d isn't dir\n", ip->dev, ip->inum, ip->type);
 			iput(ip);
 			return NULL;
 		}

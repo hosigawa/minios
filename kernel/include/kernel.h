@@ -19,9 +19,8 @@
 #include "sysproc.h"
 #include "ide.h"
 #include "fs.h"
-#include "file.h"
+#include "fsx.h"
 #include "elf.h"
-#include "procfs.h"
 #include "signal.h"
 
 #define LOG cprintf

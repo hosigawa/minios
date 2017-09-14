@@ -7,15 +7,15 @@ void init_dev();
 uint minios_bmap(struct super_block *sb, struct inode *ip, int n)
 {
 	if(n < NDIRECT){
-		if(ip->de.addrs[n] == 0){
-			ip->de.addrs[n] = minios_balloc(sb);
+		if(ip->minios_i.addrs[n] == 0){
+			ip->minios_i.addrs[n] = minios_balloc(sb);
 		}
-		return ip->de.addrs[n];
+		return ip->minios_i.addrs[n];
 	}
 	n -= NDIRECT;
-	if(ip->de.addrs[NDIRECT] == 0)
-		ip->de.addrs[NDIRECT] = minios_balloc(sb);
-	struct block_buf *buf = bread(ip->dev, ip->de.addrs[NDIRECT]);
+	if(ip->minios_i.addrs[NDIRECT] == 0)
+		ip->minios_i.addrs[NDIRECT] = minios_balloc(sb);
+	struct block_buf *buf = bread(ip->dev, ip->minios_i.addrs[NDIRECT]);
 	uint seq = *((uint*)buf->data + n);
 	if(seq == 0) {
 		*((uint *)buf->data + n) = seq = minios_balloc(sb);
@@ -28,9 +28,9 @@ uint minios_bmap(struct super_block *sb, struct inode *ip, int n)
 uint minios_balloc(struct super_block *sb)
 {
 	int i, bi, m;
-	for(i = 0; i < sb->size; i += BPER) {
+	for(i = 0; i < sb->minios_s.size; i += BPER) {
 		struct block_buf *buf = bread(sb->dev, BBLOCK(i,sb));
-		for(bi = 0; bi < BPER && bi + i < sb->size; bi++) {
+		for(bi = 0; bi < BPER && bi + i < sb->minios_s.size; bi++) {
 			m = 1 << (bi % 8);
 			if((buf->data[bi/8] & m) == 0){
 				buf->data[bi/8] |= m;
@@ -62,21 +62,21 @@ struct inode *minios_ialloc(struct super_block *sb, int type)
 {
 	int off, i;
 	struct block_buf *buf;
-	struct dinode *dp;
+	struct minios_inode *dp;
 	int dev = sb->dev;
 
-	for(off = 0; off < sb->ninodes; off += IPER) {
+	for(off = 0; off < sb->minios_s.ninodes; off += IPER) {
 		buf = bread(dev, IBLOCK(off,sb));
 		for(i = 0; i < IPER; i++) {
 			if(off == 0 && i == 0)
 				continue;
-			dp = (struct dinode *)buf->data + i;
+			dp = (struct minios_inode *)buf->data + i;
 			if(dp->type == 0) {
 				memset(dp, 0, sizeof(*dp));
 				dp->type = type;
 				bwrite(buf);
 				brelse(buf);
-				return iget(dev, off + i);
+				return iget(sb, off + i);
 			}
 		}
 		brelse(buf);
@@ -88,24 +88,38 @@ void minios_read_inode(struct super_block *sb, struct inode *ip)
 {
 	if(!(ip->flags & I_VALID)) {
 		struct block_buf *buf = bread(ip->dev, IBLOCK(ip->inum,sb));
-		memmove(&ip->de, (struct dinode *)buf->data + ip->inum % IPER, sizeof(struct dinode));
+		memmove(&ip->minios_i, (struct minios_inode *)buf->data + ip->inum % IPER, sizeof(struct minios_inode));
 		ip->flags |= I_VALID;
 		brelse(buf);
+		ip->i_op = sb->i_op;
+		ip->type = ip->minios_i.type;
+		ip->ctime = ip->minios_i.ctime;
+		ip->mtime = ip->minios_i.mtime;
+		ip->atime = ip->minios_i.atime;
+		ip->size = ip->minios_i.size;
+		ip->nlink = ip->minios_i.nlink;
 	}
 }
 
 void minios_write_inode(struct super_block *sb, struct inode *ip)
 {
-	struct dinode *dp;
+	struct minios_inode *dp;
 	struct block_buf *buf;
+	ip->minios_i.type = ip->type;
+	ip->minios_i.ctime = ip->ctime;
+	ip->minios_i.mtime = ip->mtime;
+	ip->minios_i.atime = ip->atime;
+	ip->minios_i.size = ip->size;
+	ip->minios_i.nlink = ip->nlink;
+	
 	buf = bread(ip->dev, IBLOCK(ip->inum,sb));
-	dp = (struct dinode *)buf->data + ip->inum % IPER;
-	memmove(dp, &ip->de, sizeof(*dp));
+	dp = (struct minios_inode *)buf->data + ip->inum % IPER;
+	memmove(dp, &ip->minios_i, sizeof(*dp));
 	bwrite(buf);
 	brelse(buf);
 }
 
-void minios_read_sb(struct super_block *sb, int dev); 
+void minios_read_sb(struct super_block *sb); 
 struct super_block_operation minios_sb_op = {
 	minios_read_sb,
 	minios_ialloc,
@@ -124,12 +138,11 @@ void register_file_system_minios(struct file_system *fs)
 
 extern struct file_operation minios_file_op;
 extern struct inode_operation minios_inode_op;
-void minios_read_sb(struct super_block *sb, int dev) 
+void minios_read_sb(struct super_block *sb) 
 {
-	struct block_buf *buf = bread(dev, 1);
-	memmove(sb, buf->data, 28);
+	struct block_buf *buf = bread(sb->dev, 1);
+	memmove(&sb->minios_s, buf->data, sizeof(struct minios_super_block));
 	brelse(buf);
-	sb->dev = dev;
 	sb->s_op = &minios_sb_op;
 	sb->i_op = &minios_inode_op;
 	sb->f_op = &minios_file_op;

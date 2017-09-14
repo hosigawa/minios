@@ -95,7 +95,7 @@ int file_open(char *path, int mode)
 		if(!ip) {
 			return -1;
 		}
-		if(ip->de.type == T_DIR && mode > 0) {
+		if(ip->type == T_DIR && mode > 0) {
 			iput(ip);
 			return -2;
 		}
@@ -114,7 +114,7 @@ int file_open(char *path, int mode)
 		file_close(f);
 		return -3;
 	}
-	f->ip->de.atime = get_systime();
+	f->ip->atime = get_systime();
 	sb->s_op->write_inode(sb, f->ip);
 	return fd;
 }
@@ -127,7 +127,7 @@ struct inode *file_create(char *path, int type, int major, int minor)
 	if(!dp) {
 		return NULL;
 	}
-	if(dp->de.type != T_DIR) {
+	if(dp->type != T_DIR) {
 		iput(dp);
 		return NULL;
 	}

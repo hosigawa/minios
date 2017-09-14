@@ -10,16 +10,6 @@ int main(int argc, char **argv)
 	dup(fd);
 	dup(fd);
 
-	if((fd = open("/dev/proc", 0)) < 0)
-		mknod("/dev/proc", 2, 1);
-	else
-		close(fd);
-
-	if((fd = open("/dev/sys", 0)) < 0)
-		mknod("/dev/sys", 3, 1);
-	else
-		close(fd);
-
 	char *sh_argv[] = {"/bin/sh", 0};
 	char *sh_env[] = {"/bin", 0};
 	int pid, wtpid;

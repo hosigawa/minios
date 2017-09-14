@@ -1,22 +1,19 @@
 #ifndef __FS_H__
 #define __FS_H__
 
+#include "type.h"
+#include "fsx.h"
+
 #define BLOCK_BUF_NUM 30
 #define BLOCK_SIZE 512
 #define B_VALID 0x2  // buffer has been read from disk
 #define B_DIRTY 0x4  // buffer needs to be written to disk
-#define NDIRECT 12
 #define NINDIRECT (BLOCK_SIZE / sizeof(uint))
 #define MAXFILE (NDIRECT + NINDIRECT)
 #define INODE_NUM 128
 #define SUPER_BLOCK_NUM 64
 #define FILE_SYSTEM_NUM 64
 #define I_VALID 0x2
-
-#define IPER (BLOCK_SIZE / sizeof(struct dinode))
-#define IBLOCK(inum,sb) ((inum) / IPER + (sb)->inodestart)
-#define BPER (BLOCK_SIZE * 8)
-#define BBLOCK(bnum,sb) ((bnum) / BPER + (sb)->bmapstart)
 
 #define T_DIR 1
 #define T_FILE 2
@@ -25,7 +22,23 @@
 #define ROOT_DEV 1
 #define ROOT_INO 1
 
-#include "type.h"
+#define CHECK_OP(op) if(!(op)){panic("lost operation\n");}
+
+#define MAX_DEV 100
+#define NFILE 1024
+
+#define CONSOLE 1
+#define PROCINFO 2
+#define SYSINFO 3
+
+#define FD_NONE 0
+#define FD_PIPE 1
+#define FD_INODE 2
+
+#define O_RDONLY  0x000
+#define O_WRONLY  0x001
+#define O_RDWR    0x002
+#define O_CREATE  0x200
 
 struct block_buf {
 	int flags;
@@ -38,16 +51,9 @@ struct block_buf {
 	char data[BLOCK_SIZE];
 };
 
-struct dinode {
-	short type;           // File type
-  	short major;          // Major device number (T_DEV only)
-  	short minor;          // Minor device number (T_DEV only)
-  	short nlink;          // Number of links to inode in file system
-  	uint size;            // Size of file (bytes)
-	uint ctime;
-	uint mtime;
-	uint atime;
-  	uint addrs[NDIRECT+14];   // Data block addresses
+struct dirent {
+	short inum;
+	char name[DIR_NM_SZ];
 };
 
 struct file_system {
@@ -64,7 +70,7 @@ struct inode_operation {
 	int (*unlink)(struct inode *dp, char *name);
 	int (*readi)(struct inode *ip, char *dst, int offset, int num);
 	int (*writei)(struct inode *ip, char *src, int offset, int num);
-	
+	int (*readdir)(struct inode *ip, struct dirent *de);
 };
 
 struct inode {
@@ -72,39 +78,52 @@ struct inode {
   	uint inum;          // Inode number
   	int ref;            // Reference count
   	int flags;          // I_VALID
-	struct inode_operation *i_op;
+	short type;           // File type
+  	short nlink;          // Number of links to inode in file system
+  	uint size;            // Size of file (bytes)
+	uint ctime;
+	uint mtime;
+	uint atime;
 	struct super_block *sb;
+	struct inode_operation *i_op;
 
-	struct dinode de;
+	union {
+		struct minios_inode minios_i;
+	};
+};
+
+struct file;
+struct file_operation {
+	int (*read)(struct file *f, char *dst, int len);
+	int (*write)(struct file *f, char *src, int len);
+};
+
+struct file {
+	int type;
+	struct inode *ip;
+	struct file_operation *f_op;
+	int ref;
+	int off;
 };
 
 struct super_block;
 struct super_block_operation {
-	void (*read_sb)(struct super_block *sb, int dev);
+	void (*read_sb)(struct super_block *sb);
 	struct inode *(*ialloc)(struct super_block *sb, int type);
 	void (*read_inode)(struct super_block *sb, struct inode *ip);
 	void (*write_inode)(struct super_block *sb, struct inode *ip);
 };
 
-struct file_operation;
 struct super_block {
-	uint size;         // Size of file system image (blocks)
-  	uint nblocks;      // Number of data blocks
-  	uint ninodes;      // Number of inodes.
-  	uint nlog;         // Number of log blocks
-  	uint logstart;     // Block number of first log block
-  	uint inodestart;   // Block number of first inode block
-  	uint bmapstart;    // Block number of first free map block
 	int dev;
-	struct super_block_operation *s_op;
-	struct inode_operation *i_op;
-	struct file_operation *f_op;
 	struct inode *root;
-};
+	struct super_block_operation *s_op;
+	struct file_operation *f_op;
+	struct inode_operation *i_op;
 
-struct dirent {
-	short inum;
-	char name[DIR_NM_SZ];
+	union {
+		struct minios_super_block minios_s;
+	};
 };
 
 struct block_buf *bread(int dev, int sec);
@@ -114,14 +133,26 @@ void brelse(struct block_buf *buf);
 
 void init_fs();
 void mount_root();
+int mount_fs(char *path, char *fs_name);
 struct super_block *get_sb(int dev);
-struct inode *iget(int dev, int inum);
+struct inode *iget(struct super_block *sb, int inum);
 struct inode *idup(struct inode *ip);
 void iput(struct inode *ip);
 
 struct inode *namex(char *path, char *name, bool bparent);
 struct inode *namei(char *path);
 struct inode *namep(char *path, char *name);
+
+int fd_alloc(struct file *f);
+struct file *file_alloc();
+struct file *file_dup(struct file *f);
+struct inode *file_create(char *path, int type, int major, int minor);
+int file_open(char *path, int mode);
+int file_close(struct file *f);
+int file_mknod(char *path, int major, int minor);
+int file_mkdir(char *path, int major, int minor);
+int file_unlink(char *path);
+struct file *get_file(int fd);
 
 #endif
 

@@ -39,6 +39,7 @@ int sys_stime();
 int sys_signal();
 int sys_sigret();
 int sys_kill();
+int sys_readdir();
 
 #endif
 

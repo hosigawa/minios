@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	if(stat.type == T_DEV) {
+	if(stat.type == T_DEV || stat.size == 0) {
 		char buf[4096] = {0};
 		read(fd, buf, 4096);
 		char *p = buf;

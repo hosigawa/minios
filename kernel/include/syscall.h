@@ -24,6 +24,7 @@
 #define SYS_signal 19
 #define SYS_sigret 20
 #define SYS_kill 21
+#define SYS_readdir 22
 
 #endif
 

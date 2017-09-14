@@ -14,6 +14,7 @@ SRCDIR =\
 		./kernel/\
 		./kernel/fs/\
 		./kernel/fs/minios/\
+		./kernel/fs/proc/\
 
 INCDIR =\
 		-I ./libs/\
@@ -92,8 +93,8 @@ $(OBJDIR)initcode: kernel/boot/initcode.S
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o $(OBJDIR)initcode.out $(OBJDIR)initcode.o
 	$(OBJCOPY) -S -O binary $(OBJDIR)initcode.out $@
 
-$(OBJDIR)app/mkfs: tools/mkfs.c kernel/include/fs.h
-	gcc -Werror -Wall $(INCDIR) -o $@ $<
+$(OBJDIR)app/mkfs: tools/mkfs.c kernel/include/mkfs.h
+	gcc -Werror -Wall -o $@ $<
 
 $(COM_DIR)%.o: libs/%.c
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<

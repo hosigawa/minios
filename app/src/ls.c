@@ -51,8 +51,6 @@ void ls(char *path)
 		close(fd);
 		return;
 	}
-	struct dirent de;
-	int ret;
 	if(bdetails){
 		printf("TYPE LINK    SIZE  DATE    TIME   NAME\n");
 		printf("--------------------------------------\n");
@@ -60,13 +58,14 @@ void ls(char *path)
 	if(stat.type == T_DIR) {
 		int sfd;
 		char name[64];
-		while((ret = read(fd, (char *)&de, sizeof(de))) == sizeof(de)) {
-			if(de.inum == 0)
-				continue;
-			if(bhide && de.name[0] == '.')
+		struct dirent de[256];
+		int ret = readdir(fd, de);
+		int i;
+		for(i = 0; i < ret; i++) {
+			if(bhide && de[i].name[0] == '.')
 				continue;
 			if(bdetails) {
-				fmt_name(name, path, de.name);
+				fmt_name(name, path, de[i].name);
 				sfd = open(name, 0);
 				if(sfd < 0)
 					continue;
@@ -74,11 +73,11 @@ void ls(char *path)
 					close(sfd);
 					continue;
 				}
-				print_file(de.name, &sub);
+				print_file(de[i].name, &sub);
 				close(sfd);
 			}
 			else {
-				printf("%s ", de.name);
+				printf("%s ", de[i].name);
 			}
 		}
 		if(!bdetails)

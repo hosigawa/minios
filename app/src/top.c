@@ -33,9 +33,9 @@ int main()
 {
 	char sys_info[4096];
 	memset(sys_info, 0, 4096);
-	int fd = open("/dev/sys", 0);
+	int fd = open("/proc/sysinfo", 0);
 	if(fd < 0) {
-		printf("ps: open /dev/sys error\n");
+		printf("ps: open /proc/sysinfo error\n");
 		return -1;
 	}
 	uint ver;

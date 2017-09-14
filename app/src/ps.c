@@ -33,42 +33,81 @@ char *next_str(char *dst, char **p)
 	return dst;
 }
 
+static bool name_is_digital(char *name)
+{
+	char *p = name;
+	while(*p) {
+		if(!isdigit(*p))
+			return false;
+		p++;
+	}
+	return true;
+}
+
 int main(int argc, char *argv[])
 {
-	char proc_info[4096];
-	memset(proc_info, 0, 4096);
-	int fd = open("/dev/proc", 0);
+	char info[4096];
+	char real_path[64] = {0};
+	int fd = open("/proc", 0);
 	if(fd < 0) {
-		printf("ps: open /dev/proc error\n");
+		printf("ps: open /proc error\n");
 		return -1;
 	}
-	read(fd, proc_info, 4096);
+	struct dirent de[256];
+	memset(de, 0, 256 * sizeof(struct dirent));
+	int ret = readdir(fd, de);
+	close(fd);
+	int i;
+	int sfd;
 	printf(" PID  PPID     VSZ PRI  STAT     TIME  CMD\n");
 	printf("------------------------------------------\n");
-	char *p = proc_info;
-	int pid;
-	int ppid;
-	uint vsz;
-	int pri;
-	int st;
-	uint ticks;
-	uint min, sec, ms;
-	char nm[64];
-	while(*p) {
-		pid = next_int(&p);
-		ppid = next_int(&p);
-		vsz = next_int(&p);
-		st = next_int(&p);
-		ticks = next_int(&p);
-		min = (ticks / 1000) / 60;
-		sec = (ticks / 1000) % 60;
-		ms = (ticks % 1000) / 100;
-		pri = next_int(&p);
+	for(i = 0; i < ret; i++) {
+		if(!name_is_digital(de[i].name)) {
+			continue;
+		}
+		memset(real_path, 0, 64);
+		sprintf(real_path, "/proc/%s/stat", de[i].name);
+		sfd = open(real_path, 0);
+		if(sfd < 0)
+			continue;
+		memset(info, 0, 4096);
+		read(sfd, info, 4096);
+		close(sfd);
+		char *p = info;
+		int pid = 0;
+		int ppid = 0;
+		uint vsz = 0;
+		int pri = 0;
+		int st = 0;
+		uint ticks = 0;
+		uint min = 0, sec = 0, ms = 0;
+		while(*p) {
+			pid = next_int(&p);
+			ppid = next_int(&p);
+			vsz = next_int(&p);
+			st = next_int(&p);
+			ticks = next_int(&p);
+			min = (ticks / 1000) / 60;
+			sec = (ticks / 1000) % 60;
+			ms = (ticks % 1000) / 100;
+			pri = next_int(&p);
+		}
+
+		char nm[64];
+		memset(real_path, 0, 64);
+		sprintf(real_path, "/proc/%s/cmdline", de[i].name);
+		sfd = open(real_path, 0);
+		if(sfd < 0)
+			continue;
+		memset(info, 0, 4096);
+		read(sfd, info, 4096);
+		close(sfd);
+		p = info;
 		memset(nm, 0, 64);
-		next_str(nm, &p);
+		strcpy(nm, p);
+
 		printf("%4d  %4d  %5d  %2d  %s  %4d:%02d.%d  %s\n", pid, ppid, vsz, pri, STATUS[st], min, sec, ms, nm);
 	}
-	close(fd);
 	return 0;
 }
 

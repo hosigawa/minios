@@ -16,6 +16,7 @@ void forkret()
 	if(first) {
 		first = false;
 		mount_root();
+		mount_fs("/proc", "proc");
 	}
 	else {
 		popsti();
@@ -206,7 +207,7 @@ int execv(char *path, char *argv[], char *envp[])
 		return -1;
 	}
 
-	if(ip->de.type == T_DIR) {
+	if(ip->type == T_DIR) {
 		iput(ip);
 		return -2;
 	}

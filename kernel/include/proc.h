@@ -1,7 +1,7 @@
 #ifndef __PROC_H__
 #define __PROC_H__
 
-#include "file.h"
+#include "fs.h"
 #include "signal.h"
 #include "type.h"
 

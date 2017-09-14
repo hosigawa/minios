@@ -16,7 +16,6 @@ int main()
 	init_fs();
 	init_ide();
 	init_console();
-	init_procfs();
 	user_init();
 
 	sys_info("\nMINIOS ver.%d.%d.%d start...\n\n", GET_VER_H(_version), GET_VER_M(_version), GET_VER_L(_version));

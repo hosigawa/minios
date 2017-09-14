@@ -7,8 +7,7 @@
 #include <sys/time.h>
 
 #define stat xv6_stat  // avoid clash with host struct stat
-#include "fs.h"
-#include "type.h"
+#include "mkfs.h"
 
 #ifndef static_assert
 #define static_assert(a, b) do { switch (0) case 0: case (a): ; } while (0)
@@ -19,6 +18,8 @@
 #define LOG_SIZE 30
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
+#define MIBLOCK(inum,sb) ((inum) / IPER + (sb)->inodestart)
+#define MBBLOCK(bnum,sb) ((bnum) / BPER + (sb)->bmapstart)
 
 // Disk layout:
 // [ boot block | sb block | log | inode blocks | free bit map | data blocks ]
@@ -30,7 +31,7 @@ int nmeta;    // Number of meta blocks (boot, sb, nlog, inode, bitmap)
 int nblocks;  // Number of data blocks
 
 int fsfd;
-struct super_block sb;
+struct minios_super_block sb;
 char zeroes[BLOCK_SIZE];
 uint freeinode = 1;
 uint freeblock;
@@ -38,8 +39,8 @@ uint freeblock;
 
 void balloc(int);
 void wsect(uint, void*);
-void winode(uint, struct dinode*);
-void rinode(uint inum, struct dinode *ip);
+void winode(uint, struct minios_inode*);
+void rinode(uint inum, struct minios_inode *ip);
 void rsect(uint sec, void *buf);
 uint _ialloc(ushort type);
 void iappend(uint inum, void *p, int n);
@@ -75,7 +76,7 @@ main(int argc, char *argv[])
   uint rootino, bin, home, dev, inum, off;
   struct dirent de;
   char buf[BLOCK_SIZE];
-  struct dinode din;
+  struct minios_inode din;
 
 
   static_assert(sizeof(int) == 4, "Integers must be 4 bytes!");
@@ -85,7 +86,7 @@ main(int argc, char *argv[])
     exit(1);
   }
 
-  assert((BLOCK_SIZE % sizeof(struct dinode)) == 0);
+  assert((BLOCK_SIZE % sizeof(struct minios_inode)) == 0);
   assert((BLOCK_SIZE % sizeof(struct dirent)) == 0);
 
   fsfd = open(argv[1], O_RDWR|O_CREAT|O_TRUNC, 0666);
@@ -115,7 +116,7 @@ main(int argc, char *argv[])
     wsect(i, zeroes);
 
   memset(buf, 0, sizeof(buf));
-  memmove(buf, &sb, 28);
+  memmove(buf, &sb, sizeof(sb));
   wsect(1, buf);
 
   rootino = _ialloc(T_DIR);
@@ -134,6 +135,7 @@ main(int argc, char *argv[])
   bin = create_dir("bin", rootino);
   home = create_dir("home", rootino);
   dev = create_dir("dev", rootino);
+  create_dir("proc", rootino);
 
   uint target = 0;
   for(i = 2; i < argc; i++){
@@ -218,29 +220,29 @@ uint create_dir(char *name, uint pinode)
 }
 
 void
-winode(uint inum, struct dinode *ip)
+winode(uint inum, struct minios_inode *ip)
 {
   char buf[BLOCK_SIZE];
   uint bn;
-  struct dinode *dip;
+  struct minios_inode *dip;
 
-  bn = IBLOCK(inum, &sb);
+  bn = MIBLOCK(inum, &sb);
   rsect(bn, buf);
-  dip = ((struct dinode*)buf) + (inum % IPER);
+  dip = ((struct minios_inode*)buf) + (inum % IPER);
   *dip = *ip;
   wsect(bn, buf);
 }
 
 void
-rinode(uint inum, struct dinode *ip)
+rinode(uint inum, struct minios_inode *ip)
 {
   char buf[BLOCK_SIZE];
   uint bn;
-  struct dinode *dip;
+  struct minios_inode *dip;
 
-  bn = IBLOCK(inum, &sb);
+  bn = MIBLOCK(inum, &sb);
   rsect(bn, buf);
-  dip = ((struct dinode*)buf) + (inum % IPER);
+  dip = ((struct minios_inode*)buf) + (inum % IPER);
   *ip = *dip;
 }
 
@@ -263,7 +265,7 @@ _ialloc(ushort type)
   struct timeval tv;
   gettimeofday(&tv, NULL);
   uint inum = freeinode++;
-  struct dinode din;
+  struct minios_inode din;
 
   bzero(&din, sizeof(din));
   din.type = xshort(type);
@@ -297,7 +299,7 @@ iappend(uint inum, void *xp, int n)
 {
   char *p = (char*)xp;
   uint fbn, off, n1;
-  struct dinode din;
+  struct minios_inode din;
   char buf[BLOCK_SIZE];
   uint indirect[NINDIRECT];
   uint x;

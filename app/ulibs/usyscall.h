@@ -4,7 +4,7 @@
 #include "type.h"
 #include "sysproc.h"
 #include "signal.h"
-#include "file.h"
+#include "fs.h"
 
 int fork();
 int execv(char *path, char **argv, char **envp);
@@ -27,6 +27,7 @@ int stime(uint *time);
 int signal(int signal, sig_handler handler);
 int sigret();
 int kill(int sig, int pid);
+int readdir(int fd, struct dirent *de);
 
 #endif
 
