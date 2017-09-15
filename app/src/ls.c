@@ -48,15 +48,17 @@ void ls(char *path)
 	if(stat.type == T_DIR) {
 		int sfd;
 		char name[64];
-		struct dirent de[256];
-		int ret = readdir(fd, de);
-		int i;
-		for(i = 0; i < ret; i++) {
-			if(bhide && de[i].name[0] == '.')
+		struct dirent de;
+		memset(&de, 0, sizeof(de));
+		int ret = 0;
+		while((ret = readdir(fd, &de)) >= 0) {
+			if(bhide && de.name[0] == '.'){
+				memset(&de, 0, sizeof(de));
 				continue;
+			}
 			if(bdetails) {
 				memset(name, 0, 64);
-				sprintf(name, "%s/%s", path, de[i].name);
+				sprintf(name, "%s/%s", path, de.name);
 				sfd = open(name, 0);
 				if(sfd < 0){
 					continue;
@@ -65,12 +67,13 @@ void ls(char *path)
 					close(sfd);
 					continue;
 				}
-				print_file(de[i].name, &sub);
+				print_file(de.name, &sub);
 				close(sfd);
 			}
 			else {
-				printf("%s ", de[i].name);
+				printf("%s ", de.name);
 			}
+			memset(&de, 0, sizeof(de));
 		}
 		if(!bdetails)
 			printf("\n");

@@ -145,6 +145,5 @@ void minios_read_sb(struct super_block *sb)
 	brelse(buf);
 	sb->s_op = &minios_sb_op;
 	sb->i_op = &minios_inode_op;
-	sb->f_op = &minios_file_op;
 }
 

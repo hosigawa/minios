@@ -104,7 +104,7 @@ int file_open(char *path, int mode)
 	struct super_block *sb = ip->sb;
 
 	f = file_alloc();
-	f->f_op = sb->f_op;
+	f->f_op = ip->i_op->f_op;
 	f->type = FD_INODE;
 	f->ip = ip;
 	f->off = 0;

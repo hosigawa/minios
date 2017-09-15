@@ -161,7 +161,7 @@ int sys_fstat()
 
 int sys_pwd()
 {
-	char *wd = (char *)get_arg_uint(0);
+	char *wd = (char *)get_arg_uint(0);/*
 	int off;
 	struct inode *dp = cpu.cur_proc->cwd->i_op->dirlookup(cpu.cur_proc->cwd, "..", &off);
 	if(!dp)
@@ -175,7 +175,7 @@ int sys_pwd()
 	if(!de)
 		return -1;
 	memset(de, 0, PG_SIZE);
-	int ret = dp->i_op->readdir(dp, de);
+	int ret = dp->i_op->f_op->readdir(dp, de);
 	int i = 0;
 	for(i = 0; i < ret; i++) {
 		if(de[i].inum == cpu.cur_proc->cwd->inum && strcmp(de[i].name, ".") < 0 && strcmp(de[i].name, "..") < 0) {
@@ -186,8 +186,9 @@ int sys_pwd()
 		}
 	}
 	iput(dp);
-	kfree(de);
-	return -2;
+	kfree(de);*/
+	sprintf(wd, "home");
+	return 0;
 }
 
 int sys_mkdir()
@@ -295,6 +296,6 @@ int sys_readdir()
 		return -1;
 	if(f->ip->type != T_DIR)
 		return -1;
-	return f->ip->i_op->readdir(f->ip, de);
+	return f->f_op->readdir(f, de);
 }
 

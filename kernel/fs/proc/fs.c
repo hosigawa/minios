@@ -47,7 +47,6 @@ void register_file_system_proc(struct file_system *fs)
 	fs->s_op = &proc_sb_op;
 }
 
-extern struct file_operation proc_file_op;
 extern struct inode_operation proc_root_inode_op;
 
 struct inode_operation proc_inode_op = {};
@@ -56,7 +55,6 @@ void proc_read_sb(struct super_block *sb)
 {
 	sb->s_op = &proc_sb_op;
 	sb->i_op = &proc_inode_op;
-	sb->f_op = &proc_file_op;
 	sb->root->i_op = &proc_root_inode_op;
 }
 

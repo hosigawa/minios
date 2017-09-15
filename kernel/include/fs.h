@@ -62,7 +62,9 @@ struct file_system {
 	struct super_block_operation *s_op;
 };
 
+struct file_operation;
 struct inode_operation {
+	struct file_operation *f_op;
 	struct inode *(*dirlookup)(struct inode *ip, char *name, int *off);
 	void (*itrunc)(struct inode *ip);
 	void (*dirlink)(struct inode *dp, char *name, int inum);
@@ -70,7 +72,6 @@ struct inode_operation {
 	int (*unlink)(struct inode *dp, char *name);
 	int (*readi)(struct inode *ip, char *dst, int offset, int num);
 	int (*writei)(struct inode *ip, char *src, int offset, int num);
-	int (*readdir)(struct inode *ip, struct dirent *de);
 };
 
 struct inode {
@@ -96,6 +97,7 @@ struct file;
 struct file_operation {
 	int (*read)(struct file *f, char *dst, int len);
 	int (*write)(struct file *f, char *src, int len);
+	int (*readdir)(struct file *f, struct dirent *de);
 };
 
 struct file {
@@ -118,7 +120,6 @@ struct super_block {
 	int dev;
 	struct inode *root;
 	struct super_block_operation *s_op;
-	struct file_operation *f_op;
 	struct inode_operation *i_op;
 
 	union {

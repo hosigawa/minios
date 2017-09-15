@@ -197,21 +197,9 @@ void minios_itrunc(struct inode *ip)
 	minios_write_inode(ip->sb, ip);
 }
 
-int minios_readdir(struct inode *dp, struct dirent *de)
-{
-	int num = 0;
-	int ret = 0;
-	int off = 0;
-	while((ret = minios_readi(dp, (char *)(de + num), off, sizeof(struct dirent))) == sizeof(struct dirent)) {
-		off += sizeof(struct dirent);
-		if(de[num].inum == 0) 
-			continue;
-		num++;
-	}
-	return num;
-}
-
+extern struct file_operation minios_file_op;
 struct inode_operation minios_inode_op = {
+	&minios_file_op,
 	minios_dirlookup,
 	minios_itrunc,
 	minios_dirlink,
@@ -219,6 +207,5 @@ struct inode_operation minios_inode_op = {
 	minios_unlink,
 	minios_readi,
 	minios_writei,
-	minios_readdir,
 };
 

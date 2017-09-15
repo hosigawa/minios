@@ -53,23 +53,24 @@ int main(int argc, char *argv[])
 		printf("ps: open /proc error\n");
 		return -1;
 	}
-	struct dirent de[256];
-	memset(de, 0, 256 * sizeof(struct dirent));
-	int ret = readdir(fd, de);
-	close(fd);
-	int i;
+	struct dirent de;
+	memset(&de, 0, sizeof(de));
+	int ret = 0;
 	int sfd;
 	printf(" PID  PPID     VSZ PRI  STAT     TIME  CMD\n");
 	printf("------------------------------------------\n");
-	for(i = 0; i < ret; i++) {
-		if(!name_is_digital(de[i].name)) {
+	while((ret = readdir(fd, &de)) >= 0) {
+		if(!name_is_digital(de.name)) {
+			memset(&de, 0, sizeof(de));
 			continue;
 		}
 		memset(real_path, 0, 64);
-		sprintf(real_path, "/proc/%s/stat", de[i].name);
+		sprintf(real_path, "/proc/%s/stat", de.name);
 		sfd = open(real_path, 0);
-		if(sfd < 0)
+		if(sfd < 0){
+			memset(&de, 0, sizeof(de));
 			continue;
+		}
 		memset(info, 0, 4096);
 		read(sfd, info, 4096);
 		close(sfd);
@@ -95,10 +96,12 @@ int main(int argc, char *argv[])
 
 		char nm[64];
 		memset(real_path, 0, 64);
-		sprintf(real_path, "/proc/%s/cmdline", de[i].name);
+		sprintf(real_path, "/proc/%s/cmdline", de.name);
 		sfd = open(real_path, 0);
-		if(sfd < 0)
+		if(sfd < 0) {
+			memset(&de, 0, sizeof(de));
 			continue;
+		}
 		memset(info, 0, 4096);
 		read(sfd, info, 4096);
 		close(sfd);
@@ -107,7 +110,9 @@ int main(int argc, char *argv[])
 		strcpy(nm, p);
 
 		printf("%4d  %4d  %5d  %2d  %s  %4d:%02d.%d  %s\n", pid, ppid, vsz, pri, STATUS[st], min, sec, ms, nm);
+		memset(&de, 0, sizeof(de));
 	}
+	close(fd);
 	return 0;
 }
 
