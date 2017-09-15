@@ -87,7 +87,7 @@ main(int argc, char *argv[])
   }
 
   assert((BLOCK_SIZE % sizeof(struct minios_inode)) == 0);
-  assert((BLOCK_SIZE % sizeof(struct dirent)) == 0);
+  assert((32 % sizeof(struct dirent)) == 0);
 
   fsfd = open(argv[1], O_RDWR|O_CREAT|O_TRUNC, 0666);
   if(fsfd < 0){

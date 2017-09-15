@@ -162,9 +162,8 @@ int sys_fstat()
 int sys_pwd()
 {
 	char *wd = (char *)get_arg_uint(0);
-	/*int off;
-	struct inode *dp = dir_lookup(cpu.cur_proc->cwd, "..", &off);
-	read_inode(dp);
+	int off;
+	struct inode *dp = cpu.cur_proc->cwd->i_op->dirlookup(cpu.cur_proc->cwd, "..", &off);
 	if(!dp)
 		return -1;
 	if(dp->inum == cpu.cur_proc->cwd->inum) {
@@ -172,20 +171,23 @@ int sys_pwd()
 		iput(dp);
 		return 0;
 	}
-	struct dirent de;
-	off = 0;
-	while(readi(dp, (char *)&de, off, sizeof(de)) == sizeof(de)) {
-		if(de.inum == cpu.cur_proc->cwd->inum && strcmp(de.name, ".") < 0 && strcmp(de.name, "..") < 0) {
-			memmove(wd, de.name, strlen(de.name)+1);
+	struct dirent *de = kalloc();
+	if(!de)
+		return -1;
+	memset(de, 0, PG_SIZE);
+	int ret = dp->i_op->readdir(dp, de);
+	int i = 0;
+	for(i = 0; i < ret; i++) {
+		if(de[i].inum == cpu.cur_proc->cwd->inum && strcmp(de[i].name, ".") < 0 && strcmp(de[i].name, "..") < 0) {
+			memmove(wd, de[i].name, DIR_NM_SZ);
 			iput(dp);
+			kfree(de);
 			return 0;
 		}
-		off += sizeof(de);
 	}
 	iput(dp);
-	return -2;*/
-	strcpy(wd, "home");
-	return 0;
+	kfree(de);
+	return -2;
 }
 
 int sys_mkdir()

@@ -27,16 +27,6 @@ void print_file(char *path, struct file_stat *st)
 												st->size, MONS[tm.mon - 1], tm.day, tm.h, tm.m, path);
 }
 
-void fmt_name(char *name, char *path, char *de)
-{
-	memset(name, 0, 64);
-	int len = strlen(path);
-	memmove(name, path, len);
-	if(name[len-1] != '/')
-		memmove(name+len, "/", 1);
-	memmove(name+len+1, de, strlen(de));
-}
-
 void ls(char *path) 
 {
 	int fd;
@@ -65,10 +55,12 @@ void ls(char *path)
 			if(bhide && de[i].name[0] == '.')
 				continue;
 			if(bdetails) {
-				fmt_name(name, path, de[i].name);
+				memset(name, 0, 64);
+				sprintf(name, "%s/%s", path, de[i].name);
 				sfd = open(name, 0);
-				if(sfd < 0)
+				if(sfd < 0){
 					continue;
+				}
 				if(fstat(sfd, &sub) < 0){
 					close(sfd);
 					continue;

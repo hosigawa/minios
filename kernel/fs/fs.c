@@ -80,8 +80,7 @@ void mount_root()
 	sb->s_op->read_inode(sb, sb->root);
 	cpu.cur_proc->cwd = idup(sb->root);
 
-	//sys_info("load disk 1; size:%d, nblocks:%d, ninodes:%d, nlog:%d, logstart:%d, inodestart:%d, bmapstart:%d\n",
-	//		sb.size, sb.nblocks, sb.ninodes, sb.nlog, sb.logstart, sb.inodestart, sb.bmapstart);
+	printf("mount root file system 'minios' success\n");
 }
 
 void proc_create_file();
@@ -90,20 +89,27 @@ int mount_fs(char *path, char *fs_name)
 	static int dev = ROOT_DEV + 1;
 
 	struct inode *dp = namei(path);
-	if(!dp)
-		panic("%s not exists\n", path);
-	if(dp->type != T_DIR)
-		panic("%s is not direct\n", path);
+	if(!dp) {
+		printf("%s not exists\n", path);
+		return -1;
+	}
+	if(dp->type != T_DIR) {
+		printf("%s is not direct\n", path);
+		return -1;
+	}
 	struct file_system *fs = get_fs_type(fs_name);
-	if(!fs)
-		panic("can't find file_system %s\n", fs_name);
+	if(!fs) {
+		printf("file_system '%s' may not register\n", fs_name);
+		return -1;
+	}
 	struct super_block *sb = get_sb(0);
 	sb->dev = dev++;
 	sb->root = idup(dp);
 	fs->s_op->read_sb(sb);
 	dp->sb = sb;
-	
 	iput(dp);
+	
+	printf("mount file system '%s' success\n", fs_name);
 	return 0;
 }
 
@@ -125,7 +131,7 @@ char *path_decode(char *path, char *name)
 		memmove(name, sub_path, len);
 		name[len] = 0;
 	}
-	if(*path == '/')
+	while(*path == '/')
 		path++;
 	return path;
 }
@@ -148,7 +154,7 @@ struct inode *namex(char *path, char *name, bool bparent)
 		if(bparent && *path == 0) {
 			return ip;
 		}
-		next = ip->i_op->dir_lookup(ip, name, &off);
+		next = ip->i_op->dirlookup(ip, name, &off);
 		if(!next) {
 			iput(ip);
 			return NULL;

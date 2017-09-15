@@ -10,10 +10,16 @@ static bool name_is_digital(char *name)
 	return true;
 }
 
-struct inode *proc_root_dir_lookup(struct inode *dp, char *name, int *off)
+struct inode *proc_root_dirlookup(struct inode *dp, char *name, int *off)
 {
 	struct inode *ip;
-	if(!strcmp(name, "sysinfo")) {
+	if(!strcmp(name, ".")) {
+		ip = idup(dp);
+	}
+	else if(!strcmp(name, "..")) {
+		ip = NULL;
+	}
+	else if(!strcmp(name, "sysinfo")) {
 		ip = iget(dp->sb, 1);
 	}
 	else if(name_is_digital(name)){
@@ -34,19 +40,20 @@ int proc_root_readdir(struct inode *dp, struct dirent *de)
 	extern struct proc proc_table[MAX_PROC];
 	int i;
 	int num = 0;
+	sprintf((de + num++)->name, ".");
+	sprintf((de + num++)->name, "..");
 	for(i = 0; i < MAX_PROC; i++) {
 		if(proc_table[i].stat != UNUSED) {
-			sprintf((de + num)->name, "%d", proc_table[i].pid);
-			num++;
+			(de + num)->inum = (proc_table[i].pid << 16) | 1;
+			sprintf((de + num++)->name, "%d", proc_table[i].pid);
 		}
 	}
-	sprintf((de + num)->name, "sysinfo");
-	num++;
+	sprintf((de + num++)->name, "sysinfo");
 	return num;
 }
 
 struct inode_operation proc_root_inode_op = {
-	.dir_lookup = proc_root_dir_lookup,
+	.dirlookup = proc_root_dirlookup,
 	.readdir = proc_root_readdir,
 };
 
@@ -56,12 +63,12 @@ int proc_sysinfo_readi(struct inode *ip, char *dst, int offset, int num)
 	extern uint _version;
 	extern uint user_ticks, kern_ticks, ticks;
 	wd += sprintf(dst, "%d %d %d %d %d %d\n", 
-						_version,
-						PHYSICAL_END, 
-						size_of_free_memory(),
-						user_ticks,
-						kern_ticks,
-						ticks
+					_version,
+					PHYSICAL_END, 
+					size_of_free_memory(),
+					user_ticks,
+					kern_ticks,
+					ticks
 				);
 	return wd;
 }
@@ -102,7 +109,13 @@ struct inode *proc_proc_dirlookup(struct inode *dp, char *name, int *off)
 	int low = dp->inum & 0xffff;
 	if(low != 1)
 		return NULL;
-	if(!strcmp(name, "stat")) {
+	if(!strcmp(name, ".")) {
+		return idup(dp);
+	}
+	else if(!strcmp(name, "..")) {
+		return idup(dp->sb->root);
+	}
+	else if(!strcmp(name, "stat")) {
 		return iget(dp->sb, pid << 16 | 2);
 	}
 	else if(!strcmp(name, "cmdline")) {
@@ -116,16 +129,21 @@ int proc_proc_readdir(struct inode *dp, struct dirent *de)
 	int num = 0;
 	if(dp->type != T_DIR)
 		return -1;
-	sprintf((de + num)->name, "stat");
-	num++;
-	sprintf((de + num)->name, "cmdline");
-	num++;
+	int pid = dp->inum >> 16;
+	(de + num)->inum = dp->inum;
+	sprintf((de + num++)->name, ".");
+	(de + num)->inum = dp->sb->root->inum;
+	sprintf((de + num++)->name, "..");
+	(de + num)->inum = pid << 16 | 2;
+	sprintf((de + num++)->name, "stat");
+	(de + num)->inum = pid << 16 | 3;
+	sprintf((de + num++)->name, "cmdline");
 	return num;
 }
 
 struct inode_operation proc_proc_inode_op = {
 	.readi = proc_proc_readi,
-	.dir_lookup = proc_proc_dirlookup,
+	.dirlookup = proc_proc_dirlookup,
 	.readdir = proc_proc_readdir,
 };
 

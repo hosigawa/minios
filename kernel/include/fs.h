@@ -18,7 +18,7 @@
 #define T_DIR 1
 #define T_FILE 2
 #define T_DEV 3
-#define DIR_NM_SZ 14
+#define DIR_NM_SZ 28
 #define ROOT_DEV 1
 #define ROOT_INO 1
 
@@ -52,7 +52,7 @@ struct block_buf {
 };
 
 struct dirent {
-	short inum;
+	int inum;
 	char name[DIR_NM_SZ];
 };
 
@@ -63,9 +63,9 @@ struct file_system {
 };
 
 struct inode_operation {
-	struct inode *(*dir_lookup)(struct inode *ip, char *name, int *off);
+	struct inode *(*dirlookup)(struct inode *ip, char *name, int *off);
 	void (*itrunc)(struct inode *ip);
-	void (*dir_link)(struct inode *dp, char *name, int inum);
+	void (*dirlink)(struct inode *dp, char *name, int inum);
 	struct inode *(*create)(struct inode *dp, char *name, int type, int major, int minor);
 	int (*unlink)(struct inode *dp, char *name);
 	int (*readi)(struct inode *ip, char *dst, int offset, int num);

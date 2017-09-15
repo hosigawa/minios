@@ -14,7 +14,7 @@
 #define T_DIR 1
 #define T_FILE 2
 #define T_DEV 3
-#define DIR_NM_SZ 14
+#define DIR_NM_SZ 28
 #define ROOT_DEV 1
 #define ROOT_INO 1
 #define IPER (BLOCK_SIZE / sizeof(struct minios_inode))
@@ -28,7 +28,7 @@ typedef unsigned int uint;
 typedef char bool;
 
 struct dirent {
-	short inum;
+	int inum;
 	char name[DIR_NM_SZ];
 };
 

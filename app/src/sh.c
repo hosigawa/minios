@@ -161,7 +161,7 @@ int run_cmd(char **argv)
 
 int main(int argc, char **argv) 
 {
-	printf("init sh...\n");
+	printf("\n");
 	chdir("/home");
 	memset(cwd, 0, 14);
 	int ret = pwd(cwd);

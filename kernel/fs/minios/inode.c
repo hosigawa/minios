@@ -4,8 +4,8 @@ uint minios_bmap(struct super_block *sb, struct inode *ip, int n);
 void minios_bfree(struct super_block *sb, uint n);
 void minios_write_inode(struct super_block *sb, struct inode *ip);
 void minios_read_inode(struct super_block *sb, struct inode *ip);
-void minios_dir_link(struct inode *dp, char *name, int inum);
-struct inode *minios_dir_lookup(struct inode *ip, char *name, int *off);
+void minios_dirlink(struct inode *dp, char *name, int inum);
+struct inode *minios_dirlookup(struct inode *ip, char *name, int *off);
 struct inode *minios_ialloc(struct super_block *sb, int type);
 
 int minios_readi(struct inode *ip, char *dst, int offset, int num)
@@ -49,7 +49,7 @@ struct inode *minios_create(struct inode *dp, char *name, int type, int major, i
 	struct inode *ip;
 	int off;
 
-	ip = minios_dir_lookup(dp, name, &off);
+	ip = minios_dirlookup(dp, name, &off);
 	if(ip) {
 		minios_read_inode(ip->sb, ip);
 		if(type == T_FILE && ip->type == T_FILE)
@@ -74,16 +74,16 @@ struct inode *minios_create(struct inode *dp, char *name, int type, int major, i
 	if(type == T_DIR){
 		dp->nlink++;
 		minios_write_inode(dp->sb, dp);
-		minios_dir_link(ip, ".", ip->inum);
-		minios_dir_link(ip, "..", dp->inum);
+		minios_dirlink(ip, ".", ip->inum);
+		minios_dirlink(ip, "..", dp->inum);
 	}
 
-	minios_dir_link(dp, name, ip->inum);
+	minios_dirlink(dp, name, ip->inum);
 
 	return ip;
 }
 
-void minios_dir_link(struct inode *dp, char *name, int inum)
+void minios_dirlink(struct inode *dp, char *name, int inum)
 {
 	if(dp->type != T_DIR) {
 		panic("%s is not direct\n", name);
@@ -121,7 +121,7 @@ int minios_unlink(struct inode *dp, char *name)
 	struct inode *ip;
 	int off;
 
-	ip = minios_dir_lookup(dp, name, &off);
+	ip = minios_dirlookup(dp, name, &off);
 	if(!ip) {
 		return -3;
 	}
@@ -151,7 +151,7 @@ int minios_unlink(struct inode *dp, char *name)
 	return 0;
 }
 
-struct inode *minios_dir_lookup(struct inode *ip, char *name, int *off)
+struct inode *minios_dirlookup(struct inode *ip, char *name, int *off)
 {
 	if(ip->type != T_DIR) {
 		panic("%s is not direct\n", name);
@@ -212,9 +212,9 @@ int minios_readdir(struct inode *dp, struct dirent *de)
 }
 
 struct inode_operation minios_inode_op = {
-	minios_dir_lookup,
+	minios_dirlookup,
 	minios_itrunc,
-	minios_dir_link,
+	minios_dirlink,
 	minios_create,
 	minios_unlink,
 	minios_readi,
