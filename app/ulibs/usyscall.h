@@ -21,13 +21,12 @@ int mkdir(char *path);
 int chdir(char *path);
 int unlink(char *path);
 int sbrk(int sz);
-int pwd(char *wd);
+int readdir(int fd, struct dirent *de);
 int sleep(int ms);
 int stime(uint *time);
 int signal(int signal, sig_handler handler);
 int sigret();
 int kill(int sig, int pid);
-int readdir(int fd, struct dirent *de);
 
 #endif
 

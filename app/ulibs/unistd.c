@@ -89,3 +89,73 @@ int gettimeofday(struct time_v *tm)
 	return 0;
 }
 
+char *invert_strcpy(char *dst, char *src, int len)
+{
+	int i;
+	for(i = 0; i < len; i++) {
+		*(dst + len - i - 1) = *(src + i);
+	}
+	return dst;
+}
+
+int getpwd(char *wd, bool full)
+{
+	char path[256];
+	struct file_stat pst, sst;
+	struct dirent de;
+	int pfd, sfd;
+	memset(path, 0, 256);
+	while(1) {
+		pfd = open("..", 0);
+		if(pfd < 0)
+			return -1;
+		sfd = open(".", 0);
+		if(sfd < 0) {
+			close(pfd);
+			return -1;
+		}
+		int retp = fstat(pfd, &pst);
+		int rets = fstat(sfd, &sst);
+		if(retp < 0 || rets < 0) {
+			goto err;
+		}
+		if(pst.inum == sst.inum) {
+			close(pfd);
+			close(sfd);
+			if(!*path)
+				*path = '/';
+			goto ret;
+		}
+		memset(&de, 0, sizeof(de));
+		int ret = 0;
+		while((ret = readdir(pfd, &de)) >= 0){
+			if(de.inum == sst.inum && strcmp(de.name, ".") < 0 && strcmp(de.name, "..") < 0) {
+				if(!full) {
+					close(pfd);
+					close(sfd);
+					strcpy(wd, de.name);
+					return 0;
+				}
+				invert_strcpy(path + strlen(path), de.name, strlen(de.name));
+				goto found;
+			}
+			memset(&de, 0, sizeof(de));
+		}
+		goto err;
+found:
+		close(pfd);
+		close(sfd);
+		if(chdir("..") < 0)
+			return -1;
+		path[strlen(path)] = '/';
+	}
+ret:
+	invert_strcpy(wd, path, strlen(path));
+	chdir(wd);
+	return 0;
+err:
+	close(pfd);
+	close(sfd);
+	return -1;
+}
+

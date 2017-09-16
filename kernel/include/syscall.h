@@ -14,7 +14,7 @@
 #define SYS_read 9
 #define SYS_write 10
 #define SYS_fstat 11
-#define SYS_pwd 12
+#define SYS_readdir 12
 #define SYS_mkdir 13
 #define SYS_chdir 14
 #define SYS_unlink 15
@@ -24,7 +24,6 @@
 #define SYS_signal 19
 #define SYS_sigret 20
 #define SYS_kill 21
-#define SYS_readdir 22
 
 #endif
 

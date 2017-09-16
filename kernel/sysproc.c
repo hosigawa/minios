@@ -14,7 +14,7 @@ int (*syscalls[])(void) = {
 	[SYS_read] = sys_read,
 	[SYS_write] = sys_write,
 	[SYS_fstat] = sys_fstat,
-	[SYS_pwd] = sys_pwd,
+	[SYS_readdir] = sys_readdir,
 	[SYS_mkdir] = sys_mkdir,
 	[SYS_chdir] = sys_chdir,
 	[SYS_unlink] = sys_unlink,
@@ -24,7 +24,6 @@ int (*syscalls[])(void) = {
 	[SYS_signal] = sys_signal,
 	[SYS_sigret] = sys_sigret,
 	[SYS_kill] = sys_kill,
-	[SYS_readdir] = sys_readdir,
 };
 
 int get_arg_int(int n)
@@ -150,44 +149,14 @@ int sys_fstat()
 	struct file *f = get_file(fd);
 	if(!f)
 		return -1;
+	fs->dev = f->ip->dev;
+	fs->inum = f->ip->inum;
 	fs->type = f->ip->type;
 	fs->nlink = f->ip->nlink;
 	fs->size = f->ip->size;
 	fs->ctime = f->ip->ctime;
 	fs->mtime = f->ip->mtime;
 	fs->atime = f->ip->atime;
-	return 0;
-}
-
-int sys_pwd()
-{
-	char *wd = (char *)get_arg_uint(0);/*
-	int off;
-	struct inode *dp = cpu.cur_proc->cwd->i_op->dirlookup(cpu.cur_proc->cwd, "..", &off);
-	if(!dp)
-		return -1;
-	if(dp->inum == cpu.cur_proc->cwd->inum) {
-		memmove(wd, "/", 2);
-		iput(dp);
-		return 0;
-	}
-	struct dirent *de = kalloc();
-	if(!de)
-		return -1;
-	memset(de, 0, PG_SIZE);
-	int ret = dp->i_op->f_op->readdir(dp, de);
-	int i = 0;
-	for(i = 0; i < ret; i++) {
-		if(de[i].inum == cpu.cur_proc->cwd->inum && strcmp(de[i].name, ".") < 0 && strcmp(de[i].name, "..") < 0) {
-			memmove(wd, de[i].name, DIR_NM_SZ);
-			iput(dp);
-			kfree(de);
-			return 0;
-		}
-	}
-	iput(dp);
-	kfree(de);*/
-	sprintf(wd, "home");
 	return 0;
 }
 

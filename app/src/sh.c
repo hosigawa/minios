@@ -6,7 +6,7 @@ struct alias_token {
 	char token[64];
 };
 
-char cwd[14];
+char cwd[DIR_NM_SZ];
 char profile[4096];
 char env[1024];
 char *envp[10];
@@ -163,8 +163,8 @@ int main(int argc, char **argv)
 {
 	printf("\n");
 	chdir("/home");
-	memset(cwd, 0, 14);
-	int ret = pwd(cwd);
+	memset(cwd, 0, DIR_NM_SZ);
+	int ret = getpwd(cwd, false);
 	if(ret < 0){
 		printf("pwd ret is %d\n", ret);
 		return -1;
@@ -187,12 +187,21 @@ int main(int argc, char **argv)
 				printf("-sh: cd: %s: No such file or directory\n", sargv[1]);
 			else {
 				memset(cwd, 0, 14);
-				ret = pwd(cwd);
+				ret = getpwd(cwd, false);
 				if(ret < 0){
 					printf("pwd ret is %d\n", ret);
 					break;;
 				}
 			}
+			continue;
+		}
+		else if(strcmp(sargv[0], "pwd") == 0) {
+			char full_path[256];
+			memset(full_path, 0, 256);
+			ret = getpwd(full_path, true);
+			if(ret < 0)
+				break;
+			printf("%s\n", full_path);
 			continue;
 		}
 		if(fork() == 0)

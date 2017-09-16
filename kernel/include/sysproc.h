@@ -4,6 +4,8 @@
 #include "syscall.h"
 
 struct file_stat {
+	int dev;
+	int inum;
 	short type;           // File type
   	short nlink;          // Number of links to inode in file system
   	uint size;            // Size of file (bytes)
@@ -29,7 +31,7 @@ int sys_mknod();
 int sys_read();
 int sys_write();
 int sys_fstat();
-int sys_pwd();
+int sys_readdir();
 int sys_mkdir();
 int sys_chdir();
 int sys_unlink();
@@ -39,7 +41,6 @@ int sys_stime();
 int sys_signal();
 int sys_sigret();
 int sys_kill();
-int sys_readdir();
 
 #endif
 

@@ -71,7 +71,7 @@ struct inode *proc_root_dirlookup(struct inode *dp, char *name, int *off)
 		ip = idup(dp);
 	}
 	else if(!strcmp(name, "..")) {
-		ip = NULL;
+		ip = namep(dp->sb->root_path, NULL);
 	}
 	else if(!strcmp(name, "sysinfo")) {
 		ip = iget(dp->sb, 1);

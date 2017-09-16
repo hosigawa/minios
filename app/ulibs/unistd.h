@@ -12,6 +12,8 @@ void srand(int seek);
 int rand();
 int localtime(uint time, struct time_v *tm);
 int gettimeofday(struct time_v *tm);
+int getpwd(char *wd, bool full);
+char *invert_strcpy(char *dst, char *src, int len);
 
 #endif
 

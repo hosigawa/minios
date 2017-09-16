@@ -121,6 +121,7 @@ struct super_block {
 	struct inode *root;
 	struct super_block_operation *s_op;
 	struct inode_operation *i_op;
+	char root_path[64];
 
 	union {
 		struct minios_super_block minios_s;

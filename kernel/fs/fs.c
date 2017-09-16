@@ -75,6 +75,7 @@ void mount_root()
 	fs->s_op->read_sb(sb);
 	root_sb = sb;
 	sb->root = namei("/");
+	strcpy(sb->root_path, "/");
 	sb->root->sb = sb;
 	sb->root->i_op = sb->i_op;
 	sb->s_op->read_inode(sb, sb->root);
@@ -83,7 +84,6 @@ void mount_root()
 	printf("mount root file system 'minios' success\n");
 }
 
-void proc_create_file();
 int mount_fs(char *path, char *fs_name)
 {
 	static int dev = ROOT_DEV + 1;
@@ -105,6 +105,7 @@ int mount_fs(char *path, char *fs_name)
 	struct super_block *sb = get_sb(0);
 	sb->dev = dev++;
 	sb->root = idup(dp);
+	strcpy(sb->root_path, path);
 	fs->s_op->read_sb(sb);
 	dp->sb = sb;
 	iput(dp);
@@ -124,12 +125,14 @@ char *path_decode(char *path, char *name)
 	while(*path != '/' && *path)
 		path++;
 	int len = path - sub_path;
-	if(len >= DIR_NM_SZ) {
-		memmove(name, sub_path, DIR_NM_SZ);
-	}
-	else {
-		memmove(name, sub_path, len);
-		name[len] = 0;
+	if(name) {
+		if(len >= DIR_NM_SZ) {
+			memmove(name, sub_path, DIR_NM_SZ);
+		}
+		else {
+			memmove(name, sub_path, len);
+			name[len] = 0;
+		}
 	}
 	while(*path == '/')
 		path++;
