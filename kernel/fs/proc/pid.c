@@ -30,7 +30,7 @@ int proc_proc_readdir(struct file *f, struct dirent *de)
 	return 0;
 }
 
-struct inode *proc_proc_dirlookup(struct inode *dp, char *name, int *off)
+struct inode *proc_proc_lookup(struct inode *dp, char *name, int *off)
 {
 	int pid = dp->inum >> 16;
 	int low = dp->inum & 0xffff;
@@ -89,6 +89,6 @@ struct file_operation proc_proc_file_op = {
 struct inode_operation proc_proc_inode_op = {
 	.f_op = &proc_proc_file_op,
 	.readi = proc_proc_readi,
-	.dirlookup = proc_proc_dirlookup,
+	.lookup = proc_proc_lookup,
 };
 

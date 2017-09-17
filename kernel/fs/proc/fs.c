@@ -1,13 +1,20 @@
 #include "kernel.h"
 
+#define PROC_ROOT_INO 0
+
 extern struct inode_operation proc_sysinfo_inode_op;
 extern struct inode_operation proc_proc_inode_op;
+extern struct inode_operation proc_root_inode_op;
 
 void proc_read_inode(struct super_block *sb, struct inode *ip)
 {
 	ip->mtime = get_systime();
 	ip->size = 0;
-	if(ip->inum == 1) {
+	if(ip->inum == PROC_ROOT_INO) {
+		ip->type = T_DIR;
+		ip->i_op = &proc_root_inode_op;
+	}
+	else if(ip->inum == 1) {
 		ip->type = T_FILE;
 		ip->i_op = &proc_sysinfo_inode_op;
 	}
@@ -47,14 +54,14 @@ void register_file_system_proc(struct file_system *fs)
 	fs->s_op = &proc_sb_op;
 }
 
-extern struct inode_operation proc_root_inode_op;
-
 struct inode_operation proc_inode_op = {};
 
 void proc_read_sb(struct super_block *sb) 
 {
 	sb->s_op = &proc_sb_op;
 	sb->i_op = &proc_inode_op;
-	sb->root->i_op = &proc_root_inode_op;
+	sb->root = iget(sb, PROC_ROOT_INO);
+	if(!sb->root)
+		panic("mount proc error\n");
 }
 

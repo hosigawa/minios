@@ -149,8 +149,15 @@ int sys_fstat()
 	struct file *f = get_file(fd);
 	if(!f)
 		return -1;
-	fs->dev = f->ip->dev;
-	fs->inum = f->ip->inum;
+	struct super_block *sb = f->ip->sb;
+	if(sb->root == f->ip && sb->cover) {
+		fs->dev = sb->cover->dev;
+		fs->inum = sb->cover->inum;
+	}
+	else {
+		fs->dev = f->ip->dev;
+		fs->inum = f->ip->inum;
+	}
 	fs->type = f->ip->type;
 	fs->nlink = f->ip->nlink;
 	fs->size = f->ip->size;

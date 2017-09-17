@@ -58,7 +58,10 @@ void ls(char *path)
 			}
 			if(bdetails) {
 				memset(name, 0, 64);
-				sprintf(name, "%s/%s", path, de.name);
+				if(path[strlen(path) - 1] == '/')
+					sprintf(name, "%s%s", path, de.name);
+				else
+					sprintf(name, "%s/%s", path, de.name);
 				sfd = open(name, 0);
 				if(sfd < 0){
 					continue;

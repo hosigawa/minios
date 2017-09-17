@@ -65,7 +65,7 @@ struct file_system {
 struct file_operation;
 struct inode_operation {
 	struct file_operation *f_op;
-	struct inode *(*dirlookup)(struct inode *ip, char *name, int *off);
+	struct inode *(*lookup)(struct inode *ip, char *name, int *off);
 	void (*itrunc)(struct inode *ip);
 	void (*dirlink)(struct inode *dp, char *name, int inum);
 	struct inode *(*create)(struct inode *dp, char *name, int type, int major, int minor);
@@ -85,6 +85,7 @@ struct inode {
 	uint ctime;
 	uint mtime;
 	uint atime;
+	struct inode *mount;
 	struct super_block *sb;
 	struct inode_operation *i_op;
 
@@ -119,9 +120,9 @@ struct super_block_operation {
 struct super_block {
 	int dev;
 	struct inode *root;
+	struct inode *cover;
 	struct super_block_operation *s_op;
 	struct inode_operation *i_op;
-	char root_path[64];
 
 	union {
 		struct minios_super_block minios_s;

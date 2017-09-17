@@ -119,7 +119,7 @@ int getpwd(char *wd, bool full)
 		if(retp < 0 || rets < 0) {
 			goto err;
 		}
-		if(pst.inum == sst.inum) {
+		if(pst.dev == sst.dev && pst.inum == sst.inum) {
 			close(pfd);
 			close(sfd);
 			if(!*path)

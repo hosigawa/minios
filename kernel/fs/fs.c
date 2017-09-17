@@ -75,7 +75,6 @@ void mount_root()
 	fs->s_op->read_sb(sb);
 	root_sb = sb;
 	sb->root = namei("/");
-	strcpy(sb->root_path, "/");
 	sb->root->sb = sb;
 	sb->root->i_op = sb->i_op;
 	sb->s_op->read_inode(sb, sb->root);
@@ -104,10 +103,9 @@ int mount_fs(char *path, char *fs_name)
 	}
 	struct super_block *sb = get_sb(0);
 	sb->dev = dev++;
-	sb->root = idup(dp);
-	strcpy(sb->root_path, path);
 	fs->s_op->read_sb(sb);
-	dp->sb = sb;
+	dp->mount = idup(sb->root);
+	sb->cover = idup(dp);
 	iput(dp);
 	
 	printf("mount file system '%s' success\n", fs_name);
@@ -141,6 +139,7 @@ char *path_decode(char *path, char *name)
 
 struct inode *namex(char *path, char *name, bool bparent)
 {
+	struct super_block *sb;
 	struct inode *ip, *next;
 	int off;
 	if(*path == '/')
@@ -150,14 +149,20 @@ struct inode *namex(char *path, char *name, bool bparent)
 
 	while((path = path_decode(path, name)) != 0) {
 		if(ip->type != T_DIR){
-			err_info("namex ip dev:%d inum:%d type:%d isn't dir\n", ip->dev, ip->inum, ip->type);
+			err_info("namex ip dev:%d inum:%d type:%d isn't directory path:%s, name:%s\n", ip->dev, ip->inum, ip->type, path, name);
 			iput(ip);
 			return NULL;
 		}
 		if(bparent && *path == 0) {
 			return ip;
 		}
-		next = ip->i_op->dirlookup(ip, name, &off);
+		if(!strcmp(name, "..")) {
+			if((sb = ip->sb) && (ip == sb->root) && sb->cover) {
+				iput(ip);
+				ip = idup(sb->cover);
+			}
+		}
+		next = ip->i_op->lookup(ip, name, &off);
 		if(!next) {
 			iput(ip);
 			return NULL;

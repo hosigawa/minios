@@ -64,14 +64,11 @@ int proc_root_readdir(struct file *f, struct dirent *de)
 	return -1;
 }
 
-struct inode *proc_root_dirlookup(struct inode *dp, char *name, int *off)
+struct inode *proc_root_lookup(struct inode *dp, char *name, int *off)
 {
 	struct inode *ip;
-	if(!strcmp(name, ".")) {
+	if(!strcmp(name, ".") || !strcmp(name, "..")) {
 		ip = idup(dp);
-	}
-	else if(!strcmp(name, "..")) {
-		ip = namep(dp->sb->root_path, NULL);
 	}
 	else if(!strcmp(name, "sysinfo")) {
 		ip = iget(dp->sb, 1);
@@ -123,6 +120,6 @@ struct file_operation proc_root_file_op = {
 
 struct inode_operation proc_root_inode_op = {
 	.f_op = &proc_root_file_op,
-	.dirlookup = proc_root_dirlookup,
+	.lookup = proc_root_lookup,
 };
 
