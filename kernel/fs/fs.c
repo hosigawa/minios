@@ -1,7 +1,7 @@
 #include "kernel.h"
 
 extern struct CPU cpu;
-struct super_block *root_sb;
+struct dentry *root_dentry;
 
 struct super_block super_blocks[SUPER_BLOCK_NUM];
 struct file_system file_systems[FILE_SYSTEM_NUM];
@@ -62,6 +62,7 @@ void init_fs()
 	}
 	binit();
 	init_file();
+	dentry_init();
 	register_file_system();
 }
 
@@ -73,12 +74,14 @@ void mount_root()
 	struct super_block *sb = get_sb(0);
 	sb->dev = ROOT_DEV;
 	fs->s_op->read_sb(sb);
-	root_sb = sb;
-	sb->root = namei("/");
-	sb->root->sb = sb;
-	sb->root->i_op = sb->i_op;
-	sb->s_op->read_inode(sb, sb->root);
-	cpu.cur_proc->cwd = idup(sb->root);
+	sb->mount = dalloc(NULL, "/");
+	root_dentry = sb->mount;
+	struct inode *ip = iget(sb, ROOT_INO);
+	ip->sb = sb;
+	ip->i_op = sb->i_op;
+	sb->s_op->read_inode(sb, ip);
+	dadd(sb->mount, ip);
+	cpu.cur_proc->cwd = ddup(sb->mount);
 
 	printf("mount root file system 'minios' success\n");
 }
@@ -87,26 +90,28 @@ int mount_fs(char *path, char *fs_name)
 {
 	static int dev = ROOT_DEV + 1;
 
-	struct inode *dp = namei(path);
+	struct dentry *dp = namei(path);
 	if(!dp) {
 		printf("%s not exists\n", path);
 		return -1;
 	}
-	if(dp->type != T_DIR) {
+	if(dp->ip->type != T_DIR) {
+		dput(dp);
 		printf("%s is not direct\n", path);
 		return -1;
 	}
 	struct file_system *fs = get_fs_type(fs_name);
 	if(!fs) {
+		dput(dp);
 		printf("file_system '%s' may not register\n", fs_name);
 		return -1;
 	}
 	struct super_block *sb = get_sb(0);
 	sb->dev = dev++;
+	sb->mount = ddup(dp);
 	fs->s_op->read_sb(sb);
-	dp->mount = idup(sb->root);
-	sb->cover = idup(dp);
-	iput(dp);
+	
+	dput(dp);
 	
 	printf("mount file system '%s' success\n", fs_name);
 	return 0;
@@ -137,53 +142,91 @@ char *path_decode(char *path, char *name)
 	return path;
 }
 
-struct inode *namex(char *path, char *name, bool bparent)
+void d_path(struct dentry *de, char *path)
 {
-	struct super_block *sb;
-	struct inode *ip, *next;
+	char buf[256];
+	memset(buf, 0, 256);
+	char *p = buf+254;
+	struct dentry *tmp = de;
+	if(tmp == root_dentry) {
+		strcpy(path, "/");
+		return;
+	}
+	int i, len;
+	while(tmp->parent) {
+		len = strlen(tmp->name);
+		for(i = 0; i < len; i++) {
+			*(p--) = tmp->name[len - i - 1];
+		}
+		*(p--) = '/';
+		tmp = tmp->parent;
+	}
+	strcpy(path, p + 1);
+}
+
+static struct dentry *lookup(struct dentry *parent, char *name)
+{
+	struct dentry *de;
+	struct list_t *p = parent->subdirs.next;
+	while(p) {
+		de = list_entry(p, struct dentry, child);
+		if(!strcmp(name, de->name))
+			return ddup(de);
+		p = p->next;
+	}
+	return NULL;
+}
+
+struct dentry *namex(char *path, char *name, bool bparent)
+{
+	struct dentry *dp, *next;
 	int off;
 	if(*path == '/')
-		ip = iget(root_sb, ROOT_INO);
+		dp = ddup(root_dentry);
 	else
-		ip = idup(cpu.cur_proc->cwd);
+		dp = ddup(cpu.cur_proc->cwd);
 
 	while((path = path_decode(path, name)) != 0) {
-		if(ip->type != T_DIR){
-			err_info("namex ip dev:%d inum:%d type:%d isn't directory path:%s, name:%s\n", ip->dev, ip->inum, ip->type, path, name);
-			iput(ip);
+		if(dp->ip->type != T_DIR){
+			err_info("namex ip dev:%d inum:%d type:%d isn't directory path:%s, name:%s\n", dp->ip->dev, dp->ip->inum, dp->ip->type, path, name);
+			dput(dp);
 			return NULL;
 		}
 		if(bparent && *path == 0) {
-			return ip;
+			return dp;
 		}
-		if(!strcmp(name, "..")) {
-			if((sb = ip->sb) && (ip == sb->root) && sb->cover) {
-				iput(ip);
-				ip = idup(sb->cover);
+		if(!strcmp(name, ".")) {
+			next = ddup(dp);
+		}
+		else if(!strcmp(name, "..")) {
+			next = ddup(dp->parent);
+		}
+		else {
+			next = lookup(dp, name);
+			if(!next)
+				next = dp->ip->i_op->lookup(dp->ip, dp, name, &off);
+			if(!next) {
+				dput(dp);
+				return NULL;
 			}
 		}
-		next = ip->i_op->lookup(ip, name, &off);
-		if(!next) {
-			iput(ip);
-			return NULL;
-		}
-		iput(ip);
-		ip = next;
+		dput(dp);
+		dp = next;
 	}
 	if(bparent) {
-		iput(ip);
+		dput(dp);
 		return NULL;
 	}
-	return ip;
+	return dp;
 }
 
-struct inode *namei(char *path)
+struct dentry *namei(char *path)
 {
 	char name[DIR_NM_SZ];
 	return namex(path, name, false);
 }
 
-struct inode *namep(char *path, char *name)
+struct dentry *namep(char *path, char *name)
 {
 	return namex(path, name, true);
 }

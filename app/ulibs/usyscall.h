@@ -27,6 +27,7 @@ int stime(uint *time);
 int signal(int signal, sig_handler handler);
 int sigret();
 int kill(int sig, int pid);
+int getpwd(char *wd, int full_path);
 
 #endif
 

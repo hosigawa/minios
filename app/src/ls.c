@@ -19,12 +19,27 @@ static char *MONS[] = {
 bool bdetails = false;
 bool bhide = true;
 
-void print_file(char *path, struct file_stat *st)
+void print_file(char *path, char *name, struct file_stat *st)
 {
 	struct time_v tm;
 	localtime(st->mtime, &tm);
-	printf("%s  %3d  %6d  %s %2d  %02d:%02d  %s\n", (st->type == T_DIR) ? "d   " : (st->type == T_DEV) ? "C   " : "-   ", st->nlink, 
-												st->size, MONS[tm.mon - 1], tm.day, tm.h, tm.m, path);
+	if(st->type == T_LINK) {
+		char link[64];
+		memset(link, 0, 64);
+		int fd = open(path ? path:name, 0);
+		if(fd < 0)
+			link[0] = '?';
+		else {
+			read(fd, link, 64);
+			close(fd);
+		}
+		printf("%s  %3d  %6d  %s %2d  %02d:%02d  %s -> %s\n", "l   ", st->nlink, 
+												st->size, MONS[tm.mon - 1], tm.day, tm.h, tm.m, name, link);
+	}
+	else {
+		printf("%s  %3d  %6d  %s %2d  %02d:%02d  %s\n", (st->type == T_DIR) ? "d   " : (st->type == T_DEV) ? "C   " : "-   ", st->nlink, 
+												st->size, MONS[tm.mon - 1], tm.day, tm.h, tm.m, name);
+	}
 }
 
 void ls(char *path) 
@@ -70,7 +85,7 @@ void ls(char *path)
 					close(sfd);
 					continue;
 				}
-				print_file(de.name, &sub);
+				print_file(name, de.name, &sub);
 				close(sfd);
 			}
 			else {
@@ -82,7 +97,7 @@ void ls(char *path)
 			printf("\n");
 	}
 	else {
-		print_file(path, &stat);
+		print_file(NULL, path, &stat);
 	}
 	close(fd);
 }

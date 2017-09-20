@@ -6,7 +6,7 @@
 #include "type.h"
 
 #define MAX_PROC 64
-#define PROC_NM_SZ 64
+#define PROC_CMD_SZ 64
 #define NOFILE 16
 
 enum PROC_STATUS {
@@ -30,7 +30,7 @@ struct trap_frame;
 struct proc {
 	struct list_t list_head;
 	int pid;
-	char name[PROC_NM_SZ];
+	char cmdline[PROC_CMD_SZ];
 	int killed;
 	uint kstack;
 	uint vend;
@@ -39,7 +39,8 @@ struct proc {
 	int stat;
 	pde_t *pgdir;
 	struct file *ofile[NOFILE];
-	struct inode *cwd;
+	struct dentry *cwd;
+	struct dentry *exe;
 	struct proc *parent;
 	void *sleep_chan;
 	int signal;

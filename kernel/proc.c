@@ -140,7 +140,7 @@ int fork()
 	p->tf->eax = 0;
 	p->parent = cpu.cur_proc;
 	p->vend = cpu.cur_proc->vend;
-	p->cwd = idup(cpu.cur_proc->cwd);
+	p->cwd = ddup(cpu.cur_proc->cwd);
 	p->stat = RUNNING;
 	p->priority = cpu.cur_proc->priority;
 
@@ -202,20 +202,20 @@ void wakeup(struct proc *p)
 
 int execv(char *path, char *argv[], char *envp[])
 {
-	struct inode *ip = namei(path);
-	if(!ip) {
+	struct dentry *de = namei(path);
+	if(!de) {
 		return -1;
 	}
 
-	if(ip->type == T_DIR) {
-		iput(ip);
+	if(de->ip->type == T_DIR) {
+		dput(de);
 		return -2;
 	}
 	struct elfhdr elf;
-	ip->i_op->readi(ip, (char *)&elf, 0, sizeof(struct elfhdr));
+	de->ip->i_op->readi(de->ip, (char *)&elf, 0, sizeof(struct elfhdr));
 	if(elf.magic != ELF_MAGIC) {
 		//err_info("elf magic error: %p\n", elf.magic);
-		iput(ip);
+		dput(de);
 		return -3;
 	}
 
@@ -228,14 +228,14 @@ int execv(char *path, char *argv[], char *envp[])
 	uint off = elf.phoff;
 	int num = 0;
 	while(num++ < elf.phnum) {
-		ip->i_op->readi(ip, (char *)&ph, off, sizeof(struct proghdr));
+		de->ip->i_op->readi(de->ip, (char *)&ph, off, sizeof(struct proghdr));
 		off += sizeof(struct proghdr);
 		if(ph.type != ELF_PROG_LOAD)
 			continue;
 		size = resize_uvm(pdir, size, ph.va + ph.memsz);
-		load_uvm(pdir, ip, (char *)ph.va, ph.offset, ph.filesz);
+		load_uvm(pdir, de->ip, (char *)ph.va, ph.offset, ph.filesz);
 	}
-	iput(ip);
+	cpu.cur_proc->exe = de;
 	size = PG_ROUNDUP(size);
 	size = resize_uvm(pdir, size, size + USTACKSIZE + PG_SIZE);
 	clear_pte(pdir, (char *)(size - (USTACKSIZE + PG_SIZE)));
@@ -264,15 +264,15 @@ int execv(char *path, char *argv[], char *envp[])
 	cpu.cur_proc->vend = size;
 	cpu.cur_proc->tf->esp = sp;
 	cpu.cur_proc->tf->eip = elf.entry;
-	memset(cpu.cur_proc->name, 0, PROC_NM_SZ);
+	memset(cpu.cur_proc->cmdline, 0, PROC_CMD_SZ);
 
 	int i;
 	int str_len = 0, tot_len = 0;
 	for(i = 0; i < argc; i++) {
 		str_len = strlen(argv[i]);
-		memmove(cpu.cur_proc->name+tot_len, argv[i], str_len);
+		memmove(cpu.cur_proc->cmdline+tot_len, argv[i], str_len);
 		tot_len += str_len;
-		memmove(cpu.cur_proc->name+tot_len, " ", 1);
+		memmove(cpu.cur_proc->cmdline+tot_len, " ", 1);
 		tot_len += 1;
 	}
 
@@ -296,8 +296,10 @@ void exit()
 			cpu.cur_proc->ofile[i] = NULL;
 		}
 	}
-	iput(cpu.cur_proc->cwd);
+	dput(cpu.cur_proc->cwd);
+	dput(cpu.cur_proc->exe);
 	cpu.cur_proc->cwd = NULL;
+	cpu.cur_proc->exe = NULL;
 
 	pushcli();
 
@@ -332,7 +334,7 @@ int wait()
 				p->pid = 0;
 				p->parent = NULL;
 				p->stat = UNUSED;
-				memset(p->name, 0, PROC_NM_SZ);
+				memset(p->cmdline, 0, PROC_CMD_SZ);
 				return pid;
 			}
 		}

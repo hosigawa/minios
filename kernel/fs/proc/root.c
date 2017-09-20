@@ -14,7 +14,7 @@ static bool name_is_digital(char *name)
 
 int proc_file_read(struct file *f, char *dst, int len)
 {
-	int ret = f->ip->i_op->readi(f->ip, dst, f->off, len);
+	int ret = f->de->ip->i_op->readi(f->de->ip, dst, f->off, len);
 	f->off += ret;
 
 	return ret;
@@ -22,7 +22,7 @@ int proc_file_read(struct file *f, char *dst, int len)
 
 int proc_file_write(struct file *f, char *src, int len)
 {
-	int ret = f->ip->i_op->writei(f->ip, src, f->off, len);
+	int ret = f->de->ip->i_op->writei(f->de->ip, src, f->off, len);
 	f->off += ret;
 
 	return ret;
@@ -64,26 +64,29 @@ int proc_root_readdir(struct file *f, struct dirent *de)
 	return -1;
 }
 
-struct inode *proc_root_lookup(struct inode *dp, char *name, int *off)
+struct dentry *proc_root_lookup(struct inode *dp, struct dentry *de, char *name, int *off)
 {
-	struct inode *ip;
-	if(!strcmp(name, ".") || !strcmp(name, "..")) {
-		ip = idup(dp);
+	struct dentry *sub;
+	if(!strcmp(name, ".")) {
+		sub = ddup(de);
+	}
+	else if(!strcmp(name, "..")) {
+		sub = ddup(de->parent);
 	}
 	else if(!strcmp(name, "sysinfo")) {
-		ip = iget(dp->sb, 1);
+		sub = dget(de, name, dp->sb, 1);
 	}
 	else if(name_is_digital(name)){
 		int pid = atoi(name);
 		struct proc *p = get_proc(pid);
 		if(!p)
-			ip = NULL;
+			sub = NULL;
 		else
-			ip = iget(dp->sb, pid << 16 | 1);
+			sub = dget(de, name, dp->sb, pid << 16 | 1);
 	}
 	else 
-		ip = NULL;
-	return ip;
+		sub = NULL;
+	return sub;
 }
 
 int proc_sysinfo_readi(struct inode *ip, char *dst, int offset, int num)

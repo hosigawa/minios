@@ -181,8 +181,10 @@ bool isdigit(char c)
 int atoi(char *a)
 {
 	int num = 0;
-	while(*a && isdigit(*a)) {
+	while(*a) {
 		num = num * 10 + *a++ - '0';
+		if(*a && !isdigit(*a))
+			return -1;
 	}
 	return num;
 }

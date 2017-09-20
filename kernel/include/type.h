@@ -20,10 +20,5 @@ typedef uint pte_t;
 	#define null NULL
 #endif
 
-struct list_t {
-	struct list_t *prev;
-	struct list_t *next;
-};
-
 #endif
 

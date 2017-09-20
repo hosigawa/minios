@@ -29,15 +29,16 @@ void init_dev()
 int minios_file_read(struct file *f, char *dst, int len)
 {
 	int ret;
-	if(f->ip->type == T_DEV && devrw[f->ip->minios_i.major].read) {
-		ret = devrw[f->ip->minios_i.major].read(f->ip, dst, f->off, len);
+	struct inode *ip = f->de->ip;
+	if(ip->type == T_DEV && devrw[ip->minios_i.major].read) {
+		ret = devrw[ip->minios_i.major].read(ip, dst, f->off, len);
 	}
 	else {
-		if(f->ip->type == T_DIR)
+		if(ip->type == T_DIR)
 			return -1;
-		ret = minios_readi(f->ip, dst, f->off, len);
-		f->ip->atime = get_systime();
-		minios_write_inode(f->ip->sb, f->ip);
+		ret = minios_readi(ip, dst, f->off, len);
+		ip->atime = get_systime();
+		minios_write_inode(ip->sb, ip);
 	}
 	f->off += ret;
 
@@ -47,15 +48,16 @@ int minios_file_read(struct file *f, char *dst, int len)
 int minios_file_write(struct file *f, char *src, int len)
 {
 	int ret;
-	if(f->ip->type == T_DEV && devrw[f->ip->minios_i.major].write) {
-		ret = devrw[f->ip->minios_i.major].write(f->ip, src, f->off, len);
+	struct inode *ip = f->de->ip;
+	if(ip->type == T_DEV && devrw[ip->minios_i.major].write) {
+		ret = devrw[ip->minios_i.major].write(ip, src, f->off, len);
 	}
 	else {
-		if(f->ip->type == T_DIR)
+		if(ip->type == T_DIR)
 			return -1;
-		ret = minios_writei(f->ip, src, f->off, len);
-		f->ip->mtime = get_systime();
-		minios_write_inode(f->ip->sb, f->ip);
+		ret = minios_writei(ip, src, f->off, len);
+		ip->mtime = get_systime();
+		minios_write_inode(ip->sb, ip);
 	}
 	f->off += ret;
 
@@ -66,7 +68,7 @@ int minios_file_readdir(struct file *f, struct dirent *de)
 {
 	int ret = 0;
 	while(1) {
-		ret = minios_readi(f->ip, (char *)de, f->off, sizeof(struct dirent));
+		ret = minios_readi(f->de->ip, (char *)de, f->off, sizeof(struct dirent));
 		if(ret == sizeof(struct dirent)) {
 			f->off += ret;
 			if(de->inum == 0)

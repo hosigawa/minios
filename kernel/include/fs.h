@@ -3,6 +3,7 @@
 
 #include "type.h"
 #include "fsx.h"
+#include "list.h"
 
 #define BLOCK_BUF_NUM 30
 #define BLOCK_SIZE 512
@@ -10,7 +11,8 @@
 #define B_DIRTY 0x4  // buffer needs to be written to disk
 #define NINDIRECT (BLOCK_SIZE / sizeof(uint))
 #define MAXFILE (NDIRECT + NINDIRECT)
-#define INODE_NUM 128
+#define INODE_NUM 512
+#define DENTRY_NUM 512
 #define SUPER_BLOCK_NUM 64
 #define FILE_SYSTEM_NUM 64
 #define I_VALID 0x2
@@ -18,6 +20,8 @@
 #define T_DIR 1
 #define T_FILE 2
 #define T_DEV 3
+#define T_LINK 4
+
 #define DIR_NM_SZ 28
 #define ROOT_DEV 1
 #define ROOT_INO 1
@@ -62,30 +66,42 @@ struct file_system {
 	struct super_block_operation *s_op;
 };
 
+struct inode;
+struct super_block;
+struct dentry {
+	int ref;
+	struct inode *ip;
+	struct super_block *sb;
+	struct dentry *parent;
+	struct list_t child;
+	struct list_t subdirs;
+	char name[DIR_NM_SZ];
+};
+
 struct file_operation;
 struct inode_operation {
 	struct file_operation *f_op;
-	struct inode *(*lookup)(struct inode *ip, char *name, int *off);
+	struct dentry *(*lookup)(struct inode *dp, struct dentry *de, char *name, int *off);
 	void (*itrunc)(struct inode *ip);
 	void (*dirlink)(struct inode *dp, char *name, int inum);
-	struct inode *(*create)(struct inode *dp, char *name, int type, int major, int minor);
-	int (*unlink)(struct inode *dp, char *name);
+	struct dentry *(*create)(struct inode *dp, struct dentry *de, char *name, int type, int major, int minor);
+	int (*unlink)(struct inode *dp, struct dentry *de, char *name);
 	int (*readi)(struct inode *ip, char *dst, int offset, int num);
 	int (*writei)(struct inode *ip, char *src, int offset, int num);
 };
 
 struct inode {
-  	uint dev;           // Device number
-  	uint inum;          // Inode number
-  	int ref;            // Reference count
-  	int flags;          // I_VALID
+	uint dev;           // Device number
+	uint inum;          // Inode number
+	int ref;            // Reference count
+	int flags;          // I_VALID
 	short type;           // File type
   	short nlink;          // Number of links to inode in file system
   	uint size;            // Size of file (bytes)
 	uint ctime;
 	uint mtime;
 	uint atime;
-	struct inode *mount;
+	//struct dentry *de;
 	struct super_block *sb;
 	struct inode_operation *i_op;
 
@@ -103,7 +119,7 @@ struct file_operation {
 
 struct file {
 	int type;
-	struct inode *ip;
+	struct dentry *de;
 	struct file_operation *f_op;
 	int ref;
 	int off;
@@ -119,14 +135,18 @@ struct super_block_operation {
 
 struct super_block {
 	int dev;
-	struct inode *root;
-	struct inode *cover;
+	struct dentry *mount;
 	struct super_block_operation *s_op;
 	struct inode_operation *i_op;
 
 	union {
 		struct minios_super_block minios_s;
 	};
+};
+
+struct proc_struct {
+	int base;
+	char *name;
 };
 
 struct block_buf *bread(int dev, int sec);
@@ -142,20 +162,31 @@ struct inode *iget(struct super_block *sb, int inum);
 struct inode *idup(struct inode *ip);
 void iput(struct inode *ip);
 
-struct inode *namex(char *path, char *name, bool bparent);
-struct inode *namei(char *path);
-struct inode *namep(char *path, char *name);
+void dentry_init();
+struct dentry *dalloc(struct dentry *parent, char *name);
+struct dentry *ddup(struct dentry *de);
+void dput(struct dentry *de);
+void dadd(struct dentry *de, struct inode *ip);
+struct dentry *dget(struct dentry *parent, char *name, struct super_block *sb, int inum);
+
+void d_path(struct dentry *de, char *path);
+struct dentry *namex(char *path, char *name, bool bparent);
+struct dentry *namei(char *path);
+struct dentry *namep(char *path, char *name);
 
 int fd_alloc(struct file *f);
 struct file *file_alloc();
 struct file *file_dup(struct file *f);
-struct inode *file_create(char *path, int type, int major, int minor);
+struct dentry *file_create(char *path, int type, int major, int minor);
 int file_open(char *path, int mode);
 int file_close(struct file *f);
 int file_mknod(char *path, int major, int minor);
 int file_mkdir(char *path, int major, int minor);
 int file_unlink(char *path);
 struct file *get_file(int fd);
+
+struct proc_struct *match_proc_struct(struct proc_struct *ps, int len, char *name);
+struct proc_struct *get_proc_struct(struct proc_struct *ps, int len, int seq);
 
 #endif
 

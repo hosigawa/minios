@@ -14,6 +14,7 @@ struct malloc_header {
 	char data[];
 };
 
+void malloc_init();
 void *malloc(int sz);
 void free(void *data);
 int memory_size(bool totol);

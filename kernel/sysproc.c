@@ -24,6 +24,7 @@ int (*syscalls[])(void) = {
 	[SYS_signal] = sys_signal,
 	[SYS_sigret] = sys_sigret,
 	[SYS_kill] = sys_kill,
+	[SYS_getpwd] = sys_getpwd,
 };
 
 int get_arg_int(int n)
@@ -149,21 +150,15 @@ int sys_fstat()
 	struct file *f = get_file(fd);
 	if(!f)
 		return -1;
-	struct super_block *sb = f->ip->sb;
-	if(sb->root == f->ip && sb->cover) {
-		fs->dev = sb->cover->dev;
-		fs->inum = sb->cover->inum;
-	}
-	else {
-		fs->dev = f->ip->dev;
-		fs->inum = f->ip->inum;
-	}
-	fs->type = f->ip->type;
-	fs->nlink = f->ip->nlink;
-	fs->size = f->ip->size;
-	fs->ctime = f->ip->ctime;
-	fs->mtime = f->ip->mtime;
-	fs->atime = f->ip->atime;
+	struct inode *ip = f->de->ip;
+	fs->dev = ip->dev;
+	fs->inum = ip->inum;
+	fs->type = ip->type;
+	fs->nlink = ip->nlink;
+	fs->size = ip->size;
+	fs->ctime = ip->ctime;
+	fs->mtime = ip->mtime;
+	fs->atime = ip->atime;
 	return 0;
 }
 
@@ -176,14 +171,14 @@ int sys_mkdir()
 int sys_chdir()
 {
 	char *path = (char *)get_arg_uint(0);
-	struct inode *dp = namei(path);
+	struct dentry *dp = namei(path);
 	if(!dp)
 		return -1;
-	if(dp->type != T_DIR) {
-		iput(dp);
+	if(dp->ip->type != T_DIR) {
+		dput(dp);
 		return -2;
 	}
-	iput(cpu.cur_proc->cwd);
+	dput(cpu.cur_proc->cwd);
 	cpu.cur_proc->cwd = dp;
 	return 0;
 }
@@ -265,13 +260,25 @@ int sys_kill()
 int sys_readdir()
 {
 	int fd = get_arg_int(0);
-	struct dirent *de = (struct dirent *)get_arg_uint(1);
+	struct dirent *dir = (struct dirent *)get_arg_uint(1);
 
 	struct file *f = get_file(fd);
 	if(!f)
 		return -1;
-	if(f->ip->type != T_DIR)
+	if(f->de->ip->type != T_DIR)
 		return -1;
-	return f->f_op->readdir(f, de);
+	return f->f_op->readdir(f, dir);
+}
+
+int sys_getpwd()
+{
+	char *wd = (char *)get_arg_uint(0);
+	int full_path = get_arg_int(1);
+
+	if(!full_path)
+		strcpy(wd, cpu.cur_proc->cwd->name);
+	else
+		d_path(cpu.cur_proc->cwd, wd);
+	return 0;
 }
 

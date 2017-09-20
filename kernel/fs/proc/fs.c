@@ -4,6 +4,7 @@
 
 extern struct inode_operation proc_sysinfo_inode_op;
 extern struct inode_operation proc_proc_inode_op;
+extern struct inode_operation proc_fd_inode_op;
 extern struct inode_operation proc_root_inode_op;
 
 void proc_read_inode(struct super_block *sb, struct inode *ip)
@@ -24,8 +25,19 @@ void proc_read_inode(struct super_block *sb, struct inode *ip)
 		if(low == 1) {
 			ip->type = T_DIR;
 		}
+		else if(low == 2) {
+			ip->type = T_DIR;
+			ip->i_op = &proc_fd_inode_op;
+		}
+		else if(low == 5 || low == 6){
+			ip->type = T_LINK;
+		}
 		else {
 			ip->type = T_FILE;
+			if(low >= (1 << 8)) {
+				ip->type = T_LINK;
+				ip->i_op = &proc_fd_inode_op;
+			}
 		}
 	}
 }
@@ -60,8 +72,25 @@ void proc_read_sb(struct super_block *sb)
 {
 	sb->s_op = &proc_sb_op;
 	sb->i_op = &proc_inode_op;
-	sb->root = iget(sb, PROC_ROOT_INO);
-	if(!sb->root)
-		panic("mount proc error\n");
+	iput(sb->mount->ip);
+	struct inode *ip = iget(sb, PROC_ROOT_INO);
+	dadd(sb->mount, ip);
+}
+
+struct proc_struct *match_proc_struct(struct proc_struct *ps, int len, char *name)
+{
+	int i;
+	for(i = 0; i < len; i++) {
+		if(!strcmp(ps[i].name, name))
+			return &ps[i];
+	}
+	return NULL;
+}
+
+struct proc_struct *get_proc_struct(struct proc_struct *ps, int len, int seq)
+{
+	if(seq >= len)
+		return NULL;
+	return ps + seq;
 }
 

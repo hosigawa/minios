@@ -2,6 +2,7 @@
 #include "usyscall.h"
 #include "mmu.h"
 #include "stdio.h"
+#include "param.h"
 
 static struct malloc_header * head = NULL;
 
@@ -28,6 +29,13 @@ static void check_head()
 		printf("check sbrk error\n");
 		exit();
 	}
+}
+
+void malloc_init()
+{
+	head = (struct malloc_header *)sbrk((int)PG_ROUNDUP(UHEAPSIZE));
+	head->size = UHEAPSIZE;
+	head->used = 0;
 }
 
 void *malloc(int sz)

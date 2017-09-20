@@ -28,4 +28,5 @@ SYS_CALL(stime)
 SYS_CALL(signal)
 SYS_CALL(sigret)
 SYS_CALL(kill)
+SYS_CALL(getpwd)
 

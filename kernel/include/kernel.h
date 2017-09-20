@@ -1,6 +1,7 @@
 #ifndef __KERNEL_H__
 #define __KERNEL_H__
 
+#include "list.h"
 #include "type.h"
 #include "x86.h"
 #include "param.h"
@@ -32,6 +33,8 @@
 #define GET_VER_H(v) (((v)>>16)&0xff)
 #define GET_VER_M(v) (((v)>>8)&0xff)
 #define GET_VER_L(v) ((v)&0xff)
+
+#define SIZEOF_STRUCT(ss) (sizeof(ss) / sizeof(ss[0]))
 
 #endif
 

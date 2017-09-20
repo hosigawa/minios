@@ -15,7 +15,7 @@ struct alias_token alias[16];
 int getcmd(char *buf, int len)
 {
 	int ret;
-	printf("[root@localhost %s]$", cwd);
+	printf("[root@localhost %s]$ ", cwd);
 	memset(buf, 0, len);
 	ret = read(stdin, buf, len);
 	if(ret <= 0)

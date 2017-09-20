@@ -5,7 +5,7 @@ void minios_bfree(struct super_block *sb, uint n);
 void minios_write_inode(struct super_block *sb, struct inode *ip);
 void minios_read_inode(struct super_block *sb, struct inode *ip);
 void minios_dirlink(struct inode *dp, char *name, int inum);
-struct inode *minios_lookup(struct inode *ip, char *name, int *off);
+struct dentry *minios_lookup(struct inode *ip, struct dentry *de, char *name, int *off);
 struct inode *minios_ialloc(struct super_block *sb, int type);
 
 int minios_readi(struct inode *ip, char *dst, int offset, int num)
@@ -44,17 +44,18 @@ int minios_writei(struct inode *ip, char *src, int offset, int num)
 	return wt;
 }
 
-struct inode *minios_create(struct inode *dp, char *name, int type, int major, int minor)
+struct dentry *minios_create(struct inode *dp, struct dentry *de, char *name, int type, int major, int minor)
 {
+	struct dentry *new;
 	struct inode *ip;
 	int off;
 
-	ip = minios_lookup(dp, name, &off);
-	if(ip) {
-		minios_read_inode(ip->sb, ip);
-		if(type == T_FILE && ip->type == T_FILE)
-			return ip;
-		iput(ip);
+	new = minios_lookup(dp, de, name, &off);
+	if(new) {
+		minios_read_inode(de->ip->sb, de->ip);
+		if(type == T_FILE && de->ip->type == T_FILE)
+			return new;
+		dput(new);
 		return NULL;
 	}
 
@@ -79,8 +80,10 @@ struct inode *minios_create(struct inode *dp, char *name, int type, int major, i
 	}
 
 	minios_dirlink(dp, name, ip->inum);
+	new = dalloc(de, name);
+	dadd(new, ip);
 
-	return ip;
+	return new;
 }
 
 void minios_dirlink(struct inode *dp, char *name, int inum)
@@ -116,55 +119,55 @@ bool minios_dir_empty(struct inode *dp)
 	return true;
 }
 
-int minios_unlink(struct inode *dp, char *name)
+int minios_unlink(struct inode *dp, struct dentry *de, char *name)
 {
-	struct inode *ip;
+	struct dentry *sub;
 	int off;
 
-	ip = minios_lookup(dp, name, &off);
-	if(!ip) {
+	sub = minios_lookup(dp, de, name, &off);
+	if(!sub) {
 		return -3;
 	}
 
-	if(ip->nlink < 1) {
-		iput(ip);
+	if(sub->ip->nlink < 1) {
+		dput(sub);
 		return -4;
 	}
 
-	if(ip->type == T_DIR && !minios_dir_empty(ip)){
-		iput(ip);
+	if(sub->ip->type == T_DIR && !minios_dir_empty(sub->ip)){
+		dput(sub);
 		return -5;
 	}
 
-	struct dirent de;
-	memset(&de, 0, sizeof(de));
-	minios_writei(dp, (char *)&de, off, sizeof(de));
-	if(ip->type == T_DIR) {
+	struct dirent dir;
+	memset(&dir, 0, sizeof(dir));
+	minios_writei(dp, (char *)&dir, off, sizeof(dir));
+	if(de->ip->type == T_DIR) {
 		dp->nlink--;
 		minios_write_inode(dp->sb, dp);
 	}
 
-	ip->nlink--;
-	minios_write_inode(ip->sb, ip);
-	iput(ip);
+	sub->ip->nlink--;
+	minios_write_inode(sub->ip->sb, sub->ip);
+	dput(sub);
 
 	return 0;
 }
 
-struct inode *minios_lookup(struct inode *ip, char *name, int *off)
+struct dentry *minios_lookup(struct inode *dp, struct dentry *de, char *name, int *off)
 {
-	if(ip->type != T_DIR) {
+	if(dp->type != T_DIR) {
 		panic("%s is not direct\n", name);
 		return NULL;
 	}
-	struct dirent de;
+	struct dirent di;
 	*off = 0;
-	for(; *off < ip->size; *off += sizeof(struct dirent)) {
-		minios_readi(ip, (char *)&de, *off, sizeof(struct dirent));
-		if(de.inum == 0)
+	for(; *off < dp->size; *off += sizeof(struct dirent)) {
+		minios_readi(dp, (char *)&di, *off, sizeof(struct dirent));
+		if(di.inum == 0)
 			continue;
-		if(strcmp(de.name, name) == 0) {
-			return iget(ip->sb, de.inum);
+		if(strcmp(di.name, name) == 0) {
+			return dget(de, name, dp->sb, di.inum);
 		}
 	}
 	return NULL;
