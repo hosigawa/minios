@@ -82,6 +82,7 @@ void mount_root()
 	sb->s_op->read_inode(sb, ip);
 	dadd(sb->mount, ip);
 	cpu.cur_proc->cwd = ddup(sb->mount);
+	cpu.cur_proc->exe = ddup(sb->mount);
 
 	printf("mount root file system 'minios' success\n");
 }

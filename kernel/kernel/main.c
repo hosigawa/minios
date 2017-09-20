@@ -4,7 +4,7 @@ uint _version = 0;
 
 int main() 
 {
-	_version = MAKE_VER(0,1,0);
+	_version = MAKE_VER(0, 2, 0);
 	init_uart();
 	mem_init();
 	init_kvm();

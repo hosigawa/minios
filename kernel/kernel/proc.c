@@ -141,6 +141,7 @@ int fork()
 	p->parent = cpu.cur_proc;
 	p->vend = cpu.cur_proc->vend;
 	p->cwd = ddup(cpu.cur_proc->cwd);
+	p->exe = ddup(cpu.cur_proc->exe);
 	p->stat = RUNNING;
 	p->priority = cpu.cur_proc->priority;
 
@@ -235,6 +236,7 @@ int execv(char *path, char *argv[], char *envp[])
 		size = resize_uvm(pdir, size, ph.va + ph.memsz);
 		load_uvm(pdir, de->ip, (char *)ph.va, ph.offset, ph.filesz);
 	}
+	dput(cpu.cur_proc->exe);
 	cpu.cur_proc->exe = de;
 	size = PG_ROUNDUP(size);
 	size = resize_uvm(pdir, size, size + USTACKSIZE + PG_SIZE);

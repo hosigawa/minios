@@ -12,6 +12,9 @@ OBJDIR = .obj/
 
 SRCDIR =\
 		./kernel/\
+		./kernel/kernel/\
+		./kernel/IO/\
+		./kernel/mm/\
 		./kernel/fs/\
 		./kernel/fs/minios/\
 		./kernel/fs/proc/\
@@ -31,7 +34,7 @@ COM_LIBS = $(COM_DIR)libc.o $(COM_DIR)time.o
 
 .PHONY: all mkobjdir makeproject q qemu r m fs
 
-makeproject: mkobjdir kernel/vectors.S minios.img
+makeproject: mkobjdir kernel/kernel/vectors.S minios.img
 
 all: makeproject
 
@@ -74,12 +77,12 @@ $(OBJDIR)bootblock: kernel/boot/bootasm.S kernel/boot/bootmain.c
 	$(OBJCOPY) -S -O binary -j .text $(OBJDIR)bootblock.o $@
 	perl ./tools/sign.pl $@
 
-$(OBJDIR)kernelblock: $(OBJS) $(ASM_OBJS) $(OBJDIR)initcode $(COM_LIBS) kernel/kernel.ld
-	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o $@ $(OBJS) $(ASM_OBJS) $(COM_LIBS) -b binary $(OBJDIR)initcode
+$(OBJDIR)kernelblock: $(OBJS) $(ASM_OBJS) $(OBJDIR)initcode $(COM_LIBS) kernel/kernel/kernel.ld
+	$(LD) $(LDFLAGS) -T kernel/kernel/kernel.ld -o $@ $(OBJS) $(ASM_OBJS) $(COM_LIBS) -b binary $(OBJDIR)initcode
 	$(OBJDUMP) -S $@ > $@.asm
 
-kernel/vectors.S: tools/vectors.pl
-	perl tools/vectors.pl > kernel/vectors.S
+kernel/kernel/vectors.S: tools/vectors.pl
+	perl tools/vectors.pl > $@
 
 $(OBJDIR)%.o: %.S
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
