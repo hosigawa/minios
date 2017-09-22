@@ -23,7 +23,6 @@ struct inode *iget(struct super_block *sb, int inum)
 	empty->flags = 0;
 	empty->dev = sb->dev;
 	empty->inum = inum;
-	//empty->de = NULL;
 	empty->sb = sb;
 	sb->s_op->read_inode(sb, empty);
 
@@ -43,7 +42,6 @@ void iput(struct inode *ip)
 			ip->sb->s_op->write_inode(ip->sb, ip);
 		}
 		ip->sb = NULL;
-		//ip->de = NULL;
 	}
 }
 

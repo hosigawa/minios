@@ -38,16 +38,20 @@ void init_timer()
 	outb(IO_TIMER1, TIMER_DIV(TIME_HZ) % 256);
 	outb(IO_TIMER1, TIMER_DIV(TIME_HZ) / 256);
 	enable_pic(IRQ_TIMER);
+	boot_time = init_localtime();
 }
 
 void timer_proc(struct trap_frame *tf)
 {
-	if(!boot_time)
+	static bool begin_tick = false;
+	if(!begin_tick) {
 		boot_time = init_localtime();
+		begin_tick = true;
+	}
 
 	ticks++;
 
-	wakeup_on(timer_proc);
+	wakeup_on(&ticks);
 	if(cpu.cur_proc ) {
 		if((tf->cs & 3) == DPL_USER)
 			user_ticks++;

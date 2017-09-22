@@ -1,5 +1,6 @@
 #include "stdio.h"
 #include "malloc.h"
+#include "timer.h"
 
 static char *STATUS[] = {
 	"U ", 
@@ -88,9 +89,9 @@ int main(int argc, char *argv[])
 			vsz = next_int(&p);
 			st = next_int(&p);
 			ticks = next_int(&p);
-			min = (ticks / 1000) / 60;
-			sec = (ticks / 1000) % 60;
-			ms = (ticks % 1000) / 100;
+			min = (ticks / TIME_HZ) / 60;
+			sec = (ticks / TIME_HZ) % 60;
+			ms = (ticks % TIME_HZ) / 100;
 			pri = next_int(&p);
 		}
 

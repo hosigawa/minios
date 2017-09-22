@@ -19,7 +19,7 @@
 #define CMOS_YEA 0x9
 #define BCD_TO_NUM(val) (((val)&0x0f)+((val)>>4)*10)
 
-#define TIME_HZ 1000
+#define TIME_HZ 100
 
 void init_timer();
 

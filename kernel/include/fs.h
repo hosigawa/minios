@@ -6,7 +6,7 @@
 #include "list.h"
 
 #define BLOCK_BUF_NUM 30
-#define BLOCK_SIZE 512
+#define BLOCK_SIZE 1024
 #define B_VALID 0x2  // buffer has been read from disk
 #define B_DIRTY 0x4  // buffer needs to be written to disk
 #define NINDIRECT (BLOCK_SIZE / sizeof(uint))
@@ -23,7 +23,7 @@
 #define T_LINK 4
 
 #define DIR_NM_SZ 28
-#define ROOT_DEV 1
+#define ROOT_DEV 0
 #define ROOT_INO 1
 
 #define CHECK_OP(op) if(!(op)){panic("lost operation\n");}
@@ -157,7 +157,6 @@ void brelse(struct block_buf *buf);
 void init_fs();
 void mount_root();
 int mount_fs(char *path, char *fs_name);
-struct super_block *get_sb(int dev);
 struct inode *iget(struct super_block *sb, int inum);
 struct inode *idup(struct inode *ip);
 void iput(struct inode *ip);

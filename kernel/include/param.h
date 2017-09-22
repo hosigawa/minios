@@ -7,7 +7,7 @@
 #define UHEAPSIZE (64 * PG_SIZE)
 #define USTACKSIZE (64 * PG_SIZE)
 #define USER_LINK 0x10000
-#define DEF_PRIORITY 2
+#define DEF_PRIORITY 15
 
 #endif
 

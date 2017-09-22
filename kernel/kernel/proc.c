@@ -82,7 +82,7 @@ void scheduler()
 			for(i = 0; i < MAX_PROC; i++) {
 				p = proc_table + i;
 				if(p->stat == RUNNING || p->stat == SLEEPING) {
-					p->count = p->count / 2 + p->priority * 10;
+					p->count = p->count / 2 + p->priority;
 				}
 			}
 			continue;

@@ -32,22 +32,17 @@ ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o)))
 COM_DIR = libs/.obj/
 COM_LIBS = $(COM_DIR)libc.o $(COM_DIR)time.o
 
+include app/applist.dep
+
 .PHONY: all mkobjdir makeproject q qemu r m fs
 
 makeproject: mkobjdir kernel/kernel/vectors.S minios.img
 
 all: makeproject
 
-m: minios.img
-q: fs qemu-fs
-r: fs qemu-fs
-
-fs:
-	@cd app && make && cd ../
+r: qemu
 
 g: qemu-gdb
-
-m: $(OBJDIR)app/mkfs
 
 c: clean
 
@@ -57,18 +52,16 @@ qemu: makeproject
 qemu-fs: makeproject
 	qemu-system-x86_64 -m 512 -smp 1 -serial mon:stdio \
 	-drive file=minios.img,index=0,media=disk,format=raw \
-	-drive file=fs.img,index=1,media=disk,format=raw
+	-drive file=fs.img,index=0,media=disk,format=raw
 
 qemu-gdb: makeproject
 	qemu-system-x86_64 -m 512 -serial mon:stdio \
 	-drive file=minios.img,index=0,media=disk,format=raw \
-	-drive file=fs.img,index=1,media=disk,format=raw \
 	-S -gdb tcp::1111
 
-minios.img:	$(OBJDIR)bootblock $(OBJDIR)kernelblock
-	dd if=/dev/zero of=$@ count=10000
-	dd if=$(OBJDIR)bootblock of=$@ conv=notrunc
-	dd if=$(OBJDIR)kernelblock of=$@ seek=1 conv=notrunc
+minios.img: $(OBJDIR)mkfs $(OBJDIR)bootblock $(OBJDIR)kernelblock
+	@cd app && make && cd ../
+	$< $@ $(addprefix app/, $(APPS))
 
 $(OBJDIR)bootblock: kernel/boot/bootasm.S kernel/boot/bootmain.c
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c kernel/boot/bootmain.c -o $(OBJDIR)bootmain.o
@@ -103,6 +96,9 @@ $(COM_DIR)%.o: libs/%.c
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
 	$(OBJDUMP) -S $@ > $@.asm
 
+$(OBJDIR)mkfs: tools/mkfs.c
+	gcc -Werror -Wall -o $@ $<
+
 mkobjdir:
 	@test -d $(COM_DIR) || mkdir $(COM_DIR)
 	@test -d $(OBJDIR) || (mkdir $(OBJDIR) && mkdir $(addprefix $(OBJDIR), $(subst ./,,$(SRCDIR))))
@@ -111,4 +107,5 @@ clean:
 	rm -f minios.img
 	rm -rf $(OBJDIR)
 	rm -rf $(COM_DIR)
+	@cd app && make c && cd ../
 

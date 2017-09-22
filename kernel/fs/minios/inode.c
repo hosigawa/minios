@@ -142,7 +142,7 @@ int minios_unlink(struct inode *dp, struct dentry *de, char *name)
 	struct dirent dir;
 	memset(&dir, 0, sizeof(dir));
 	minios_writei(dp, (char *)&dir, off, sizeof(dir));
-	if(de->ip->type == T_DIR) {
+	if(sub->ip->type == T_DIR) {
 		dp->nlink--;
 		minios_write_inode(dp->sb, dp);
 	}

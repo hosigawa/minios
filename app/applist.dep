@@ -1,0 +1,18 @@
+APPS =\
+	_malloctest\
+	_test\
+	README\
+	.profile\
+	_init\
+	_sh\
+	_ps\
+	_ls\
+	_mkdir\
+	_rm\
+	_cat\
+	_top\
+	_cp\
+	_mv\
+	_kill\
+	_date\
+

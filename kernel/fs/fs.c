@@ -10,16 +10,21 @@ void binit();
 void register_file_system_minios(struct file_system *fs);
 void register_file_system_proc(struct file_system *fs);
 
-struct super_block *get_sb(int dev)
+static struct super_block *get_sb(int dev)
 {
 	int i;
 	for(i = 0; i < SUPER_BLOCK_NUM; i++) {
 		if(super_blocks[i].dev == dev)
 			return &super_blocks[i];
 	}
-	if(dev == 0)
+	if(dev < 0)
 		panic("super_blocks not enough\n");
 	return NULL;
+}
+
+static struct super_block *get_free_sb()
+{
+	return get_sb(-1);
 }
 
 struct file_system *get_fs_type(char *fs_name)
@@ -55,7 +60,7 @@ void init_fs()
 {
 	int i;
 	for(i = 0; i < SUPER_BLOCK_NUM; i++) {
-		super_blocks[i].dev = 0;
+		super_blocks[i].dev = -1;
 	}
 	for(i = 0; i < FILE_SYSTEM_NUM; i++) {
 		file_systems[i].reg = 0;
@@ -71,7 +76,7 @@ void mount_root()
 	struct file_system *fs = get_fs_type("minios");
 	if(!fs)
 		panic("can't find file_system minios\n");
-	struct super_block *sb = get_sb(0);
+	struct super_block *sb = get_free_sb();
 	sb->dev = ROOT_DEV;
 	fs->s_op->read_sb(sb);
 	sb->mount = dalloc(NULL, "/");
@@ -107,7 +112,7 @@ int mount_fs(char *path, char *fs_name)
 		printf("file_system '%s' may not register\n", fs_name);
 		return -1;
 	}
-	struct super_block *sb = get_sb(0);
+	struct super_block *sb = get_free_sb();
 	sb->dev = dev++;
 	sb->mount = ddup(dp);
 	fs->s_op->read_sb(sb);
@@ -189,7 +194,7 @@ struct dentry *namex(char *path, char *name, bool bparent)
 
 	while((path = path_decode(path, name)) != 0) {
 		if(dp->ip->type != T_DIR){
-			err_info("namex ip dev:%d inum:%d type:%d isn't directory path:%s, name:%s\n", dp->ip->dev, dp->ip->inum, dp->ip->type, path, name);
+			err_info("namex ip dev:%d inum:%d type:%d isn't directory. name:%s\n", dp->ip->dev, dp->ip->inum, dp->ip->type, dp->name);
 			dput(dp);
 			return NULL;
 		}

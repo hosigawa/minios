@@ -205,12 +205,13 @@ int sys_sbrk()
 
 int sys_sleep()
 {
-	int slpms = get_arg_uint(0);
-	int tick = slpms;
+	int slps = get_arg_uint(0);
+	int tick = slps * TIME_HZ;
 	while(tick) {
-		sleep();
+		extern uint ticks;
+		sleep_on(&ticks);
 		if(cpu.cur_proc->signal)
-			return 0;
+			return 1;
 		tick--;
 	}
 	return 0;

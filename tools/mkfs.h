@@ -1,6 +1,6 @@
 
 #define BLOCK_BUF_NUM 30
-#define BLOCK_SIZE 512
+#define BLOCK_SIZE 1024
 #define B_VALID 0x2  // buffer has been read from disk
 #define B_DIRTY 0x4  // buffer needs to be written to disk
 #define NDIRECT 12
@@ -53,3 +53,4 @@ struct minios_super_block {
   	uint inodestart;   // Block number of first inode block
   	uint bmapstart;    // Block number of first free map block
 };
+

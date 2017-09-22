@@ -8,6 +8,8 @@ struct _input {
 	char buf[INPUT_BUFF];
 }input;
 
+static struct proc *front_proc = NULL;
+
 static void console_cputc(char *dst, int data)
 {
 	console_putc(data);
@@ -63,6 +65,7 @@ int console_write(struct inode *ip, char *src, int off, int len)
 	for(i = 0; i < len; i++) {
 		console_putc(src[i]);
 	}
+	front_proc = cpu.cur_proc;
 	return 0;
 }
 
@@ -117,8 +120,8 @@ void console_proc(int (*getc)(void))
 				break;
 			case C('C'):
 			case C('D'):
-				if(cpu.cur_proc)
-					cpu.cur_proc->killed = 1;
+				if(front_proc)
+					kill(front_proc->pid, SIG_TERM);
 				wakeup_on(&input.r);
 				break;
 			default:

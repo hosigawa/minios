@@ -2,6 +2,8 @@
 #include "type.h"
 #include "x86.h"
 
+#define KERNEL_IMG_OFF (62*2)
+
 void wait_disk() {
 	while((inb(0x1f7) & 0xc0) != 0x40);
 }
@@ -22,9 +24,12 @@ void read_disk(uchar *va, int offset) {
 void read_seg(uchar *va, int size, int offset) {
 	uchar *end = va + size;
 	va -= offset % 512;
-	offset = offset / 512 + 1;
+	offset = offset / 512 + KERNEL_IMG_OFF;
 	for(; va < end; va += 512, offset++) {
-		read_disk(va, offset);
+		if(offset - KERNEL_IMG_OFF >= 24)
+			read_disk(va, offset + 2);
+		else
+			read_disk(va, offset);
 	}
 }
 

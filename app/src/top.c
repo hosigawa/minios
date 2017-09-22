@@ -1,5 +1,6 @@
 #include "stdio.h"
 #include "malloc.h"
+#include "timer.h"
 
 #define GET_VER_H(v) (((v)>>16)&0xff)
 #define GET_VER_M(v) (((v)>>8)&0xff)
@@ -53,19 +54,19 @@ int main()
 	printf("Memory Total : %d kB\n", mt / 1024);
 	printf("Memory Free  : %d kB\n", mf / 1024);
 	printf("User Time    : %d:%02d:%02d(%d)\n", 
-							ut / 1000 / 3600 % 24,
-							ut / 1000 / 60 % 60,
-							ut / 1000 % 60,
+							ut / TIME_HZ  / 3600 % 24,
+							ut / TIME_HZ / 60 % 60,
+							ut / TIME_HZ % 60,
 							ut);
 	printf("Kern Time    : %d:%02d:%02d(%d)\n", 
-							kt / 1000 / 3600 % 24,
-							kt / 1000 / 60 % 60,
-							kt / 1000 % 60,
+							kt / TIME_HZ / 3600 % 24,
+							kt / TIME_HZ / 60 % 60,
+							kt / TIME_HZ % 60,
 							kt);
 	printf("Total Time   : %d:%02d:%02d(%d)\n", 
-							tt / 1000 / 3600 % 24,
-							tt / 1000 / 60 % 60,
-							tt / 1000 % 60,
+							tt / TIME_HZ / 3600 % 24,
+							tt / TIME_HZ / 60 % 60,
+							tt / TIME_HZ % 60,
 							tt);
 	close(fd);
 	return 0;

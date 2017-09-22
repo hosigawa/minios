@@ -14,7 +14,7 @@
 #endif
 
 #define NINODES 200
-#define FS_SIZE 1000
+#define FS_SIZE 10000
 #define LOG_SIZE 30
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
@@ -73,7 +73,7 @@ int
 main(int argc, char *argv[])
 {
   int i, cc, fd;
-  uint rootino, bin, home, dev, inum, off;
+  uint rootino, boot, bin, home, dev, inum, off;
   struct dirent de;
   char buf[BLOCK_SIZE];
   struct minios_inode din;
@@ -116,6 +116,17 @@ main(int argc, char *argv[])
     wsect(i, zeroes);
 
   memset(buf, 0, sizeof(buf));
+  int bootfd = open(".obj/bootblock", 0);
+  if(bootfd < 0) {
+	perror("bootblock");	
+	exit(1);
+  }
+  read(bootfd, buf, sizeof(buf));
+  wsect(0, buf);
+  close(bootfd);
+  
+
+  memset(buf, 0, sizeof(buf));
   memmove(buf, &sb, sizeof(sb));
   wsect(1, buf);
 
@@ -132,6 +143,26 @@ main(int argc, char *argv[])
   strcpy(de.name, "..");
   iappend(rootino, &de, sizeof(de));
 
+  boot = create_dir("boot", rootino);
+/***************************************/
+  int kernelfd = open(".obj/kernelblock", 0);
+  if(kernelfd < 0) {
+	perror("kernelblock");	
+	exit(1);
+  }
+  inum = _ialloc(T_FILE);
+  bzero(&de, sizeof(de));
+  de.inum = xshort(inum);
+  strncpy(de.name, "kernel_v0.2.0.img", DIR_NM_SZ);
+  iappend(boot, &de, sizeof(de));
+
+  printf("freeblock :%d\n", freeblock);
+
+  while((cc = read(kernelfd, buf, sizeof(buf))) > 0)
+    iappend(inum, buf, cc);
+  close(kernelfd);
+/***************************************/
+
   bin = create_dir("bin", rootino);
   home = create_dir("home", rootino);
   dev = create_dir("dev", rootino);
@@ -139,18 +170,19 @@ main(int argc, char *argv[])
 
   uint target = 0;
   for(i = 2; i < argc; i++){
-    assert(index(argv[i], '/') == 0);
-
     if((fd = open(argv[i], 0)) < 0){
       perror(argv[i]);
       exit(1);
     }
+    argv[i] += 4;
+    assert(index(argv[i], '/') == 0);
 
     // Skip leading _ in name when writing to file system.
     // The binaries are named _rm, _cat, etc. to keep the
     // build operating system from trying to execute them
     // in place of system binaries like rm and cat.
-    if(argv[i][0] == '_') {
+    
+	if(argv[i][0] == '_') {
       ++argv[i];
 	  target = bin;
 	}
@@ -306,7 +338,7 @@ iappend(uint inum, void *xp, int n)
 
   rinode(inum, &din);
   off = xint(din.size);
-  // printf("append inum %d at off %d sz %d\n", inum, off, n);
+  //printf("append inum %d at off %d sz %d\n", inum, off, n);
   while(n > 0){
     fbn = off / BLOCK_SIZE;
     assert(fbn < MAXFILE);
