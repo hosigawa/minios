@@ -114,17 +114,23 @@ main(int argc, char *argv[])
 
   for(i = 0; i < FS_SIZE; i++)
     wsect(i, zeroes);
-
+/**************************************/
   memset(buf, 0, sizeof(buf));
   int bootfd = open(".obj/bootblock", 0);
   if(bootfd < 0) {
 	perror("bootblock");	
 	exit(1);
   }
-  read(bootfd, buf, sizeof(buf));
+  int n = read(bootfd, buf, sizeof(buf));
+  if(n > 510){
+	perror("bootblock'size too big\n");
+	exit(1);
+  }
+  buf[510] = '\x55';
+  buf[511] = '\xAA';
   wsect(0, buf);
   close(bootfd);
-  
+/**************************************/
 
   memset(buf, 0, sizeof(buf));
   memmove(buf, &sb, sizeof(sb));

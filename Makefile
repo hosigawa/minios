@@ -36,7 +36,7 @@ include app/applist.dep
 
 .PHONY: all mkobjdir makeproject q qemu r m fs
 
-makeproject: mkobjdir kernel/kernel/vectors.S minios.img
+makeproject: mkobjdir  minios.img
 
 all: makeproject
 
@@ -68,14 +68,10 @@ $(OBJDIR)bootblock: kernel/boot/bootasm.S kernel/boot/bootmain.c
 	$(CC) $(CFLAGS) -nostdinc $(INCDIR) -c kernel/boot/bootasm.S -o $(OBJDIR)bootasm.o
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7c00 -o $(OBJDIR)bootblock.o $(OBJDIR)bootasm.o $(OBJDIR)bootmain.o
 	$(OBJCOPY) -S -O binary -j .text $(OBJDIR)bootblock.o $@
-	perl ./tools/sign.pl $@
 
 $(OBJDIR)kernelblock: $(OBJS) $(ASM_OBJS) $(OBJDIR)initcode $(COM_LIBS) kernel/kernel/kernel.ld
 	$(LD) $(LDFLAGS) -T kernel/kernel/kernel.ld -o $@ $(OBJS) $(ASM_OBJS) $(COM_LIBS) -b binary $(OBJDIR)initcode
 	$(OBJDUMP) -S $@ > $@.asm
-
-kernel/kernel/vectors.S: tools/vectors.pl
-	perl tools/vectors.pl > $@
 
 $(OBJDIR)%.o: %.S
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c -o $@ $<
