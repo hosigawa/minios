@@ -1,8 +1,6 @@
 .obj/
 app/.obj/
 app/_*
-app/fs.img
 libs/.obj
 minios.img
-fs.img
 

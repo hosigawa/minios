@@ -56,16 +56,19 @@ int fd_alloc(struct file *f)
 
 int file_mknod(char *path, int major, int minor) 
 {
-	struct dentry *de = file_create(path, T_DEV, major, minor);
+	struct dentry *de = file_create(path, T_DEV);
 	if(!de)
 		return -1;
+	de->ip->dev = (major << 16) | (minor & 0xffff);
+	de->ip->i_op = get_devop(major);
+	de->sb->s_op->write_inode(de->sb, de->ip);
 	dput(de);
 	return 0;
 }
 
-int file_mkdir(char *path, int major, int minor)
+int file_mkdir(char *path)
 {
-	struct dentry *de = file_create(path, T_DIR, major, minor);
+	struct dentry *de = file_create(path, T_DIR);
 	if(!de)
 		return -1;
 	dput(de);
@@ -88,7 +91,7 @@ int file_open(char *path, int mode)
 	struct file *f;
 	struct dentry *dp;
 	if(mode & O_CREATE) {
-		dp = file_create(path, T_FILE, 0, 0);
+		dp = file_create(path, T_FILE);
 	}
 	else {
 		dp = namei(path);
@@ -119,7 +122,7 @@ int file_open(char *path, int mode)
 	return fd;
 }
 
-struct dentry *file_create(char *path, int type, int major, int minor)
+struct dentry *file_create(char *path, int type)
 {
 	struct dentry *dp, *ip;
 	char name[DIR_NM_SZ];
@@ -132,7 +135,7 @@ struct dentry *file_create(char *path, int type, int major, int minor)
 		return NULL;
 	}
 
-	ip = dp->ip->i_op->create(dp->ip, dp, name, type, major, minor);
+	ip = dp->ip->i_op->create(dp->ip, dp, name, type);
 	dput(dp);
 
 	return ip;

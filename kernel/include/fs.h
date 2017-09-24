@@ -2,15 +2,13 @@
 #define __FS_H__
 
 #include "type.h"
-#include "fsx.h"
 #include "list.h"
+#include "../fs/minios/minios.h"
 
 #define BLOCK_BUF_NUM 30
 #define BLOCK_SIZE 1024
 #define B_VALID 0x2  // buffer has been read from disk
 #define B_DIRTY 0x4  // buffer needs to be written to disk
-#define NINDIRECT (BLOCK_SIZE / sizeof(uint))
-#define MAXFILE (NDIRECT + NINDIRECT)
 #define INODE_NUM 512
 #define DENTRY_NUM 512
 #define SUPER_BLOCK_NUM 64
@@ -31,9 +29,7 @@
 #define MAX_DEV 100
 #define NFILE 1024
 
-#define CONSOLE 1
-#define PROCINFO 2
-#define SYSINFO 3
+#define DEV_CONSOLE 101
 
 #define FD_NONE 0
 #define FD_PIPE 1
@@ -84,7 +80,7 @@ struct inode_operation {
 	struct dentry *(*lookup)(struct inode *dp, struct dentry *de, char *name, int *off);
 	void (*itrunc)(struct inode *ip);
 	void (*dirlink)(struct inode *dp, char *name, int inum);
-	struct dentry *(*create)(struct inode *dp, struct dentry *de, char *name, int type, int major, int minor);
+	struct dentry *(*create)(struct inode *dp, struct dentry *de, char *name, int type);
 	int (*unlink)(struct inode *dp, struct dentry *de, char *name);
 	int (*readi)(struct inode *ip, char *dst, int offset, int num);
 	int (*writei)(struct inode *ip, char *src, int offset, int num);
@@ -106,7 +102,7 @@ struct inode {
 	struct inode_operation *i_op;
 
 	union {
-		struct minios_inode minios_i;
+		struct minios_inode_info minios_i;
 	};
 };
 
@@ -176,16 +172,20 @@ struct dentry *namep(char *path, char *name);
 int fd_alloc(struct file *f);
 struct file *file_alloc();
 struct file *file_dup(struct file *f);
-struct dentry *file_create(char *path, int type, int major, int minor);
+struct dentry *file_create(char *path, int type);
 int file_open(char *path, int mode);
 int file_close(struct file *f);
 int file_mknod(char *path, int major, int minor);
-int file_mkdir(char *path, int major, int minor);
+int file_mkdir(char *path);
 int file_unlink(char *path);
 struct file *get_file(int fd);
 
 struct proc_struct *match_proc_struct(struct proc_struct *ps, int len, char *name);
 struct proc_struct *get_proc_struct(struct proc_struct *ps, int len, int seq);
+
+void init_dev();
+void register_devop(int dev, struct inode_operation *i_op);
+struct inode_operation *get_devop(int dev);
 
 #endif
 

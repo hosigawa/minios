@@ -34,9 +34,9 @@ struct dirent {
 
 struct minios_inode {
 	short type;           // File type
-  	short major;          // Major device number (T_DEV only)
-  	short minor;          // Minor device number (T_DEV only)
-  	short nlink;          // Number of links to inode in file system
+	short nlink;          // Number of links to inode in file systeum
+	short uid;
+	short gid;
   	uint size;            // Size of file (bytes)
 	uint ctime;
 	uint mtime;

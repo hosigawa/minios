@@ -1,12 +1,5 @@
 #include "kernel.h"
-
-uint minios_bmap(struct super_block *sb, struct inode *ip, int n);
-void minios_bfree(struct super_block *sb, uint n);
-void minios_write_inode(struct super_block *sb, struct inode *ip);
-void minios_read_inode(struct super_block *sb, struct inode *ip);
-void minios_dirlink(struct inode *dp, char *name, int inum);
-struct dentry *minios_lookup(struct inode *ip, struct dentry *de, char *name, int *off);
-struct inode *minios_ialloc(struct super_block *sb, int type);
+#include "minios.h"
 
 int minios_readi(struct inode *ip, char *dst, int offset, int num)
 {
@@ -44,7 +37,7 @@ int minios_writei(struct inode *ip, char *src, int offset, int num)
 	return wt;
 }
 
-struct dentry *minios_create(struct inode *dp, struct dentry *de, char *name, int type, int major, int minor)
+struct dentry *minios_create(struct inode *dp, struct dentry *de, char *name, int type)
 {
 	struct dentry *new;
 	struct inode *ip;
@@ -52,7 +45,6 @@ struct dentry *minios_create(struct inode *dp, struct dentry *de, char *name, in
 
 	new = minios_lookup(dp, de, name, &off);
 	if(new) {
-		minios_read_inode(de->ip->sb, de->ip);
 		if(type == T_FILE && de->ip->type == T_FILE)
 			return new;
 		dput(new);
@@ -63,8 +55,6 @@ struct dentry *minios_create(struct inode *dp, struct dentry *de, char *name, in
 	if(!ip)
 		panic("create file alloc inode error\n");
 
-	ip->minios_i.major = major;
-	ip->minios_i.minor = minor;
 	ip->size = 0;
 	ip->nlink = 1;
 	ip->ctime = get_systime();
@@ -178,21 +168,22 @@ void minios_itrunc(struct inode *ip)
 	struct block_buf *buf;
 	uint *p;
 	int i;
+	struct super_block *sb = ip->sb;
 	for(i = 0; i < NDIRECT; i++) {
 		if(ip->minios_i.addrs[i]) {
-			minios_bfree(ip->sb, ip->minios_i.addrs[i]);
+			minios_bfree(sb, ip->minios_i.addrs[i]);
 			ip->minios_i.addrs[i] = 0;
 		}
 	}
 	if(ip->minios_i.addrs[NDIRECT]) {
-		buf = bread(ip->dev, ip->minios_i.addrs[NDIRECT]);
+		buf = bread(sb->dev, ip->minios_i.addrs[NDIRECT]);
 		p = (uint *)buf->data;
 		for(i = 0; i < BLOCK_SIZE / sizeof(uint); i++) {
 			if(p[i])
 				minios_bfree(ip->sb, p[i]);
 		}
 		brelse(buf);
-		minios_bfree(ip->sb, ip->minios_i.addrs[NDIRECT]);
+		minios_bfree(sb, ip->minios_i.addrs[NDIRECT]);
 		ip->minios_i.addrs[NDIRECT] = 0;
 	}
 

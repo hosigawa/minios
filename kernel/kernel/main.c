@@ -15,6 +15,7 @@ int main()
 	init_timer();
 	init_fs();
 	init_ide();
+	init_dev();
 	init_console();
 	user_init();
 

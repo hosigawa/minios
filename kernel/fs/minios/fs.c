@@ -1,8 +1,8 @@
 #include "kernel.h"
+#include "minios.h"
 
 uint minios_balloc(struct super_block *sb);
 void bzero(int dev, int num);
-void init_dev();
 
 uint minios_bmap(struct super_block *sb, struct inode *ip, int n)
 {
@@ -86,35 +86,48 @@ struct inode *minios_ialloc(struct super_block *sb, int type)
 
 void minios_read_inode(struct super_block *sb, struct inode *ip)
 {
+	struct minios_inode *mi;
 	if(!(ip->flags & I_VALID)) {
-		struct block_buf *buf = bread(ip->dev, IBLOCK(ip->inum,sb));
-		memmove(&ip->minios_i, (struct minios_inode *)buf->data + ip->inum % IPER, sizeof(struct minios_inode));
+		struct block_buf *buf = bread(sb->dev, IBLOCK(ip->inum,sb));
+		mi = (struct minios_inode *)buf->data + ip->inum % IPER;
 		ip->flags |= I_VALID;
-		brelse(buf);
 		ip->i_op = sb->i_op;
-		ip->type = ip->minios_i.type;
-		ip->ctime = ip->minios_i.ctime;
-		ip->mtime = ip->minios_i.mtime;
-		ip->atime = ip->minios_i.atime;
-		ip->size = ip->minios_i.size;
-		ip->nlink = ip->minios_i.nlink;
+		ip->type = mi->type;
+		ip->ctime = mi->ctime;
+		ip->mtime = mi->mtime;
+		ip->atime = mi->atime;
+		ip->size = mi->size;
+		ip->nlink = mi->nlink;
+		int i;
+		for(i = 0; i <= NDIRECT; i++)
+			ip->minios_i.addrs[i] = mi->addrs[i];
+		if(ip->type == T_DEV){
+			ip->dev = mi->addrs[0];
+			ip->i_op = get_devop(ip->dev >> 16);
+		}
+		brelse(buf);
 	}
 }
 
 void minios_write_inode(struct super_block *sb, struct inode *ip)
 {
-	struct minios_inode *dp;
+	struct minios_inode *mi;
 	struct block_buf *buf;
-	ip->minios_i.type = ip->type;
-	ip->minios_i.ctime = ip->ctime;
-	ip->minios_i.mtime = ip->mtime;
-	ip->minios_i.atime = ip->atime;
-	ip->minios_i.size = ip->size;
-	ip->minios_i.nlink = ip->nlink;
 	
-	buf = bread(ip->dev, IBLOCK(ip->inum,sb));
-	dp = (struct minios_inode *)buf->data + ip->inum % IPER;
-	memmove(dp, &ip->minios_i, sizeof(*dp));
+	buf = bread(sb->dev, IBLOCK(ip->inum,sb));
+	mi = (struct minios_inode *)buf->data + ip->inum % IPER;
+	mi->type = ip->type;
+	mi->ctime = ip->ctime;
+	mi->mtime = ip->mtime;
+	mi->atime = ip->atime;
+	mi->size = ip->size;
+	mi->nlink = ip->nlink;
+	int i;
+	for(i = 0; i <= NDIRECT; i++)
+		mi->addrs[i] = ip->minios_i.addrs[i];
+	if(ip->type == T_DEV) {
+		mi->addrs[0] = ip->dev;
+	}
 	bwrite(buf);
 	brelse(buf);
 }
@@ -132,7 +145,6 @@ void register_file_system_minios(struct file_system *fs)
 	fs->reg = 1;
 	strcpy(fs->name, "minios");
 	fs->s_op = &minios_sb_op;
-	init_dev();
 }
 
 
@@ -140,7 +152,7 @@ extern struct file_operation minios_file_op;
 extern struct inode_operation minios_inode_op;
 void minios_read_sb(struct super_block *sb) 
 {
-	struct block_buf *buf = bread(sb->dev, 1);
+	struct block_buf *buf = bread(sb->dev, ROOT_INO);
 	memmove(&sb->minios_s, buf->data, sizeof(struct minios_super_block));
 	brelse(buf);
 	sb->s_op = &minios_sb_op;

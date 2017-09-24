@@ -126,7 +126,7 @@ int sys_read()
 	int len = get_arg_int(2);
 
 	struct file *f = get_file(fd);
-	if(!f)
+	if(!f || f->de->ip->type == T_DIR)
 		return -1;
 	return f->f_op->read(f, dst, len);
 }
@@ -138,7 +138,7 @@ int sys_write()
 	int len = get_arg_int(2);
 
 	struct file *f = get_file(fd);
-	if(!f)
+	if(!f || f->de->ip->type == T_DIR)
 		return -1;
 	return f->f_op->write(f, src, len);
 }
@@ -165,7 +165,7 @@ int sys_fstat()
 int sys_mkdir()
 {
 	char *path = (char *)get_arg_uint(0);
-	return file_mkdir(path, 0, 0);
+	return file_mkdir(path);
 }
 
 int sys_chdir()

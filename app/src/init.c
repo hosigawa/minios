@@ -1,10 +1,11 @@
 #include "stdio.h"
+#include "fs.h"
 
 int main(int argc, char **argv)
 {
 	int fd;
 	if((fd = open("/dev/console", 0)) < 0) {
-		mknod("/dev/console", 1, 1);
+		mknod("/dev/console", DEV_CONSOLE, 1);
 		fd = open("/dev/console", 0);
 	}
 	dup(fd);

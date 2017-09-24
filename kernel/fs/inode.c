@@ -9,7 +9,7 @@ struct inode *iget(struct super_block *sb, int inum)
 	int i = 0;
 	struct inode *empty = NULL;
 	for(; i < INODE_NUM; i++){
-		if(inodes[i].ref > 0 && inodes[i].dev == sb->dev && inodes[i].inum == inum){
+		if(inodes[i].ref > 0 && inodes[i].sb == sb && inodes[i].inum == inum){
 			inodes[i].ref++;
 			return inodes + i;
 		}
@@ -21,9 +21,9 @@ struct inode *iget(struct super_block *sb, int inum)
 		panic("no empty inodes\n");
 	empty->ref = 1;
 	empty->flags = 0;
+	empty->sb = sb;
 	empty->dev = sb->dev;
 	empty->inum = inum;
-	empty->sb = sb;
 	sb->s_op->read_inode(sb, empty);
 
 	return empty;
@@ -42,6 +42,7 @@ void iput(struct inode *ip)
 			ip->sb->s_op->write_inode(ip->sb, ip);
 		}
 		ip->sb = NULL;
+		ip->inum = 0;
 	}
 }
 

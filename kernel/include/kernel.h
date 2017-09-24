@@ -20,7 +20,6 @@
 #include "sysproc.h"
 #include "ide.h"
 #include "fs.h"
-#include "fsx.h"
 #include "elf.h"
 #include "signal.h"
 

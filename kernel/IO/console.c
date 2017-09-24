@@ -41,7 +41,7 @@ void console_putc(int c)
 		uart_putc(c);
 }
 
-int console_read(struct inode *ip, char *dst, int off, int len)
+int console_read(struct file *f, char *dst, int len)
 {
 	int tar = len;
 	if(input.r == input.w)
@@ -59,7 +59,7 @@ int console_read(struct inode *ip, char *dst, int off, int len)
 	return tar - len;
 }
 
-int console_write(struct inode *ip, char *src, int off, int len)
+int console_write(struct file *f, char *src, int len)
 {
 	int i;
 	for(i = 0; i < len; i++) {
@@ -69,10 +69,20 @@ int console_write(struct inode *ip, char *src, int off, int len)
 	return 0;
 }
 
+struct file_operation console_fop = {
+	.read = console_read,
+	.write = console_write,
+};
+
+struct inode_operation console_iop = {
+	.f_op = &console_fop,
+};
+
 void init_console()
 {
 	enable_pic(IRQ_KBD);
 	init_kdb();
+	register_devop(DEV_CONSOLE, &console_iop);
 }
 
 bool udrl = false;

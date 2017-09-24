@@ -32,8 +32,10 @@ void get_envp()
 	}
 	memset(env, 0, 1024);
 	int fd = open("/home/.profile", 0);
-	if(fd < 0)
+	if(fd < 0) {
+		printf("open profile error\n");
 		return;
+	}
 	while(fgets(fd, env, 1024)){
 		if(!strncmp(env, "PATH", 4)) {
 			char *p = env;

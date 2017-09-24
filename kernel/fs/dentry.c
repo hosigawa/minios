@@ -20,6 +20,7 @@ struct dentry *dalloc(struct dentry *parent, char *name)
 			dentry_cache[i].parent = NULL;
 			if(parent) {
 				dentry_cache[i].parent = parent;
+				dentry_cache[i].sb = parent->sb;
 				parent->ref++;
 				list_add(&parent->subdirs, &dentry_cache[i].child);
 			}

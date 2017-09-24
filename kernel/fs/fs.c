@@ -10,6 +10,49 @@ void binit();
 void register_file_system_minios(struct file_system *fs);
 void register_file_system_proc(struct file_system *fs);
 
+struct devop {
+	int dev;
+	struct inode_operation *i_op;
+};
+
+static struct devop devops[MAX_DEV];
+
+struct inode_operation *get_devop(int dev)
+{
+	int i;
+	for(i = 0; i < MAX_DEV; i++) {
+		if(devops[i].dev == dev) {
+			return devops[i].i_op;
+		}
+	}
+	return NULL;
+}
+
+void register_devop(int dev, struct inode_operation *i_op)
+{
+	struct devop *devop = NULL;
+	int i;
+	for(i = 0; i < MAX_DEV; i++) {
+		if(devops[i].dev == -1){
+			devop = &devops[i];
+			break;
+		}
+	}
+	if(!devop)
+		panic("devops not enough\n");
+	devop->dev = dev;
+	devop->i_op = i_op;
+}
+
+void init_dev()
+{
+	int i;
+	for(i = 0; i < MAX_DEV; i++) {
+		devops[i].dev = -1;
+		devops[i].i_op = NULL;
+	}
+}
+
 static struct super_block *get_sb(int dev)
 {
 	int i;
@@ -80,6 +123,7 @@ void mount_root()
 	sb->dev = ROOT_DEV;
 	fs->s_op->read_sb(sb);
 	sb->mount = dalloc(NULL, "/");
+	sb->mount->sb = sb;
 	root_dentry = sb->mount;
 	struct inode *ip = iget(sb, ROOT_INO);
 	ip->sb = sb;

@@ -13,8 +13,8 @@ void console_putc(int c);
 void init_console();
 void console_proc(int (*getc)(void));
 
-int console_read(struct inode *ip, char *dst, int off, int len);
-int console_write(struct inode *ip, char *dst, int off, int len);
+int console_read(struct file *f, char *dst, int len);
+int console_write(struct file *f, char *dst, int len);
 
 #endif
 
