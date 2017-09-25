@@ -29,6 +29,10 @@
 #define MAX_DEV 100
 #define NFILE 1024
 
+#define MAJOR(x) ((x) >> 16)
+#define MINOR(x) ((x) | 0xffff)
+
+#define DEV_NULL 100
 #define DEV_CONSOLE 101
 
 #define FD_NONE 0

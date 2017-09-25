@@ -81,8 +81,8 @@ main(int argc, char *argv[])
 
   static_assert(sizeof(int) == 4, "Integers must be 4 bytes!");
 
-  if(argc < 2){
-    fprintf(stderr, "Usage: mkfs fs.img files...\n");
+  if(argc < 3){
+    fprintf(stderr, "Usage: mkfs fs.img version files...\n");
     exit(1);
   }
 
@@ -159,7 +159,7 @@ main(int argc, char *argv[])
   inum = _ialloc(T_FILE);
   bzero(&de, sizeof(de));
   de.inum = xshort(inum);
-  strncpy(de.name, "kernel_v0.2.0.img", DIR_NM_SZ);
+  snprintf(de.name, DIR_NM_SZ, "mnkernel-%s.img", argv[2]);
   iappend(boot, &de, sizeof(de));
 
   printf("freeblock :%d\n", freeblock);
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
   create_dir("proc", rootino);
 
   uint target = 0;
-  for(i = 2; i < argc; i++){
+  for(i = 3; i < argc; i++){
     if((fd = open(argv[i], 0)) < 0){
       perror(argv[i]);
       exit(1);

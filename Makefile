@@ -32,6 +32,8 @@ ASM_OBJS = $(addprefix $(OBJDIR), $(subst ./,,$(ASM_SRCS:.S=.o)))
 COM_DIR = libs/.obj/
 COM_LIBS = $(COM_DIR)libc.o $(COM_DIR)time.o
 
+VERSION = 0.2.0
+
 include app/applist.dep
 
 .PHONY: all mkobjdir makeproject q qemu r m fs
@@ -61,7 +63,7 @@ qemu-gdb: makeproject
 
 minios.img: $(OBJDIR)mkfs $(OBJDIR)bootblock $(OBJDIR)kernelblock
 	@cd app && make && cd ../
-	$< $@ $(addprefix app/, $(APPS))
+	$< $@ $(VERSION) $(addprefix app/, $(APPS))
 
 $(OBJDIR)bootblock: kernel/boot/bootasm.S kernel/boot/bootmain.c
 	$(CC) $(CFLAGS) -O -nostdinc $(INCDIR) -c kernel/boot/bootmain.c -o $(OBJDIR)bootmain.o

@@ -78,11 +78,31 @@ struct inode_operation console_iop = {
 	.f_op = &console_fop,
 };
 
+int null_read(struct file *f, char *dst, int len)
+{
+	return 0;
+}
+
+int null_write(struct file *f, char *src, int len)
+{
+	return 0;
+}
+
+struct file_operation null_fop = {
+	.read = null_read,
+	.write = null_write,
+};
+
+struct inode_operation null_iop = {
+	.f_op = &null_fop,
+};
+
 void init_console()
 {
 	enable_pic(IRQ_KBD);
 	init_kdb();
 	register_devop(DEV_CONSOLE, &console_iop);
+	register_devop(DEV_NULL, &null_iop);
 }
 
 bool udrl = false;

@@ -103,7 +103,7 @@ void minios_read_inode(struct super_block *sb, struct inode *ip)
 			ip->minios_i.addrs[i] = mi->addrs[i];
 		if(ip->type == T_DEV){
 			ip->dev = mi->addrs[0];
-			ip->i_op = get_devop(ip->dev >> 16);
+			ip->i_op = get_devop(MAJOR(ip->dev));
 		}
 		brelse(buf);
 	}
