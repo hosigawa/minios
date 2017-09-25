@@ -51,8 +51,6 @@ int console_read(struct file *f, char *dst, int len)
 		*dst++ = c;
 		if(--len <= 0)
 			break;
-		if(c == '\n')
-			break;
 	}
 	input.w = 0;
 	input.r = 0;
@@ -161,9 +159,7 @@ void console_proc(int (*getc)(void))
 					input.w++;
 				}
 				console_putc(data);
-				if(data == '\n'){
-					wakeup_on(&input.r);
-				}
+				wakeup_on(&input.r);
 				break;
 		}
 	}

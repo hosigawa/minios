@@ -10,6 +10,7 @@
 #define stderr 2
 
 void printf(char *fmt, ...);
+int gets(char *dst, int len);
 int fgets(int fd, char *dst, int len);
 
 #endif

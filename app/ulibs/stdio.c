@@ -27,3 +27,8 @@ int fgets(int fd, char *dst, int len)
 	return target - len;
 }
 
+int gets(char *dst, int len)
+{
+	return fgets(stdin, dst, len);
+}
+

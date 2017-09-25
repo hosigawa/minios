@@ -17,7 +17,7 @@ int getcmd(char *buf, int len)
 	int ret;
 	printf("[root@localhost %s]$ ", cwd);
 	memset(buf, 0, len);
-	ret = read(stdin, buf, len);
+	ret = gets(buf, len);
 	if(ret <= 0)
 		return -1;
 	buf[ret - 1] = 0;
